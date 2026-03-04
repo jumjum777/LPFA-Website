@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//g/LPFA Website/**)",
+      "Bash(curl:*)",
+      "Bash(start \"\" \"g:/LPFA Website/index.html\")"
+    ]
+  }
+}

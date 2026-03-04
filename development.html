@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Economic development, brownfields programs, property financing, and waterborne commerce opportunities through the Lorain Port & Finance Authority." />
+  <title>Development & Finance | Lorain Port & Finance Authority</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .program-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem 2rem;
+      box-shadow: var(--shadow-sm);
+      transition: all var(--transition);
+    }
+    .program-card:hover { box-shadow: var(--shadow-md); border-color: rgba(27,139,235,0.2); transform: translateY(-3px); }
+    .program-icon { width: 60px; height: 60px; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 1.5rem; }
+    .program-card h3 { margin-bottom: 0.75rem; font-size: 1.25rem; }
+    .program-card p { margin-bottom: 1.25rem; font-size: 0.95rem; }
+    .programs-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+    .rfp-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1.25rem;
+      transition: all var(--transition);
+      box-shadow: var(--shadow-sm);
+    }
+    .rfp-card:hover { box-shadow: var(--shadow-md); border-color: rgba(217,119,6,0.25); }
+    .rfp-status {
+      flex-shrink: 0;
+      padding: 0.3rem 0.75rem;
+      border-radius: 100px;
+      font-family: var(--font-heading);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .rfp-open { background: rgba(16,185,129,0.1); color: #059669; border: 1px solid rgba(16,185,129,0.2); }
+    .rfp-closed { background: rgba(100,116,139,0.1); color: var(--gray-500); border: 1px solid rgba(100,116,139,0.2); }
+    .rfp-icon { width: 48px; height: 48px; background: rgba(27,139,235,0.08); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--blue-accent); flex-shrink: 0; }
+    .rfp-body h4 { margin-bottom: 0.35rem; }
+    .rfp-body p { font-size: 0.88rem; margin-bottom: 0.75rem; }
+    .rfp-meta { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+    .rfp-meta span { font-size: 0.78rem; color: var(--gray-500); display: flex; align-items: center; gap: 0.3rem; }
+    .stats-band { background: var(--navy); padding: 3rem 0; }
+    .stats-band-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; text-align: center; }
+    .stats-band-item .num { font-family: var(--font-heading); font-weight: 800; font-size: 2.5rem; color: #fff; display: block; }
+    .stats-band-item .lbl { font-size: 0.85rem; color: rgba(255,255,255,0.5); display: block; margin-top: 0.25rem; }
+    @media (max-width: 768px) {
+      .programs-grid { grid-template-columns: 1fr; }
+      .stats-band-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+  <script>(function(){var t=localStorage.getItem('lpfa-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.setAttribute('data-theme','dark')})()</script>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="site-header" id="site-header">
+    <div class="header-top">
+      <div class="container">
+        <div class="header-top-inner">
+          <div class="header-contact">
+            <a href="tel:4402042269"><i class="fas fa-phone-alt"></i> 440.204.2269</a>
+            <a href="mailto:info@lorainport.com"><i class="fas fa-envelope"></i> info@lorainport.com</a>
+            <span class="header-address"><i class="fas fa-map-marker-alt"></i> 319 Black River Lane, Lorain, OH 44052</span>
+          </div>
+          <div class="header-social">
+            <a href="https://www.facebook.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="https://www.instagram.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.youtube.com/@LorainPortandFinanceAuthority" target="_blank" rel="noopener" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+            <a href="https://www.linkedin.com/company/lorainport" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav class="main-nav" id="main-nav">
+      <div class="container">
+        <div class="nav-inner">
+          <a href="index.html" class="logo" aria-label="Lorain Port & Finance Authority Home"><img src="images/logo.png" alt="Lorain Port & Finance Authority" class="logo-img" /></a>
+          <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+          <ul class="nav-menu" id="nav-menu">
+            <li><a href="index.html">Home</a></li>
+            <li class="has-dropdown"><a href="development.html" class="active">Development &amp; Finance <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="development.html#brownfields">Brownfields Program</a></li><li><a href="development.html#financing">Property Financing</a></li><li><a href="development.html#rfp">RFPs &amp; Bids</a></li><li><a href="development.html#commerce">Waterborne Commerce</a></li></ul></li>
+            <li><a href="events.html">Events</a></li>
+            <li class="has-dropdown"><a href="recreation.html">Recreation <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="recreation.html#history-tours">History &amp; Lighthouse Tours</a></li><li><a href="recreation.html#nature-tours">Nature &amp; Sunset Cruises</a></li><li><a href="recreation.html#water-taxi">Water Taxi</a></li><li><a href="recreation.html#charters">Private Charters</a></li></ul></li>
+            <li class="has-dropdown"><a href="facilities.html">Facilities <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="facilities.html#black-river-landing">Black River Landing</a></li><li><a href="facilities.html#lakeside-landing">Lakeside Landing</a></li><li><a href="facilities.html#mile-long-pier">Mile-Long Pier</a></li><li><a href="facilities.html#boat-launch">Boat Launch</a></li></ul></li>
+            <li><a href="news.html">News</a></li>
+            <li class="has-dropdown"><a href="about.html">About <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="about.html">About Us</a></li><li><a href="staff.html">Staff</a></li><li><a href="board.html">Board of Directors</a></li><li><a href="didyouknow.html">Did You Know?</a></li></ul></li>
+            <li><a href="donate.html">Stage Project</a></li>
+            <li><a href="contact.html" class="nav-cta">Contact Us</a></li>
+          </ul>
+          <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode"><svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg><svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <!-- PAGE HERO -->
+    <section class="page-hero">
+      <div class="container">
+        <nav class="breadcrumb" aria-label="Breadcrumb"><a href="index.html">Home</a><span class="sep"><i class="fas fa-chevron-right"></i></span><span class="current">Development &amp; Finance</span></nav>
+        <div class="page-hero-label">Economic Growth</div>
+        <h1>Development &amp; Finance</h1>
+        <p>Catalyzing investment and opportunity along Lorain's Lake Erie waterfront through brownfields remediation, property financing, and strategic development partnerships.</p>
+      </div>
+    </section>
+
+    <!-- STATS BAND -->
+    <div class="stats-band">
+      <div class="container">
+        <div class="stats-band-grid">
+          <div class="stats-band-item" data-animate="fade-up" data-delay="0"><span class="num">$50M+</span><span class="lbl">Development Investment</span></div>
+          <div class="stats-band-item" data-animate="fade-up" data-delay="100"><span class="num">Multiple</span><span class="lbl">Active Brownfield Sites</span></div>
+          <div class="stats-band-item" data-animate="fade-up" data-delay="200"><span class="num">State &amp; Federal</span><span class="lbl">Grant Programs</span></div>
+          <div class="stats-band-item" data-animate="fade-up" data-delay="300"><span class="num">Active</span><span class="lbl">RFPs Available</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BROWNFIELDS -->
+    <section class="section" id="brownfields">
+      <div class="container">
+        <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:4rem;align-items:center;">
+          <div data-animate="fade-right">
+            <div class="section-label">Environmental Remediation</div>
+            <h2 style="margin-bottom:1.25rem;">Brownfields Program</h2>
+            <p style="margin-bottom:1rem;">Lorain's industrial heritage left behind contaminated and underutilized properties — a challenge we're turning into opportunity. Our Brownfields Program provides grants and technical assistance to assess, clean up, and redevelop these sites for productive use.</p>
+            <p style="margin-bottom:1rem;">We work with state and federal partners — including the U.S. EPA, Ohio EPA, and the Ohio Department of Development — to access the funding and expertise needed to make remediation projects viable.</p>
+            <p style="margin-bottom:2rem;">Cleaned brownfield sites can be transformed into housing, commercial development, green space, or manufacturing — all of which create jobs and expand Lorain's tax base.</p>
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+              <a href="contact.html" class="btn btn-primary">Inquire About Brownfields</a>
+            </div>
+          </div>
+          <div data-animate="fade-left">
+            <div style="display:flex;flex-direction:column;gap:1rem;">
+              <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius);padding:1.5rem;display:flex;gap:1rem;align-items:flex-start;">
+                <div style="width:44px;height:44px;background:rgba(27,139,235,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--blue-accent);font-size:1.1rem;flex-shrink:0;"><i class="fas fa-search"></i></div>
+                <div><h4 style="margin-bottom:0.3rem;">Phase I &amp; II Assessments</h4><p style="font-size:0.88rem;">Environmental site assessments to identify contamination and develop remediation strategies.</p></div>
+              </div>
+              <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius);padding:1.5rem;display:flex;gap:1rem;align-items:flex-start;">
+                <div style="width:44px;height:44px;background:rgba(16,185,129,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#059669;font-size:1.1rem;flex-shrink:0;"><i class="fas fa-leaf"></i></div>
+                <div><h4 style="margin-bottom:0.3rem;">Cleanup Grants</h4><p style="font-size:0.88rem;">Grant funding for remediation of petroleum, hazardous substance, and other contamination.</p></div>
+              </div>
+              <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius);padding:1.5rem;display:flex;gap:1rem;align-items:flex-start;">
+                <div style="width:44px;height:44px;background:rgba(217,119,6,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:1.1rem;flex-shrink:0;"><i class="fas fa-building"></i></div>
+                <div><h4 style="margin-bottom:0.3rem;">Redevelopment Planning</h4><p style="font-size:0.88rem;">Technical assistance and planning support to bring cleaned sites to market for productive reuse.</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FINANCING -->
+    <section class="section bg-light" id="financing">
+      <div class="container">
+        <div class="section-header center" data-animate="fade-up">
+          <div class="section-label">Property Finance</div>
+          <h2 class="section-title">Development Financing Programs</h2>
+          <p class="section-desc">We offer a range of financing tools to help private developers and property owners invest in Lorain's waterfront.</p>
+        </div>
+        <div class="programs-grid">
+          <div class="program-card" data-animate="fade-up" data-delay="0">
+            <div class="program-icon" style="background:rgba(27,139,235,0.1);color:var(--blue-accent);"><i class="fas fa-hand-holding-dollar"></i></div>
+            <h3>Property Financing</h3>
+            <p>The LPFA can provide property financing to support acquisition, development, and redevelopment of waterfront properties. Our flexible financing tools complement traditional bank lending to fill financing gaps.</p>
+            <a href="contact.html" class="btn btn-outline btn-sm">Learn More</a>
+          </div>
+          <div class="program-card" data-animate="fade-up" data-delay="100">
+            <div class="program-icon" style="background:rgba(217,119,6,0.1);color:var(--gold);"><i class="fas fa-landmark"></i></div>
+            <h3>Tax Increment Financing</h3>
+            <p>TIF arrangements allow new tax revenues generated by development to be reinvested into the project area — funding infrastructure improvements and making projects more financially viable.</p>
+            <a href="contact.html" class="btn btn-outline btn-sm">Learn More</a>
+          </div>
+          <div class="program-card" data-animate="fade-up" data-delay="200">
+            <div class="program-icon" style="background:rgba(16,185,129,0.1);color:#059669;"><i class="fas fa-file-contract"></i></div>
+            <h3>Development Agreements</h3>
+            <p>We structure public-private partnerships and development agreements to incentivize quality investment on key waterfront sites, aligning developer interests with community goals.</p>
+            <a href="contact.html" class="btn btn-outline btn-sm">Learn More</a>
+          </div>
+          <div class="program-card" data-animate="fade-up" data-delay="300">
+            <div class="program-icon" style="background:rgba(139,92,246,0.1);color:#7C3AED;"><i class="fas fa-network-wired"></i></div>
+            <h3>Grant Coordination</h3>
+            <p>We help developers identify and navigate state and federal grant programs — from JobsOhio incentives to Community Development Block Grants — maximizing the financial viability of waterfront projects.</p>
+            <a href="contact.html" class="btn btn-outline btn-sm">Learn More</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RFPs -->
+    <section class="section" id="rfp">
+      <div class="container">
+        <div class="section-header" data-animate="fade-up">
+          <div class="section-label">Procurement</div>
+          <h2 class="section-title">Requests for Proposals &amp; Bids</h2>
+          <p class="section-desc">Current development opportunities and procurement solicitations from the Lorain Port &amp; Finance Authority.</p>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:1rem;" data-animate="fade-up">
+          <div class="rfp-card">
+            <div class="rfp-icon"><i class="fas fa-anchor"></i></div>
+            <div class="rfp-body" style="flex:1;">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:0.5rem;">
+                <h4>Marina Conditions Assessment</h4>
+                <span class="rfp-status rfp-open">Open</span>
+              </div>
+              <p>The Lorain Port &amp; Finance Authority is seeking qualified firms to conduct a comprehensive marina conditions assessment of LPFA-managed waterfront facilities. The assessment will evaluate current conditions, capacity, and identify capital improvement priorities.</p>
+              <div class="rfp-meta">
+                <span><i class="fas fa-calendar"></i> Posted: 2026</span>
+                <span><i class="fas fa-map-marker-alt"></i> Lorain, OH</span>
+                <a href="contact.html" class="btn btn-gold btn-sm" style="margin-left:auto;">Request Documents</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="rfp-card" style="opacity:0.65;">
+            <div class="rfp-icon" style="background:rgba(100,116,139,0.08);color:var(--gray-500);"><i class="fas fa-building"></i></div>
+            <div class="rfp-body" style="flex:1;">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:0.5rem;">
+                <h4>Waterfront Property Development RFP</h4>
+                <span class="rfp-status rfp-closed">Closed</span>
+              </div>
+              <p>Request for Proposals for development of a designated waterfront parcel near Black River Landing. This RFP has closed; award pending. Check back for future opportunities.</p>
+              <div class="rfp-meta">
+                <span><i class="fas fa-calendar"></i> Closed: 2025</span>
+                <span><i class="fas fa-map-marker-alt"></i> Lorain, OH</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:2.5rem;padding:1.75rem;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius);display:flex;gap:1.25rem;align-items:flex-start;" data-animate="fade-up">
+          <div style="width:44px;height:44px;background:rgba(27,139,235,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--blue-accent);font-size:1.1rem;flex-shrink:0;"><i class="fas fa-bell"></i></div>
+          <div>
+            <h4 style="margin-bottom:0.3rem;">Stay Notified of New RFPs</h4>
+            <p style="font-size:0.9rem;margin-bottom:0.75rem;">Sign up for our newsletter or contact us to be added to our procurement notification list. We'll alert you when new opportunities are posted.</p>
+            <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+              <a href="contact.html" class="btn btn-primary btn-sm">Get Notified</a>
+              <a href="index.html#newsletter" class="btn btn-outline btn-sm">Subscribe to Newsletter</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WATERBORNE COMMERCE -->
+    <section class="section bg-dark-navy" id="commerce">
+      <div class="container">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;">
+          <div data-animate="fade-right">
+            <div class="section-label" style="color:var(--gold-muted);background:rgba(252,211,77,0.1);border-color:rgba(252,211,77,0.2);">Maritime Industry</div>
+            <h2 style="color:#fff;margin-bottom:1.25rem;">Waterborne Commerce</h2>
+            <p style="color:rgba(255,255,255,0.65);margin-bottom:1rem;">Lorain's strategic location at the mouth of the Black River on Lake Erie has made it a working port city for generations. The LPFA supports continued commercial maritime activity — a critical driver of jobs and economic activity in our region.</p>
+            <p style="color:rgba(255,255,255,0.65);margin-bottom:2rem;">We work to maintain and improve port infrastructure, facilitate commercial shipping relationships, and ensure Lorain's viability as a Great Lakes maritime hub for future generations.</p>
+            <a href="contact.html" class="btn btn-gold">Contact Our Team</a>
+          </div>
+          <div data-animate="fade-left">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+              <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:var(--radius);padding:1.5rem;text-align:center;">
+                <div style="font-size:2rem;color:rgba(27,139,235,0.8);margin-bottom:0.75rem;"><i class="fas fa-ship"></i></div>
+                <h4 style="color:#fff;font-size:0.95rem;margin-bottom:0.4rem;">Commercial Shipping</h4>
+                <p style="font-size:0.82rem;color:rgba(255,255,255,0.45);">Supporting cargo and freight operations on Lake Erie</p>
+              </div>
+              <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:var(--radius);padding:1.5rem;text-align:center;">
+                <div style="font-size:2rem;color:rgba(217,119,6,0.8);margin-bottom:0.75rem;"><i class="fas fa-anchor"></i></div>
+                <h4 style="color:#fff;font-size:0.95rem;margin-bottom:0.4rem;">Port Infrastructure</h4>
+                <p style="font-size:0.82rem;color:rgba(255,255,255,0.45);">Maintaining and improving maritime infrastructure</p>
+              </div>
+              <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:var(--radius);padding:1.5rem;text-align:center;">
+                <div style="font-size:2rem;color:rgba(16,185,129,0.8);margin-bottom:0.75rem;"><i class="fas fa-industry"></i></div>
+                <h4 style="color:#fff;font-size:0.95rem;margin-bottom:0.4rem;">Industrial Access</h4>
+                <p style="font-size:0.82rem;color:rgba(255,255,255,0.45);">Waterfront industrial site access and logistics</p>
+              </div>
+              <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:var(--radius);padding:1.5rem;text-align:center;">
+                <div style="font-size:2rem;color:rgba(139,92,246,0.8);margin-bottom:0.75rem;"><i class="fas fa-handshake"></i></div>
+                <h4 style="color:#fff;font-size:0.95rem;margin-bottom:0.4rem;">Trade Relations</h4>
+                <p style="font-size:0.82rem;color:rgba(255,255,255,0.45);">Building commercial maritime partnerships</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="section bg-light">
+      <div class="container" style="text-align:center;">
+        <div data-animate="fade-up">
+          <div class="section-label">Get Started</div>
+          <h2 style="margin-bottom:1rem;">Ready to Invest in Lorain?</h2>
+          <p style="max-width:560px;margin:0 auto 2rem;">Whether you're interested in a brownfields site, development financing, or a partnership opportunity — our team is here to help.</p>
+          <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+            <a href="contact.html" class="btn btn-primary">Contact Our Team</a>
+            <a href="about.html" class="btn btn-outline">Learn About the LPFA</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-main"><div class="container"><div class="footer-grid">
+      <div class="footer-brand"><a href="index.html" class="logo footer-logo"><div class="logo-icon"><i class="fas fa-anchor"></i></div><div class="logo-text"><span class="logo-main">Lorain Port</span><span class="logo-sub">&amp; Finance Authority</span></div></a><p class="footer-tagline">Economic Development &middot; Waterborne Commerce &middot; Public Access to Waterways</p><div class="footer-social"><a href="https://www.facebook.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a><a href="https://www.instagram.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a><a href="https://www.youtube.com/@LorainPortandFinanceAuthority" target="_blank" rel="noopener" aria-label="YouTube"><i class="fab fa-youtube"></i></a><a href="https://www.linkedin.com/company/lorainport" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a></div></div>
+      <div class="footer-links"><h4>Quick Links</h4><ul><li><a href="index.html">Home</a></li><li><a href="development.html">Development &amp; Finance</a></li><li><a href="events.html">Events</a></li><li><a href="recreation.html">Boat Tours &amp; Recreation</a></li><li><a href="facilities.html">Facilities</a></li><li><a href="news.html">News</a></li><li><a href="about.html">About Us</a></li><li><a href="contact.html">Contact</a></li></ul></div>
+      <div class="footer-links"><h4>Development</h4><ul><li><a href="development.html#brownfields">Brownfields Program</a></li><li><a href="development.html#financing">Property Financing</a></li><li><a href="development.html#rfp">RFPs &amp; Bids</a></li><li><a href="development.html#commerce">Waterborne Commerce</a></li></ul></div>
+      <div class="footer-contact-col"><h4>Contact Us</h4><address><div class="footer-contact-item"><i class="fas fa-map-marker-alt"></i><div><p>319 Black River Lane</p><p>Lorain, OH 44052</p></div></div><div class="footer-contact-item"><i class="fas fa-phone-alt"></i><a href="tel:4402042269">440.204.2269</a></div><div class="footer-contact-item"><i class="fas fa-envelope"></i><a href="mailto:info@lorainport.com">info@lorainport.com</a></div></address><a href="contact.html" class="btn btn-gold btn-sm" style="margin-top:1.25rem;display:inline-flex;">Send a Message</a></div>
+    </div></div></div>
+    <div class="footer-bottom"><div class="container"><p>&copy; 2026 Lorain Port &amp; Finance Authority. All rights reserved.</p><div class="footer-bottom-links"><a href="#">Privacy Policy</a><a href="#">Terms of Use</a><a href="#">Accessibility</a></div></div></div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

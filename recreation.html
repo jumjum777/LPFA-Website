@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Boat tours, lighthouse tours, sunset cruises, water taxi, and private charters on Lake Erie and the Black River with the Lorain Port & Finance Authority." />
+  <title>Boat Tours &amp; Recreation | Lorain Port &amp; Finance Authority</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    /* ---- Tour Cards ---- */
+    .tour-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      transition: all var(--transition-slow);
+    }
+    .tour-card:hover { box-shadow: var(--shadow-md); transform: translateY(-4px); }
+    .tour-visual { height: 220px; position: relative; }
+    .tour-visual::before { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent 30%, rgba(0,0,0,0.4) 100%); z-index: 1; }
+    .tour-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -65%); font-size: 3.5rem; color: rgba(255,255,255,0.15); z-index: 0; }
+    .tour-badge { position: absolute; bottom: 1rem; left: 1rem; z-index: 2; background: var(--gold); color: #fff; font-family: var(--font-heading); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.3rem 0.8rem; border-radius: 100px; }
+    .tour-body { padding: 1.75rem; }
+    .tour-body h3 { margin-bottom: 0.6rem; }
+    .tour-body p { font-size: 0.92rem; color: var(--gray-500); line-height: 1.65; margin-bottom: 1.25rem; }
+    .tour-details { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.25rem; }
+
+    /* ---- Tour Schedule ---- */
+    .tour-schedule {
+      border-top: 1px solid var(--gray-200);
+      margin-top: 0.25rem;
+      padding-top: 1.25rem;
+    }
+    .tour-schedule-toggle {
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; width: 100%; border: none; background: none;
+      padding: 0; font-family: var(--font-heading);
+      font-size: 0.82rem; font-weight: 700; color: var(--blue-accent);
+      letter-spacing: 0.03em;
+    }
+    .tour-schedule-toggle i {
+      font-size: 0.7rem; transition: transform var(--transition);
+    }
+    .tour-schedule.open .tour-schedule-toggle i { transform: rotate(180deg); }
+    .tour-schedule-body {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.4s ease, padding 0.4s ease;
+      padding-top: 0;
+    }
+    .tour-schedule.open .tour-schedule-body {
+      max-height: 500px;
+      padding-top: 1rem;
+    }
+    .tour-schedule-month {
+      margin-bottom: 0.75rem;
+    }
+    .tour-schedule-month:last-child { margin-bottom: 0; }
+    .tour-schedule-month-name {
+      font-family: var(--font-heading); font-weight: 700;
+      font-size: 0.72rem; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--gold);
+      margin-bottom: 0.35rem;
+    }
+    .tour-schedule-dates {
+      display: flex; flex-wrap: wrap; gap: 0.35rem;
+    }
+    .tour-schedule-date {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      padding: 0.25rem 0.6rem;
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .tour-schedule-recurring {
+      font-size: 0.82rem; color: var(--gray-600);
+      line-height: 1.5; padding-top: 0.25rem;
+    }
+    .tour-schedule-recurring strong { color: var(--gray-700); }
+    [data-theme="dark"] .tour-schedule { border-top-color: var(--gray-200); }
+    [data-theme="dark"] .tour-schedule-date { background: var(--gray-100); border-color: var(--gray-200); }
+    .tour-detail { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: var(--gray-500); }
+    .tour-detail .fas { color: var(--blue-accent); font-size: 0.75rem; width: 14px; }
+    .tour-price { display: inline-flex; align-items: center; gap: 0.35rem; font-family: var(--font-heading); font-weight: 700; font-size: 1.25rem; color: var(--navy); margin-bottom: 1rem; }
+    .tour-price .per { font-size: 0.75rem; font-weight: 400; color: var(--gray-500); }
+
+    /* ---- Visual Gradients ---- */
+    .tv-history { background: linear-gradient(135deg, #0a1a3a 0%, #1a3a6e 50%, #0d2b52 100%); }
+    .tv-lighthouse { background: linear-gradient(135deg, #1a2a0a 0%, #3a5a1a 50%, #2a4a10 100%); }
+    .tv-dinner { background: linear-gradient(135deg, #3a0a1a 0%, #6e1a2a 50%, #520d1a 100%); }
+    .tv-nature { background: linear-gradient(135deg, #052a0a 0%, #0a4a10 50%, #083a0d 100%); }
+    .tv-sunset { background: linear-gradient(135deg, #3a1a0a 0%, #c75b13 50%, #8a3a00 100%); }
+    .tv-sipnsway { background: linear-gradient(135deg, #2a0a3a 0%, #5a1a6e 50%, #3a0d52 100%); }
+    .tv-watertaxi { background: linear-gradient(135deg, #062a3d 0%, #0a4a6e 50%, #0d3a5c 100%); }
+    .tv-charter { background: linear-gradient(135deg, #1a0a2a 0%, #2a1a4a 50%, #1a0a3a 100%); }
+
+    /* ---- Grids ---- */
+    .tours-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+    .tours-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; max-width: 820px; margin: 0 auto; }
+
+    /* ---- Hero Stats ---- */
+    .rec-hero-extra { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-top: 2.5rem; }
+    .rec-stat-card { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius); padding: 1.5rem; text-align: center; }
+    .rec-stat-num { display: block; font-family: var(--font-heading); font-weight: 800; font-size: 2rem; color: #fff; }
+    .rec-stat-lbl { display: block; font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 0.25rem; }
+
+    /* ---- Booking ---- */
+    .booking-section { background: var(--navy); border-radius: var(--radius-lg); padding: 3rem; }
+    .booking-form { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .booking-form .full-width { grid-column: span 2; }
+
+    /* ---- Tour Category Tabs ---- */
+    .tour-filters { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; margin-bottom: 2.5rem; }
+    .tour-filter-btn {
+      font-family: var(--font-heading);
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      padding: 0.6rem 1.5rem;
+      border-radius: 100px;
+      border: 2px solid var(--gray-200);
+      background: var(--white);
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .tour-filter-btn:hover { border-color: var(--blue-accent); color: var(--blue-accent); }
+    .tour-filter-btn.active { background: var(--blue-accent); border-color: var(--blue-accent); color: #fff; }
+
+    /* ---- Water Taxi Schedule ---- */
+    .wt-schedule-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; }
+    .wt-month { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 1.25rem; text-align: center; }
+    .wt-month h4 { font-size: 0.9rem; margin-bottom: 0.75rem; color: var(--blue-accent); }
+    .wt-month ul { list-style: none; padding: 0; margin: 0; }
+    .wt-month li { font-size: 0.82rem; color: var(--gray-600); padding: 0.25rem 0; }
+
+    /* ---- Charter Feature Cards ---- */
+    .charter-features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2.5rem; }
+    .charter-feature-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      text-align: center;
+      transition: all var(--transition-slow);
+    }
+    .charter-feature-card:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); }
+    .charter-feature-icon {
+      width: 60px; height: 60px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem;
+      margin: 0 auto 1.25rem;
+    }
+
+    /* ---- Policy Note ---- */
+    .policy-note {
+      background: rgba(217,119,6,0.06);
+      border: 1px solid rgba(217,119,6,0.15);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      font-size: 0.85rem;
+      color: var(--gray-600);
+      margin-top: 2rem;
+    }
+    .policy-note i { color: var(--gold); margin-top: 0.15rem; flex-shrink: 0; }
+
+    /* ---- Departure Info ---- */
+    .departure-banner {
+      background: var(--navy);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem 3rem;
+      display: flex;
+      align-items: center;
+      gap: 3rem;
+      margin-top: 3rem;
+    }
+    .departure-banner-icon {
+      width: 70px; height: 70px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem;
+      color: var(--gold);
+      flex-shrink: 0;
+    }
+    .departure-banner h3 { color: #fff; margin-bottom: 0.5rem; }
+    .departure-banner p { color: rgba(255,255,255,0.6); font-size: 0.9rem; margin: 0; }
+    .departure-banner a { color: var(--gold); }
+
+    /* ---- Dark Mode ---- */
+    [data-theme="dark"] .tour-price { color: #F1F5F9; }
+    [data-theme="dark"] .tour-filter-btn { background: var(--gray-50); border-color: var(--gray-200); color: var(--gray-600); }
+    [data-theme="dark"] .tour-filter-btn.active { background: var(--blue-accent); border-color: var(--blue-accent); color: #fff; }
+    [data-theme="dark"] .wt-month h4 { color: var(--blue-accent); }
+    [data-theme="dark"] .charter-feature-card { background: var(--gray-50); border-color: var(--gray-200); }
+    [data-theme="dark"] .policy-note { background: rgba(217,119,6,0.08); border-color: rgba(217,119,6,0.2); color: var(--gray-600); }
+    [data-theme="dark"] .departure-banner { background: #0F172A; border: 1px solid rgba(255,255,255,0.08); }
+
+    @media (max-width: 992px) {
+      .tours-grid { grid-template-columns: repeat(2, 1fr); }
+      .charter-features { grid-template-columns: repeat(2, 1fr); }
+      .wt-schedule-grid { grid-template-columns: repeat(3, 1fr); }
+      .departure-banner { flex-direction: column; text-align: center; gap: 1.5rem; padding: 2rem; }
+    }
+    @media (max-width: 768px) {
+      .tours-grid { grid-template-columns: 1fr; }
+      .tours-grid-2 { grid-template-columns: 1fr; }
+      .rec-hero-extra { grid-template-columns: repeat(2, 1fr); }
+      .booking-form { grid-template-columns: 1fr; }
+      .booking-form .full-width { grid-column: span 1; }
+      .charter-features { grid-template-columns: 1fr; }
+      .wt-schedule-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+  <script>(function(){var t=localStorage.getItem('lpfa-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.setAttribute('data-theme','dark')})()</script>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="site-header" id="site-header">
+    <div class="header-top">
+      <div class="container">
+        <div class="header-top-inner">
+          <div class="header-contact">
+            <a href="tel:4402042269"><i class="fas fa-phone-alt"></i> 440.204.2269</a>
+            <a href="mailto:info@lorainport.com"><i class="fas fa-envelope"></i> info@lorainport.com</a>
+            <span class="header-address"><i class="fas fa-map-marker-alt"></i> 319 Black River Lane, Lorain, OH 44052</span>
+          </div>
+          <div class="header-social">
+            <a href="https://www.facebook.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="https://www.instagram.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.youtube.com/@LorainPortandFinanceAuthority" target="_blank" rel="noopener" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+            <a href="https://www.linkedin.com/company/lorainport" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav class="main-nav" id="main-nav">
+      <div class="container">
+        <div class="nav-inner">
+          <a href="index.html" class="logo" aria-label="Lorain Port & Finance Authority Home"><img src="images/logo.png" alt="Lorain Port & Finance Authority" class="logo-img" /></a>
+          <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+          <ul class="nav-menu" id="nav-menu">
+            <li><a href="index.html">Home</a></li>
+            <li class="has-dropdown"><a href="development.html">Development &amp; Finance <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="development.html#brownfields">Brownfields Program</a></li><li><a href="development.html#financing">Property Financing</a></li><li><a href="development.html#rfp">RFPs &amp; Bids</a></li><li><a href="development.html#commerce">Waterborne Commerce</a></li></ul></li>
+            <li><a href="events.html">Events</a></li>
+            <li class="has-dropdown"><a href="recreation.html" class="active">Recreation <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="recreation.html#history-tours">History &amp; Lighthouse Tours</a></li><li><a href="recreation.html#nature-tours">Nature &amp; Sunset Cruises</a></li><li><a href="recreation.html#water-taxi">Water Taxi</a></li><li><a href="recreation.html#charters">Private Charters</a></li></ul></li>
+            <li class="has-dropdown"><a href="facilities.html">Facilities <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="facilities.html#black-river-landing">Black River Landing</a></li><li><a href="facilities.html#lakeside-landing">Lakeside Landing</a></li><li><a href="facilities.html#mile-long-pier">Mile-Long Pier</a></li><li><a href="facilities.html#boat-launch">Boat Launch</a></li></ul></li>
+            <li><a href="news.html">News</a></li>
+            <li class="has-dropdown"><a href="about.html">About <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="about.html">About Us</a></li><li><a href="staff.html">Staff</a></li><li><a href="board.html">Board of Directors</a></li><li><a href="didyouknow.html">Did You Know?</a></li></ul></li>
+            <li><a href="donate.html">Stage Project</a></li>
+            <li><a href="contact.html" class="nav-cta">Contact Us</a></li>
+          </ul>
+          <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode"><svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg><svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="page-hero">
+      <div class="container">
+        <nav class="breadcrumb" aria-label="Breadcrumb"><a href="index.html">Home</a><span class="sep"><i class="fas fa-chevron-right"></i></span><span class="current">Boat Tours &amp; Recreation</span></nav>
+        <div class="page-hero-label">Lake Erie Adventures</div>
+        <h1>Boat Tours &amp; Recreation</h1>
+        <p>Explore Lorain's waterfront with narrated history cruises, lighthouse tours, sunset sails, a free water taxi, and private charter experiences on Lake Erie and the Black River.</p>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- HISTORY & LIGHTHOUSE TOURS -->
+    <!-- ============================================================= -->
+    <section class="section" id="history-tours">
+      <div class="container">
+        <div class="section-header center" data-animate="fade-up">
+          <div class="section-label">History &amp; Heritage</div>
+          <h2 class="section-title">History Excursions &amp; Lighthouse Tours</h2>
+          <p class="section-desc">Brush up on Lorain's past and learn the importance the waterways played in the development of the International City. Cruise past the Lorain Lighthouse and historic landmarks along the Black River.</p>
+        </div>
+
+        <div class="tours-grid">
+          <!-- History Excursion -->
+          <div class="tour-card" data-animate="fade-up" data-delay="0">
+            <div class="tour-body">
+              <h3>History Excursion</h3>
+              <div class="tour-price">$25 <span class="per">/ person</span></div>
+              <p>A two-hour narrated tour by a Lorain Historical Society member cruising past the Lorain Lighthouse and historic landmarks along the Black River, including sites of American Shipbuilding and United States Steel.</p>
+              <div class="tour-details">
+                <div class="tour-detail"><i class="fas fa-clock"></i> 2 hours</div>
+                <div class="tour-detail"><i class="fas fa-users"></i> All ages welcome</div>
+                <div class="tour-detail"><i class="fas fa-map-marker-alt"></i> Alliance Marine at Port Lorain Dock A</div>
+                <div class="tour-detail"><i class="fas fa-calendar"></i> Sundays &amp; Fridays, June through August</div>
+              </div>
+              <div class="tour-schedule">
+                <button class="tour-schedule-toggle" aria-expanded="false"><span><i class="fas fa-calendar-alt" style="margin-right:0.4rem;"></i> 2025 Schedule</span><i class="fas fa-chevron-down"></i></button>
+                <div class="tour-schedule-body">
+                  <div class="tour-schedule-month">
+                    <div class="tour-schedule-month-name">June</div>
+                    <div class="tour-schedule-dates">
+                      <span class="tour-schedule-date">Sun, Jun 8 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Fri, Jun 13 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Sun, Jun 22 &mdash; 2pm</span>
+                    </div>
+                  </div>
+                  <div class="tour-schedule-month">
+                    <div class="tour-schedule-month-name">July</div>
+                    <div class="tour-schedule-dates">
+                      <span class="tour-schedule-date">Fri, Jul 11 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Sun, Jul 13 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Fri, Jul 25 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Sun, Jul 27 &mdash; 2pm</span>
+                    </div>
+                  </div>
+                  <div class="tour-schedule-month">
+                    <div class="tour-schedule-month-name">August</div>
+                    <div class="tour-schedule-dates">
+                      <span class="tour-schedule-date">Fri, Aug 8 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Sun, Aug 10 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Fri, Aug 22 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Sun, Aug 24 &mdash; 2pm</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lighthouse Tour -->
+          <div class="tour-card" data-animate="fade-up" data-delay="100">
+            <div class="tour-body">
+              <h3>Lighthouse Tour</h3>
+              <div class="tour-price">$25 <span class="per">/ person</span></div>
+              <p>A shuttle ride to and from the historic Lorain Lighthouse, plus a guided tour of the structure's interior. Knowledgeable volunteers answer questions about the lighthouse's rich history.</p>
+              <div class="tour-details">
+                <div class="tour-detail"><i class="fas fa-clock"></i> Shuttles every 45 minutes</div>
+                <div class="tour-detail"><i class="fas fa-users"></i> All ages welcome</div>
+                <div class="tour-detail"><i class="fas fa-map-marker-alt"></i> Alliance Marine at Port Lorain Dock A</div>
+                <div class="tour-detail"><i class="fas fa-calendar"></i> Saturdays, June through September</div>
+              </div>
+              <div class="tour-schedule">
+                <button class="tour-schedule-toggle" aria-expanded="false"><span><i class="fas fa-calendar-alt" style="margin-right:0.4rem;"></i> 2025 Schedule</span><i class="fas fa-chevron-down"></i></button>
+                <div class="tour-schedule-body">
+                  <div class="tour-schedule-month">
+                    <div class="tour-schedule-month-name">June</div>
+                    <div class="tour-schedule-dates">
+                      <span class="tour-schedule-date">Sat, Jun 7 &mdash; 11am</span>
+                      <span class="tour-schedule-date">Sat, Jun 14 &mdash; 11am</span>
+                      <span class="tour-schedule-date">Sun, Jun 22 &mdash; 11am</span>
+                    </div>
+                  </div>
+                  <div class="tour-schedule-month">
+                    <div class="tour-schedule-month-name">July</div>
+                    <div class="tour-schedule-dates">
+                      <span class="tour-schedule-date">Sun, Jul 6 &mdash; 11am</span>
+                      <span class="tour-schedule-date">Sun, Jul 13 &mdash; 11am</span>
+                      <span class="tour-schedule-date">Wed, Jul 16 &mdash; 5pm</span>
+                      <span class="tour-schedule-date">Sat, Jul 26 &mdash; 11am</span>
+                    </div>
+                  </div>
+                  <div class="tour-schedule-month">
+                    <div class="tour-schedule-month-name">August</div>
+                    <div class="tour-schedule-dates">
+                      <span class="tour-schedule-date">Sat, Aug 9 &mdash; 11am</span>
+                      <span class="tour-schedule-date">Wed, Aug 13 &mdash; 5pm</span>
+                      <span class="tour-schedule-date">Sun, Aug 17 &mdash; 11am</span>
+                      <span class="tour-schedule-date">Sat, Aug 30 &mdash; 11am</span>
+                    </div>
+                  </div>
+                  <div class="tour-schedule-month">
+                    <div class="tour-schedule-month-name">September</div>
+                    <div class="tour-schedule-dates">
+                      <span class="tour-schedule-date">Sat, Sep 6 &mdash; 11am</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lighthouse Dinner -->
+          <div class="tour-card" data-animate="fade-up" data-delay="200">
+            <div class="tour-body">
+              <h3>Lighthouse Dinner</h3>
+              <div class="tour-price">$165 <span class="per">/ person (includes tip)</span></div>
+              <p>A specialty dining experience at the Lorain Lighthouse featuring wine pairings provided by Lorain Brewing Company, plus a guided interior tour of the lighthouse.</p>
+              <div class="tour-details">
+                <div class="tour-detail"><i class="fas fa-clock"></i> 3 hours</div>
+                <div class="tour-detail"><i class="fas fa-wine-glass-alt"></i> Wine pairings included</div>
+                <div class="tour-detail"><i class="fas fa-map-marker-alt"></i> Alliance Marine at Port Lorain Dock A</div>
+                <div class="tour-detail"><i class="fas fa-calendar"></i> Tuesdays, June 17 &ndash; September 16</div>
+                <div class="tour-detail"><i class="fas fa-phone-alt"></i> Reserve at 440-752-8955</div>
+              </div>
+              <div class="tour-schedule">
+                <button class="tour-schedule-toggle" aria-expanded="false"><span><i class="fas fa-calendar-alt" style="margin-right:0.4rem;"></i> 2025 Schedule</span><i class="fas fa-chevron-down"></i></button>
+                <div class="tour-schedule-body">
+                  <div class="tour-schedule-month">
+                    <div class="tour-schedule-month-name">June</div>
+                    <div class="tour-schedule-dates">
+                      <span class="tour-schedule-date">Tue, Jun 17 &mdash; 6:30pm</span>
+                      <span class="tour-schedule-date">Tue, Jun 24 &mdash; 6:30pm</span>
+                    </div>
+                  </div>
+                  <div class="tour-schedule-month">
+                    <div class="tour-schedule-month-name">July</div>
+                    <div class="tour-schedule-dates">
+                      <span class="tour-schedule-date">Tue, Jul 8 &mdash; 6:30pm</span>
+                      <span class="tour-schedule-date">Tue, Jul 15 &mdash; 6:30pm</span>
+                      <span class="tour-schedule-date">Tue, Jul 22 &mdash; 6:00pm</span>
+                      <span class="tour-schedule-date">Tue, Jul 29 &mdash; 6:00pm</span>
+                    </div>
+                  </div>
+                  <div class="tour-schedule-month">
+                    <div class="tour-schedule-month-name">August</div>
+                    <div class="tour-schedule-dates">
+                      <span class="tour-schedule-date">Tue, Aug 5 &mdash; 6:00pm</span>
+                      <span class="tour-schedule-date">Tue, Aug 12 &mdash; 6:00pm</span>
+                      <span class="tour-schedule-date">Tue, Aug 19 &mdash; 5:30pm</span>
+                      <span class="tour-schedule-date">Tue, Aug 26 &mdash; 5:30pm</span>
+                    </div>
+                  </div>
+                  <div class="tour-schedule-month">
+                    <div class="tour-schedule-month-name">September</div>
+                    <div class="tour-schedule-dates">
+                      <span class="tour-schedule-date">Tue, Sep 2 &mdash; 5:30pm</span>
+                      <span class="tour-schedule-date">Tue, Sep 9 &mdash; 5:30pm</span>
+                      <span class="tour-schedule-date">Tue, Sep 16 &mdash; 5pm</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="policy-note" data-animate="fade-up">
+          <i class="fas fa-info-circle"></i>
+          <div><strong>Cancellation Policy:</strong> All sales are final. No refunds. The Authority reserves the right to cancel for inclement weather, in which case exchanges for future trips will be offered. Lighthouse tour tickets available through the Lorain Lighthouse Foundation.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- NATURE, SUNSET & SIP N' SWAY -->
+    <!-- ============================================================= -->
+    <section class="section bg-light" id="nature-tours">
+      <div class="container">
+        <div class="section-header center" data-animate="fade-up">
+          <div class="section-label">Scenic Cruises</div>
+          <h2 class="section-title">Nature Tours, Sunsets &amp; Sip n' Sway</h2>
+          <p class="section-desc">Cruise the shores of the beautiful Black River on an all-inclusive tour of Lorain's waterfront areas. From relaxing nature cruises to breathtaking sunsets and adult BYOB sails.</p>
+        </div>
+
+        <div class="tours-grid">
+          <!-- River Nature Tour -->
+          <div class="tour-card" data-animate="fade-up" data-delay="0">
+            <div class="tour-body">
+              <h3>River Nature Tour</h3>
+              <div class="tour-price">$20 <span class="per">/ person</span></div>
+              <p>Cruise the shores of the beautiful Black River on an all-inclusive narrated tour of Lorain's waterfront areas. Includes a pass by the river, harbor, and the historic Lorain Lighthouse.</p>
+              <div class="tour-details">
+                <div class="tour-detail"><i class="fas fa-clock"></i> 2 hours</div>
+                <div class="tour-detail"><i class="fas fa-users"></i> All ages welcome</div>
+                <div class="tour-detail"><i class="fas fa-map-marker-alt"></i> Alliance Marine at Port Lorain Dock A</div>
+                <div class="tour-detail"><i class="fas fa-calendar"></i> Seasonal &mdash; Spring through Fall</div>
+              </div>
+              <div class="tour-schedule">
+                <button class="tour-schedule-toggle" aria-expanded="false"><span><i class="fas fa-calendar-alt" style="margin-right:0.4rem;"></i> 2025 Schedule</span><i class="fas fa-chevron-down"></i></button>
+                <div class="tour-schedule-body">
+                  <div class="tour-schedule-month">
+                    <div class="tour-schedule-month-name">June</div>
+                    <div class="tour-schedule-dates">
+                      <span class="tour-schedule-date">Sun, Jun 8 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Fri, Jun 13 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Sun, Jun 22 &mdash; 2pm</span>
+                    </div>
+                  </div>
+                  <div class="tour-schedule-month">
+                    <div class="tour-schedule-month-name">July</div>
+                    <div class="tour-schedule-dates">
+                      <span class="tour-schedule-date">Fri, Jul 11 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Sun, Jul 13 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Fri, Jul 25 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Sun, Jul 27 &mdash; 2pm</span>
+                    </div>
+                  </div>
+                  <div class="tour-schedule-month">
+                    <div class="tour-schedule-month-name">August</div>
+                    <div class="tour-schedule-dates">
+                      <span class="tour-schedule-date">Fri, Aug 8 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Sun, Aug 10 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Fri, Aug 22 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Sun, Aug 24 &mdash; 2pm</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sunset Cruise -->
+          <div class="tour-card" data-animate="fade-up" data-delay="100">
+            <div class="tour-body">
+              <h3>Sunset Cruise</h3>
+              <div class="tour-price">$20 <span class="per">/ person</span></div>
+              <p>Capture a breathtaking Lorain sunset while on the water. Features a harbor tour and Black River passage with captain narration as the sky lights up over Lake Erie.</p>
+              <div class="tour-details">
+                <div class="tour-detail"><i class="fas fa-clock"></i> 1.5 hours</div>
+                <div class="tour-detail"><i class="fas fa-users"></i> All ages welcome</div>
+                <div class="tour-detail"><i class="fas fa-map-marker-alt"></i> Alliance Marine at Port Lorain Dock A</div>
+                <div class="tour-detail"><i class="fas fa-calendar"></i> Seasonal &mdash; Spring through Fall</div>
+              </div>
+              <div class="tour-schedule">
+                <button class="tour-schedule-toggle" aria-expanded="false"><span><i class="fas fa-calendar-alt" style="margin-right:0.4rem;"></i> 2025 Schedule</span><i class="fas fa-chevron-down"></i></button>
+                <div class="tour-schedule-body">
+                  <div class="tour-schedule-month">
+                    <div class="tour-schedule-month-name">June</div>
+                    <div class="tour-schedule-dates">
+                      <span class="tour-schedule-date">Sun, Jun 8 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Fri, Jun 13 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Sun, Jun 22 &mdash; 2pm</span>
+                    </div>
+                  </div>
+                  <div class="tour-schedule-month">
+                    <div class="tour-schedule-month-name">July</div>
+                    <div class="tour-schedule-dates">
+                      <span class="tour-schedule-date">Fri, Jul 11 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Sun, Jul 13 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Fri, Jul 25 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Sun, Jul 27 &mdash; 2pm</span>
+                    </div>
+                  </div>
+                  <div class="tour-schedule-month">
+                    <div class="tour-schedule-month-name">August</div>
+                    <div class="tour-schedule-dates">
+                      <span class="tour-schedule-date">Fri, Aug 8 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Sun, Aug 10 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Fri, Aug 22 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Sun, Aug 24 &mdash; 2pm</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sip n' Sway -->
+          <div class="tour-card" data-animate="fade-up" data-delay="200">
+            <div class="tour-body">
+              <h3>Sip n' Sway</h3>
+              <div class="tour-price">$25 <span class="per">/ person</span></div>
+              <p>A River Nature Tour variant for adults 21 and over. Bring your own beverages and enjoy a relaxing two-hour cruise along the Black River and Lake Erie shoreline.</p>
+              <div class="tour-details">
+                <div class="tour-detail"><i class="fas fa-clock"></i> 2 hours</div>
+                <div class="tour-detail"><i class="fas fa-id-card"></i> Ages 21+ only</div>
+                <div class="tour-detail"><i class="fas fa-beer-mug-empty"></i> BYOB &mdash; 36 oz beer or 18 oz wine per person</div>
+                <div class="tour-detail"><i class="fas fa-ban"></i> Beer &amp; wine only — no liquor</div>
+                <div class="tour-detail"><i class="fas fa-map-marker-alt"></i> Alliance Marine at Port Lorain Dock A</div>
+              </div>
+              <div class="tour-schedule">
+                <button class="tour-schedule-toggle" aria-expanded="false"><span><i class="fas fa-calendar-alt" style="margin-right:0.4rem;"></i> 2025 Schedule</span><i class="fas fa-chevron-down"></i></button>
+                <div class="tour-schedule-body">
+                  <div class="tour-schedule-month">
+                    <div class="tour-schedule-month-name">June</div>
+                    <div class="tour-schedule-dates">
+                      <span class="tour-schedule-date">Sun, Jun 8 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Fri, Jun 13 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Sun, Jun 22 &mdash; 2pm</span>
+                    </div>
+                  </div>
+                  <div class="tour-schedule-month">
+                    <div class="tour-schedule-month-name">July</div>
+                    <div class="tour-schedule-dates">
+                      <span class="tour-schedule-date">Fri, Jul 11 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Sun, Jul 13 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Fri, Jul 25 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Sun, Jul 27 &mdash; 2pm</span>
+                    </div>
+                  </div>
+                  <div class="tour-schedule-month">
+                    <div class="tour-schedule-month-name">August</div>
+                    <div class="tour-schedule-dates">
+                      <span class="tour-schedule-date">Fri, Aug 8 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Sun, Aug 10 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Fri, Aug 22 &mdash; 2pm</span>
+                      <span class="tour-schedule-date">Sun, Aug 24 &mdash; 2pm</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="policy-note" data-animate="fade-up">
+          <i class="fas fa-info-circle"></i>
+          <div><strong>Cancellation Policy:</strong> All sales are final. No refunds. Weather cancellations result in exchanges for future trips. Customers will be notified via phone and email.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- WATER TAXI -->
+    <!-- ============================================================= -->
+    <section class="section" id="water-taxi">
+      <div class="container">
+        <div class="section-header center" data-animate="fade-up">
+          <div class="section-label">Free Transportation</div>
+          <h2 class="section-title">Water Taxi Service</h2>
+          <p class="section-desc">A free water taxi service available during Rockin' on the River concerts and other festivals and events. A convenient way to travel between waterfront destinations.</p>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:start;margin-bottom:3rem;" data-animate="fade-up">
+          <div>
+            <h3 style="margin-bottom:1rem;">Route &amp; Stops</h3>
+            <p style="margin-bottom:1.5rem;font-size:0.92rem;">The water taxi follows a fixed route connecting three main waterfront locations, running continuously throughout the evening on event nights.</p>
+            <div style="display:flex;flex-direction:column;gap:1rem;">
+              <div style="display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius);">
+                <div style="width:40px;height:40px;background:rgba(27,139,235,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--blue-accent);flex-shrink:0;"><i class="fas fa-anchor"></i></div>
+                <div><strong style="font-size:0.88rem;">Black River Landing</strong><br><span style="font-size:0.78rem;color:var(--gray-500);">Concert venue &amp; event center</span></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius);">
+                <div style="width:40px;height:40px;background:rgba(217,119,6,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--gold);flex-shrink:0;"><i class="fas fa-ship"></i></div>
+                <div><strong style="font-size:0.88rem;">Alliance Marine at Port Lorain</strong><br><span style="font-size:0.78rem;color:var(--gray-500);">Dock A &mdash; main departure point</span></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius);">
+                <div style="width:40px;height:40px;background:rgba(13,148,136,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#0D9488;flex-shrink:0;"><i class="fas fa-beer-mug-empty"></i></div>
+                <div><strong style="font-size:0.88rem;">The Shipyards (Lorain Brewing Co.)</strong><br><span style="font-size:0.78rem;color:var(--gray-500);">Brewery &amp; waterfront dining</span></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3 style="margin-bottom:1rem;">Service Details</h3>
+            <div style="display:flex;flex-direction:column;gap:1.25rem;">
+              <div style="display:flex;align-items:center;gap:1rem;">
+                <div style="width:44px;height:44px;background:rgba(16,185,129,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#059669;font-size:1.2rem;flex-shrink:0;"><i class="fas fa-dollar-sign"></i></div>
+                <div><strong style="font-size:0.9rem;">Free of Charge</strong><br><span style="font-size:0.82rem;color:var(--gray-500);">Complimentary service — no tickets needed</span></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:1rem;">
+                <div style="width:44px;height:44px;background:rgba(27,139,235,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--blue-accent);font-size:1.2rem;flex-shrink:0;"><i class="fas fa-clock"></i></div>
+                <div><strong style="font-size:0.9rem;">6:00 PM &ndash; 11:30 PM</strong><br><span style="font-size:0.82rem;color:var(--gray-500);">Continuous rounds on concert nights</span></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:1rem;">
+                <div style="width:44px;height:44px;background:rgba(217,119,6,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:1.2rem;flex-shrink:0;"><i class="fas fa-music"></i></div>
+                <div><strong style="font-size:0.9rem;">Event Nights Only</strong><br><span style="font-size:0.82rem;color:var(--gray-500);">Runs during Rockin' on the River &amp; select festivals</span></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:1rem;">
+                <div style="width:44px;height:44px;background:rgba(139,92,246,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#7C3AED;font-size:1.2rem;flex-shrink:0;"><i class="fas fa-users"></i></div>
+                <div><strong style="font-size:0.9rem;">All Ages Welcome</strong><br><span style="font-size:0.82rem;color:var(--gray-500);">Families, visitors, and residents</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="text-align:center;margin-bottom:1.5rem;" data-animate="fade-up">2025 Water Taxi Schedule</h3>
+        <div class="wt-schedule-grid" data-animate="fade-up">
+          <div class="wt-month">
+            <h4><i class="fas fa-calendar-alt" style="margin-right:0.4rem;"></i> May</h4>
+            <ul>
+              <li>May 23</li>
+              <li>May 30</li>
+            </ul>
+          </div>
+          <div class="wt-month">
+            <h4><i class="fas fa-calendar-alt" style="margin-right:0.4rem;"></i> June</h4>
+            <ul>
+              <li>June 6 &amp; 7</li>
+              <li>June 13 &amp; 14</li>
+              <li>June 20 &amp; 21</li>
+              <li>June 27</li>
+            </ul>
+          </div>
+          <div class="wt-month">
+            <h4><i class="fas fa-calendar-alt" style="margin-right:0.4rem;"></i> July</h4>
+            <ul>
+              <li>July 11 &amp; 12</li>
+              <li>July 19 &amp; 20</li>
+              <li>July 25</li>
+            </ul>
+          </div>
+          <div class="wt-month">
+            <h4><i class="fas fa-calendar-alt" style="margin-right:0.4rem;"></i> August</h4>
+            <ul>
+              <li>August 1</li>
+              <li>August 8</li>
+              <li>August 15 &amp; 16</li>
+              <li>August 22</li>
+              <li>August 29</li>
+            </ul>
+          </div>
+          <div class="wt-month">
+            <h4><i class="fas fa-calendar-alt" style="margin-right:0.4rem;"></i> September</h4>
+            <ul>
+              <li>September 5</li>
+              <li>September 12</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- PRIVATE CHARTERS -->
+    <!-- ============================================================= -->
+    <section class="section bg-light" id="charters">
+      <div class="container">
+        <div class="section-header center" data-animate="fade-up">
+          <div class="section-label">Private Experiences</div>
+          <h2 class="section-title">Private Charters</h2>
+          <p class="section-desc">Book a boat for your next get together! With a capacity of up to 18 passengers, you set the time, date, and guest list and make the experience unique to your group.</p>
+        </div>
+
+        <div class="charter-features" data-animate="fade-up">
+          <div class="charter-feature-card">
+            <div class="charter-feature-icon" style="background:rgba(217,119,6,0.1);color:var(--gold);"><i class="fas fa-briefcase"></i></div>
+            <h3 style="margin-bottom:0.6rem;font-size:1.05rem;">Corporate Events</h3>
+            <p style="font-size:0.88rem;color:var(--gray-500);">Team-building outings, client entertainment, and corporate celebrations. A unique alternative to traditional venues.</p>
+          </div>
+          <div class="charter-feature-card">
+            <div class="charter-feature-icon" style="background:rgba(27,139,235,0.1);color:var(--blue-accent);"><i class="fas fa-birthday-cake"></i></div>
+            <h3 style="margin-bottom:0.6rem;font-size:1.05rem;">Private Celebrations</h3>
+            <p style="font-size:0.88rem;color:var(--gray-500);">Birthdays, anniversaries, graduations, and family gatherings — make your occasion extraordinary on Lake Erie.</p>
+          </div>
+          <div class="charter-feature-card">
+            <div class="charter-feature-icon" style="background:rgba(13,148,136,0.1);color:#0D9488;"><i class="fas fa-school"></i></div>
+            <h3 style="margin-bottom:0.6rem;font-size:1.05rem;">Educational Groups</h3>
+            <p style="font-size:0.88rem;color:var(--gray-500);">School field trips, scout outings, and educational tours. Hands-on learning about Great Lakes ecology and maritime history.</p>
+          </div>
+        </div>
+
+        <div style="max-width:720px;margin:0 auto;" data-animate="fade-up">
+          <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:2.5rem;box-shadow:var(--shadow-sm);">
+            <div style="display:flex;align-items:center;gap:1.25rem;margin-bottom:2rem;">
+              <div style="width:56px;height:56px;background:linear-gradient(135deg,var(--navy),var(--blue-accent));border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.5rem;flex-shrink:0;"><i class="fas fa-ship"></i></div>
+              <div>
+                <h3 style="margin-bottom:0.25rem;">Charter Pricing &amp; Details</h3>
+                <p style="font-size:0.85rem;color:var(--gray-500);margin:0;">Everything you need to know about booking</p>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem;">
+              <div style="background:var(--gray-50);border-radius:var(--radius);padding:1.25rem;text-align:center;">
+                <div style="font-family:var(--font-heading);font-weight:800;font-size:1.5rem;color:var(--navy);">$300</div>
+                <div style="font-size:0.78rem;color:var(--gray-500);margin-top:0.25rem;">for 2 hours</div>
+              </div>
+              <div style="background:var(--gray-50);border-radius:var(--radius);padding:1.25rem;text-align:center;">
+                <div style="font-family:var(--font-heading);font-weight:800;font-size:1.5rem;color:var(--navy);">+$100</div>
+                <div style="font-size:0.78rem;color:var(--gray-500);margin-top:0.25rem;">each additional hour</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:0.6rem;margin-bottom:1.5rem;">
+              <div style="display:flex;align-items:center;gap:0.6rem;font-size:0.88rem;"><i class="fas fa-users" style="color:var(--blue-accent);width:16px;font-size:0.78rem;"></i> Up to 18 passengers</div>
+              <div style="display:flex;align-items:center;gap:0.6rem;font-size:0.88rem;"><i class="fas fa-music" style="color:var(--blue-accent);width:16px;font-size:0.78rem;"></i> Decorations, music, food &amp; drinks welcome</div>
+              <div style="display:flex;align-items:center;gap:0.6rem;font-size:0.88rem;"><i class="fas fa-file-alt" style="color:var(--blue-accent);width:16px;font-size:0.78rem;"></i> Application required</div>
+            </div>
+            <h4 style="font-size:0.88rem;margin-bottom:0.75rem;">Pickup / Drop-off Locations</h4>
+            <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1.5rem;">
+              <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;color:var(--gray-600);"><i class="fas fa-map-pin" style="color:var(--gold);width:14px;font-size:0.75rem;"></i> Black River Landing (BRL)</div>
+              <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;color:var(--gray-600);"><i class="fas fa-map-pin" style="color:var(--gold);width:14px;font-size:0.75rem;"></i> Alliance Marine at Port Lorain Dock A</div>
+              <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;color:var(--gray-600);"><i class="fas fa-map-pin" style="color:var(--gold);width:14px;font-size:0.75rem;"></i> The Shipyards (Lorain Brewing Co.)</div>
+            </div>
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+              <a href="tel:4402042269" class="btn btn-outline btn-sm"><i class="fas fa-phone-alt"></i> 440-204-2269</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- DEPARTURE INFO -->
+    <!-- ============================================================= -->
+    <section class="section">
+      <div class="container">
+        <div class="departure-banner" data-animate="fade-up">
+          <div class="departure-banner-icon"><i class="fas fa-compass"></i></div>
+          <div>
+            <h3>All Tours Depart from Port Lorain</h3>
+            <p>Most tours depart from <strong style="color:#fff;">Alliance Marine at Port Lorain Dock A</strong>, located at <a href="https://maps.google.com/?q=319+Black+River+Lane+Lorain+OH+44052" target="_blank" rel="noopener">319 Black River Lane, Lorain, OH 44052</a>. Arrive at least 15 minutes before your scheduled departure.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-main"><div class="container"><div class="footer-grid">
+      <div class="footer-brand"><a href="index.html" class="logo footer-logo"><div class="logo-icon"><i class="fas fa-anchor"></i></div><div class="logo-text"><span class="logo-main">Lorain Port</span><span class="logo-sub">&amp; Finance Authority</span></div></a><p class="footer-tagline">Economic Development &middot; Waterborne Commerce &middot; Public Access to Waterways</p><div class="footer-social"><a href="https://www.facebook.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a><a href="https://www.instagram.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a><a href="https://www.youtube.com/@LorainPortandFinanceAuthority" target="_blank" rel="noopener" aria-label="YouTube"><i class="fab fa-youtube"></i></a><a href="https://www.linkedin.com/company/lorainport" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a></div></div>
+      <div class="footer-links"><h4>Quick Links</h4><ul><li><a href="index.html">Home</a></li><li><a href="development.html">Development &amp; Finance</a></li><li><a href="events.html">Events</a></li><li><a href="recreation.html">Boat Tours &amp; Recreation</a></li><li><a href="facilities.html">Facilities</a></li><li><a href="news.html">News</a></li><li><a href="about.html">About Us</a></li><li><a href="contact.html">Contact</a></li></ul></div>
+      <div class="footer-links"><h4>Development</h4><ul><li><a href="development.html#brownfields">Brownfields Program</a></li><li><a href="development.html#financing">Property Financing</a></li><li><a href="development.html#rfp">RFPs &amp; Bids</a></li><li><a href="development.html#commerce">Waterborne Commerce</a></li></ul></div>
+      <div class="footer-contact-col"><h4>Contact Us</h4><address><div class="footer-contact-item"><i class="fas fa-map-marker-alt"></i><div><p>319 Black River Lane</p><p>Lorain, OH 44052</p></div></div><div class="footer-contact-item"><i class="fas fa-phone-alt"></i><a href="tel:4402042269">440.204.2269</a></div><div class="footer-contact-item"><i class="fas fa-envelope"></i><a href="mailto:info@lorainport.com">info@lorainport.com</a></div></address><a href="contact.html" class="btn btn-gold btn-sm" style="margin-top:1.25rem;display:inline-flex;">Send a Message</a></div>
+    </div></div></div>
+    <div class="footer-bottom"><div class="container"><p>&copy; 2026 Lorain Port &amp; Finance Authority. All rights reserved.</p><div class="footer-bottom-links"><a href="#">Privacy Policy</a><a href="#">Terms of Use</a><a href="#">Accessibility</a></div></div></div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    document.querySelectorAll('.tour-schedule-toggle').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var schedule = this.closest('.tour-schedule');
+        schedule.classList.toggle('open');
+        this.setAttribute('aria-expanded', schedule.classList.contains('open'));
+      });
+    });
+  </script>
+</body>
+</html>

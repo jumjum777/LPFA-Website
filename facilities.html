@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Lorain Port & Finance Authority facilities — Black River Landing, Mile-Long Pier, Lakeside Landing, Riverside Park, and the Black River Wharf Boat Launch." />
+  <title>Facilities | Lorain Port & Finance Authority</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .facility-detail {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+    .facility-detail.reverse { direction: rtl; }
+    .facility-detail.reverse > * { direction: ltr; }
+    .facility-img-block {
+      border-radius: var(--radius-lg);
+      height: 380px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+    }
+    .fib-brl { background: linear-gradient(135deg, #0B1F3A 0%, #1B4B82 40%, #0D3560 70%, #0B2445 100%); background-image: url('images/fac-brl-aerial.jpg'); background-size: cover; background-position: center; }
+    .fib-pier { background: linear-gradient(135deg, #0a2a45 0%, #104070 50%, #0d3558 100%); background-image: url('images/fac-pier.jpg'); background-size: cover; background-position: center; }
+    .fib-lakeside { background: linear-gradient(135deg, #073040 0%, #0a4a60 50%, #083545 100%); background-image: url('images/fac-lakeside.png'); background-size: cover; background-position: center; }
+    .fib-launch { background: linear-gradient(135deg, #062535 0%, #093d52 50%, #07303f 100%); background-image: url('images/fac-boat-launch.jpg'); background-size: cover; background-position: center; }
+    .fib-river { background: linear-gradient(135deg, #062a1a 0%, #0a3f2a 50%, #083320 100%); background-image: url('images/fac-riverside.png'); background-size: cover; background-position: center; }
+    .facility-img-block::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 60%, rgba(27,139,235,0.15) 0%, transparent 70%);
+    }
+    .facility-icon-big {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 8rem;
+      color: rgba(255,255,255,0.06);
+      z-index: 1;
+    }
+    .facility-detail-content .section-label { margin-bottom: 0.75rem; }
+    .facility-detail-content h2 { margin-bottom: 1.25rem; }
+    .facility-detail-content p { font-size: 0.98rem; line-height: 1.75; margin-bottom: 1rem; }
+    .facility-feature-list { display: flex; flex-direction: column; gap: 0.6rem; margin: 1.5rem 0 2rem; }
+    .facility-feature-list li { display: flex; align-items: center; gap: 0.65rem; font-size: 0.9rem; color: var(--gray-600); }
+    .facility-feature-list .fas { color: var(--blue-accent); font-size: 0.8rem; flex-shrink: 0; }
+    .rental-banner {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+      border-radius: var(--radius-lg);
+      padding: 3.5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .rental-banner::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 100%, rgba(217,119,6,0.15) 0%, transparent 60%); }
+    .rental-banner h2 { color: #fff; margin-bottom: 1rem; }
+    .rental-banner p { color: rgba(255,255,255,0.65); max-width: 540px; margin: 0 auto 2rem; }
+    .facility-section-divider { border: none; border-top: 1px solid var(--gray-200); margin: 0; }
+    @media (max-width: 768px) {
+      .facility-detail { grid-template-columns: 1fr; }
+      .facility-detail.reverse { direction: ltr; }
+      .facility-img-block { height: 260px; }
+    }
+  </style>
+  <script>(function(){var t=localStorage.getItem('lpfa-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.setAttribute('data-theme','dark')})()</script>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="site-header" id="site-header">
+    <div class="header-top">
+      <div class="container">
+        <div class="header-top-inner">
+          <div class="header-contact">
+            <a href="tel:4402042269"><i class="fas fa-phone-alt"></i> 440.204.2269</a>
+            <a href="mailto:info@lorainport.com"><i class="fas fa-envelope"></i> info@lorainport.com</a>
+            <span class="header-address"><i class="fas fa-map-marker-alt"></i> 319 Black River Lane, Lorain, OH 44052</span>
+          </div>
+          <div class="header-social">
+            <a href="https://www.facebook.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="https://www.instagram.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.youtube.com/@LorainPortandFinanceAuthority" target="_blank" rel="noopener" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+            <a href="https://www.linkedin.com/company/lorainport" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav class="main-nav" id="main-nav">
+      <div class="container">
+        <div class="nav-inner">
+          <a href="index.html" class="logo" aria-label="Lorain Port & Finance Authority Home"><img src="images/logo.png" alt="Lorain Port & Finance Authority" class="logo-img" /></a>
+          <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+          <ul class="nav-menu" id="nav-menu">
+            <li><a href="index.html">Home</a></li>
+            <li class="has-dropdown"><a href="development.html">Development &amp; Finance <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="development.html#brownfields">Brownfields Program</a></li><li><a href="development.html#financing">Property Financing</a></li><li><a href="development.html#rfp">RFPs &amp; Bids</a></li><li><a href="development.html#commerce">Waterborne Commerce</a></li></ul></li>
+            <li><a href="events.html">Events</a></li>
+            <li class="has-dropdown"><a href="recreation.html">Recreation <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="recreation.html#history-tours">History &amp; Lighthouse Tours</a></li><li><a href="recreation.html#nature-tours">Nature &amp; Sunset Cruises</a></li><li><a href="recreation.html#water-taxi">Water Taxi</a></li><li><a href="recreation.html#charters">Private Charters</a></li></ul></li>
+            <li class="has-dropdown"><a href="facilities.html" class="active">Facilities <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="facilities.html#black-river-landing">Black River Landing</a></li><li><a href="facilities.html#lakeside-landing">Lakeside Landing</a></li><li><a href="facilities.html#mile-long-pier">Mile-Long Pier</a></li><li><a href="facilities.html#boat-launch">Boat Launch</a></li></ul></li>
+            <li><a href="news.html">News</a></li>
+            <li class="has-dropdown"><a href="about.html">About <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="about.html">About Us</a></li><li><a href="staff.html">Staff</a></li><li><a href="board.html">Board of Directors</a></li><li><a href="didyouknow.html">Did You Know?</a></li></ul></li>
+            <li><a href="donate.html">Stage Project</a></li>
+            <li><a href="contact.html" class="nav-cta">Contact Us</a></li>
+          </ul>
+          <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode"><svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg><svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <nav class="breadcrumb" aria-label="Breadcrumb"><a href="index.html">Home</a><span class="sep"><i class="fas fa-chevron-right"></i></span><span class="current">Facilities</span></nav>
+        <div class="page-hero-label">Our Properties</div>
+        <h1>World-Class Waterfront Facilities</h1>
+        <p>From premier event venues to public parks and boat launches — the LPFA manages and maintains Lorain's most treasured waterfront destinations.</p>
+      </div>
+    </section>
+
+    <!-- JUMP LINKS -->
+    <div style="background:var(--gray-50);border-bottom:1px solid var(--gray-200);padding:1rem 0;position:sticky;top:var(--header-total);z-index:50;">
+      <div class="container">
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
+          <span style="font-family:var(--font-heading);font-size:0.75rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.1em;">Jump to:</span>
+          <a href="#black-river-landing" style="font-family:var(--font-heading);font-size:0.8rem;font-weight:600;color:var(--gray-800);padding:0.3rem 0.75rem;border-radius:100px;border:1.5px solid var(--gray-200);transition:all 0.2s;text-decoration:none;" onmouseover="this.style.background='var(--blue-accent)';this.style.color='#fff';this.style.borderColor='var(--blue-accent)';" onmouseout="this.style.background='';this.style.color='var(--gray-800)';this.style.borderColor='var(--gray-200)';">Black River Landing</a>
+          <a href="#mile-long-pier" style="font-family:var(--font-heading);font-size:0.8rem;font-weight:600;color:var(--gray-800);padding:0.3rem 0.75rem;border-radius:100px;border:1.5px solid var(--gray-200);transition:all 0.2s;text-decoration:none;" onmouseover="this.style.background='var(--blue-accent)';this.style.color='#fff';this.style.borderColor='var(--blue-accent)';" onmouseout="this.style.background='';this.style.color='var(--gray-800)';this.style.borderColor='var(--gray-200)';">Mile-Long Pier</a>
+          <a href="#lakeside-landing" style="font-family:var(--font-heading);font-size:0.8rem;font-weight:600;color:var(--gray-800);padding:0.3rem 0.75rem;border-radius:100px;border:1.5px solid var(--gray-200);transition:all 0.2s;text-decoration:none;" onmouseover="this.style.background='var(--blue-accent)';this.style.color='#fff';this.style.borderColor='var(--blue-accent)';" onmouseout="this.style.background='';this.style.color='var(--gray-800)';this.style.borderColor='var(--gray-200)';">Lakeside Landing</a>
+          <a href="#boat-launch" style="font-family:var(--font-heading);font-size:0.8rem;font-weight:600;color:var(--gray-800);padding:0.3rem 0.75rem;border-radius:100px;border:1.5px solid var(--gray-200);transition:all 0.2s;text-decoration:none;" onmouseover="this.style.background='var(--blue-accent)';this.style.color='#fff';this.style.borderColor='var(--blue-accent)';" onmouseout="this.style.background='';this.style.color='var(--gray-800)';this.style.borderColor='var(--gray-200)';">Boat Launch</a>
+          <a href="#riverside-park" style="font-family:var(--font-heading);font-size:0.8rem;font-weight:600;color:var(--gray-800);padding:0.3rem 0.75rem;border-radius:100px;border:1.5px solid var(--gray-200);transition:all 0.2s;text-decoration:none;" onmouseover="this.style.background='var(--blue-accent)';this.style.color='#fff';this.style.borderColor='var(--blue-accent)';" onmouseout="this.style.background='';this.style.color='var(--gray-800)';this.style.borderColor='var(--gray-200)';">Riverside Park</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- BLACK RIVER LANDING -->
+    <section class="section" id="black-river-landing">
+      <div class="container">
+        <div class="facility-detail">
+          <div class="facility-img-block fib-brl" data-animate="fade-right">
+            <div class="facility-icon-big"><i class="fas fa-water"></i></div>
+          </div>
+          <div class="facility-detail-content" data-animate="fade-left">
+            <div class="section-label">Premier Event Venue</div>
+            <h2>Black River Landing</h2>
+            <p>Lorain's crown jewel waterfront destination, Black River Landing is a multi-use event venue and public gathering space situated at the confluence of the Black River and Lake Erie.</p>
+            <p>From summer concerts and Independence Day fireworks to private corporate events and community festivals, Black River Landing is the heartbeat of Lorain's waterfront. The stunning waterfront setting provides a backdrop unlike any other venue in Northeast Ohio.</p>
+            <ul class="facility-feature-list">
+              <li><i class="fas fa-check"></i> Outdoor event stage and amphitheater area</li>
+              <li><i class="fas fa-check"></i> Waterfront promenade and public access</li>
+              <li><i class="fas fa-check"></i> Parking for hundreds of vehicles</li>
+              <li><i class="fas fa-check"></i> Available for private event rental</li>
+              <li><i class="fas fa-check"></i> Host of Rockin' on the River and July 4th Fireworks</li>
+              <li><i class="fas fa-check"></i> Accessible to all visitors</li>
+            </ul>
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+              <a href="events.html" class="btn btn-primary">Upcoming Events</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="facility-section-divider" />
+
+    <!-- MILE-LONG PIER -->
+    <section class="section" id="mile-long-pier">
+      <div class="container">
+        <div class="facility-detail reverse">
+          <div class="facility-img-block fib-pier" data-animate="fade-left">
+            <div class="facility-icon-big"><i class="fas fa-anchor"></i></div>
+          </div>
+          <div class="facility-detail-content" data-animate="fade-right">
+            <div class="section-label">Lorain's Iconic Landmark</div>
+            <h2>Mile-Long Pier</h2>
+            <p>One of Lorain's most iconic and beloved landmarks, the Mile-Long Pier extends dramatically into Lake Erie — offering breathtaking panoramic views of the lake, the city skyline, and the lighthouse.</p>
+            <p>A favorite destination for fishing, walking, and simply taking in the majesty of Lake Erie, the pier attracts thousands of visitors each year. The Lorain Lighthouse, sitting at the outer end of the breakwater, is one of the most photographed landmarks on the Great Lakes.</p>
+            <ul class="facility-feature-list">
+              <li><i class="fas fa-check"></i> Public access for walking and fishing</li>
+              <li><i class="fas fa-check"></i> Panoramic views of Lake Erie</li>
+              <li><i class="fas fa-check"></i> Views of the historic Lorain Lighthouse</li>
+              <li><i class="fas fa-check"></i> Open year-round (weather permitting)</li>
+              <li><i class="fas fa-check"></i> Popular photography and sightseeing destination</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="facility-section-divider" />
+
+    <!-- LAKESIDE LANDING -->
+    <section class="section" id="lakeside-landing">
+      <div class="container">
+        <div class="facility-detail">
+          <div class="facility-img-block fib-lakeside" data-animate="fade-right">
+            <div class="facility-icon-big"><i class="fas fa-umbrella-beach"></i></div>
+          </div>
+          <div class="facility-detail-content" data-animate="fade-left">
+            <div class="section-label">Event &amp; Recreation Venue</div>
+            <h2>Lakeside Landing</h2>
+            <p>Lakeside Landing is a beautiful waterfront facility offering a scenic setting for private events, community gatherings, and outdoor recreation along the shores of Lake Erie.</p>
+            <p>With its stunning waterfront location and flexible event capabilities, Lakeside Landing provides an exceptional setting for weddings, corporate events, and community gatherings in a natural, waterfront environment.</p>
+            <ul class="facility-feature-list">
+              <li><i class="fas fa-check"></i> Waterfront location on Lake Erie</li>
+              <li><i class="fas fa-check"></i> Available for private event rental</li>
+              <li><i class="fas fa-check"></i> Outdoor recreation and public access</li>
+              <li><i class="fas fa-check"></i> Scenic waterfront views</li>
+              <li><i class="fas fa-check"></i> Accessible and family-friendly</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="facility-section-divider" />
+
+    <!-- BOAT LAUNCH -->
+    <section class="section" id="boat-launch">
+      <div class="container">
+        <div class="facility-detail reverse">
+          <div class="facility-img-block fib-launch" data-animate="fade-left">
+            <div class="facility-icon-big"><i class="fas fa-ship"></i></div>
+          </div>
+          <div class="facility-detail-content" data-animate="fade-right">
+            <div class="section-label">Public Access</div>
+            <h2>Black River Wharf Boat Launch</h2>
+            <p>The Black River Wharf Boat Launch provides public access to the Black River and Lake Erie for recreational boaters, anglers, and water sports enthusiasts.</p>
+            <p>One of the premier public boat launches in Lorain County, the facility provides a safe and accessible entry point to some of the best fishing and boating waters in the Great Lakes region. Whether you're launching a bass boat, kayak, or canoe — you'll find easy access here.</p>
+            <ul class="facility-feature-list">
+              <li><i class="fas fa-check"></i> Multi-lane public boat launch ramp</li>
+              <li><i class="fas fa-check"></i> Trailer parking available</li>
+              <li><i class="fas fa-check"></i> Access to Black River and Lake Erie</li>
+              <li><i class="fas fa-check"></i> Popular fishing and boating destination</li>
+              <li><i class="fas fa-check"></i> Seasonal operation</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="facility-section-divider" />
+
+    <!-- RIVERSIDE PARK -->
+    <section class="section" id="riverside-park">
+      <div class="container">
+        <div class="facility-detail">
+          <div class="facility-img-block fib-river" data-animate="fade-right">
+            <div class="facility-icon-big"><i class="fas fa-tree"></i></div>
+          </div>
+          <div class="facility-detail-content" data-animate="fade-left">
+            <div class="section-label">Public Green Space</div>
+            <h2>Riverside Park</h2>
+            <p>Riverside Park is a scenic public green space nestled along the banks of the Black River, offering Lorain residents and visitors a peaceful natural retreat in the heart of the waterfront district.</p>
+            <p>Whether you're enjoying a morning walk, having a riverside picnic, or simply taking in the natural beauty of the Black River, Riverside Park offers a genuine respite in an urban waterfront setting.</p>
+            <ul class="facility-feature-list">
+              <li><i class="fas fa-check"></i> Scenic walking paths along the Black River</li>
+              <li><i class="fas fa-check"></i> Picnic areas and open green space</li>
+              <li><i class="fas fa-check"></i> River access and nature observation</li>
+              <li><i class="fas fa-check"></i> Free and open to the public</li>
+              <li><i class="fas fa-check"></i> Accessible for all visitors</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-main"><div class="container"><div class="footer-grid">
+      <div class="footer-brand"><a href="index.html" class="logo footer-logo"><div class="logo-icon"><i class="fas fa-anchor"></i></div><div class="logo-text"><span class="logo-main">Lorain Port</span><span class="logo-sub">&amp; Finance Authority</span></div></a><p class="footer-tagline">Economic Development &middot; Waterborne Commerce &middot; Public Access to Waterways</p><div class="footer-social"><a href="https://www.facebook.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a><a href="https://www.instagram.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a><a href="https://www.youtube.com/@LorainPortandFinanceAuthority" target="_blank" rel="noopener" aria-label="YouTube"><i class="fab fa-youtube"></i></a><a href="https://www.linkedin.com/company/lorainport" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a></div></div>
+      <div class="footer-links"><h4>Quick Links</h4><ul><li><a href="index.html">Home</a></li><li><a href="development.html">Development &amp; Finance</a></li><li><a href="events.html">Events</a></li><li><a href="recreation.html">Boat Tours &amp; Recreation</a></li><li><a href="facilities.html">Facilities</a></li><li><a href="news.html">News</a></li><li><a href="about.html">About Us</a></li><li><a href="contact.html">Contact</a></li></ul></div>
+      <div class="footer-links"><h4>Development</h4><ul><li><a href="development.html#brownfields">Brownfields Program</a></li><li><a href="development.html#financing">Property Financing</a></li><li><a href="development.html#rfp">RFPs &amp; Bids</a></li><li><a href="development.html#commerce">Waterborne Commerce</a></li></ul></div>
+      <div class="footer-contact-col"><h4>Contact Us</h4><address><div class="footer-contact-item"><i class="fas fa-map-marker-alt"></i><div><p>319 Black River Lane</p><p>Lorain, OH 44052</p></div></div><div class="footer-contact-item"><i class="fas fa-phone-alt"></i><a href="tel:4402042269">440.204.2269</a></div><div class="footer-contact-item"><i class="fas fa-envelope"></i><a href="mailto:info@lorainport.com">info@lorainport.com</a></div></address><a href="contact.html" class="btn btn-gold btn-sm" style="margin-top:1.25rem;display:inline-flex;">Send a Message</a></div>
+    </div></div></div>
+    <div class="footer-bottom"><div class="container"><p>&copy; 2026 Lorain Port &amp; Finance Authority. All rights reserved.</p><div class="footer-bottom-links"><a href="#">Privacy Policy</a><a href="#">Terms of Use</a><a href="#">Accessibility</a></div></div></div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

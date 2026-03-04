@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Meet the Board of Directors of the Lorain Port & Finance Authority — appointed leaders guiding Lorain's waterfront development." />
+  <title>Board of Directors | Lorain Port & Finance Authority</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    /* Board Grid */
+    .board-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+    .board-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: all var(--transition);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+    }
+    .board-card:hover { box-shadow: var(--shadow-md); transform: translateY(-4px); }
+    .board-card-photo {
+      width: 100%;
+      aspect-ratio: 5 / 6;
+      object-fit: cover; object-position: center top;
+      display: block;
+    }
+    .board-card-body { padding: 1.25rem; text-align: center; }
+    .board-card-body h4 { font-size: 1.05rem; margin-bottom: 0.2rem; }
+    .board-card-role {
+      font-size: 0.82rem; color: var(--gold); font-weight: 600;
+      display: block; margin-bottom: 0.4rem;
+      font-family: var(--font-heading); letter-spacing: 0.02em;
+    }
+    .board-card-term {
+      font-size: 0.75rem; color: var(--gray-400);
+      margin-bottom: 0; display: block;
+    }
+    .board-card-cta {
+      font-size: 0.8rem; color: var(--blue-accent); font-weight: 600;
+      font-family: var(--font-heading); margin-top: 0.6rem; display: block;
+    }
+    /* Officers accent */
+    .board-officers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-bottom: 2.5rem; }
+    .board-officers .board-card { border-color: var(--blue-accent); border-width: 2px; }
+    /* Bio Modal */
+    .bio-modal-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(11,31,58,0.6); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; visibility: hidden; transition: all 0.3s ease;
+      padding: 2rem;
+    }
+    .bio-modal-overlay.active { opacity: 1; visibility: visible; }
+    .bio-modal {
+      background: var(--white); border-radius: var(--radius-lg);
+      max-width: 700px; width: 100%; max-height: 85vh;
+      overflow-y: auto; box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+      transform: translateY(20px); transition: transform 0.3s ease;
+    }
+    .bio-modal-overlay.active .bio-modal { transform: translateY(0); }
+    .bio-modal-header {
+      display: flex; align-items: center; gap: 1.5rem;
+      padding: 2rem 2rem 1.5rem; border-bottom: 1px solid var(--gray-200);
+      position: sticky; top: 0; background: var(--white); z-index: 1;
+    }
+    .bio-modal-photo {
+      width: 100px; height: 100px; border-radius: 50%;
+      object-fit: cover; object-position: center top;
+      flex-shrink: 0; border: 3px solid var(--blue-accent);
+    }
+    .bio-modal-header h3 { font-size: 1.3rem; margin-bottom: 0.15rem; }
+    .bio-modal-header .board-card-role { margin-bottom: 0; font-size: 0.9rem; }
+    .bio-modal-close {
+      position: absolute; top: 1rem; right: 1rem;
+      background: var(--gray-100); border: none; cursor: pointer;
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; color: var(--gray-500); transition: all var(--transition);
+    }
+    .bio-modal-close:hover { background: var(--gray-200); color: var(--navy); }
+    .bio-modal-content {
+      padding: 1.5rem 2rem 2rem;
+    }
+    .bio-modal-content p {
+      font-size: 0.95rem; color: var(--gray-600); line-height: 1.8;
+      margin-bottom: 1rem;
+    }
+    .bio-modal-content p:last-child { margin-bottom: 0; }
+    @media (max-width: 992px) { .board-officers { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 768px) {
+      .board-grid { grid-template-columns: repeat(2, 1fr); }
+      .board-officers { grid-template-columns: 1fr; }
+      .bio-modal-header { flex-direction: column; text-align: center; gap: 1rem; padding: 1.5rem 1.5rem 1.25rem; }
+      .bio-modal-content { padding: 1.25rem 1.5rem 1.5rem; }
+      .bio-modal-overlay { padding: 1rem; }
+    }
+    @media (max-width: 500px) { .board-grid { grid-template-columns: 1fr; } .board-officers { grid-template-columns: 1fr; } }
+  </style>
+  <script>(function(){var t=localStorage.getItem('lpfa-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.setAttribute('data-theme','dark')})()</script>
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="site-header" id="site-header">
+    <div class="header-top">
+      <div class="container">
+        <div class="header-top-inner">
+          <div class="header-contact">
+            <a href="tel:4402042269"><i class="fas fa-phone-alt"></i> 440.204.2269</a>
+            <a href="mailto:info@lorainport.com"><i class="fas fa-envelope"></i> info@lorainport.com</a>
+            <span class="header-address"><i class="fas fa-map-marker-alt"></i> 319 Black River Lane, Lorain, OH 44052</span>
+          </div>
+          <div class="header-social">
+            <a href="https://www.facebook.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="https://www.instagram.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.youtube.com/@LorainPortandFinanceAuthority" target="_blank" rel="noopener" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+            <a href="https://www.linkedin.com/company/lorainport" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav class="main-nav" id="main-nav">
+      <div class="container">
+        <div class="nav-inner">
+          <a href="index.html" class="logo" aria-label="Lorain Port & Finance Authority Home"><img src="images/logo.png" alt="Lorain Port & Finance Authority" class="logo-img" /></a>
+          <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+          <ul class="nav-menu" id="nav-menu">
+            <li><a href="index.html">Home</a></li>
+            <li class="has-dropdown"><a href="development.html">Development &amp; Finance <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="development.html#brownfields">Brownfields Program</a></li><li><a href="development.html#financing">Property Financing</a></li><li><a href="development.html#rfp">RFPs &amp; Bids</a></li><li><a href="development.html#commerce">Waterborne Commerce</a></li></ul></li>
+            <li><a href="events.html">Events</a></li>
+            <li class="has-dropdown"><a href="recreation.html">Recreation <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="recreation.html#history-tours">History &amp; Lighthouse Tours</a></li><li><a href="recreation.html#nature-tours">Nature &amp; Sunset Cruises</a></li><li><a href="recreation.html#water-taxi">Water Taxi</a></li><li><a href="recreation.html#charters">Private Charters</a></li></ul></li>
+            <li class="has-dropdown"><a href="facilities.html">Facilities <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="facilities.html#black-river-landing">Black River Landing</a></li><li><a href="facilities.html#lakeside-landing">Lakeside Landing</a></li><li><a href="facilities.html#mile-long-pier">Mile-Long Pier</a></li><li><a href="facilities.html#boat-launch">Boat Launch</a></li></ul></li>
+            <li><a href="news.html">News</a></li>
+            <li class="has-dropdown"><a href="about.html" class="active">About <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="about.html">About Us</a></li><li><a href="staff.html">Staff</a></li><li><a href="board.html">Board of Directors</a></li><li><a href="didyouknow.html">Did You Know?</a></li></ul></li>
+            <li><a href="donate.html">Stage Project</a></li>
+            <li><a href="contact.html" class="nav-cta">Contact Us</a></li>
+          </ul>
+          <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode"><svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg><svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <!-- PAGE HERO -->
+    <section class="page-hero">
+      <div class="container">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="index.html">Home</a>
+          <span class="sep"><i class="fas fa-chevron-right"></i></span>
+          <a href="about.html">About</a>
+          <span class="sep"><i class="fas fa-chevron-right"></i></span>
+          <span class="current">Board of Directors</span>
+        </nav>
+        <div class="page-hero-label">Governance</div>
+        <h1>Board of Directors</h1>
+        <p>Appointed leaders providing strategic oversight and governance for the Authority.</p>
+      </div>
+    </section>
+
+    <!-- BOARD -->
+    <section class="section">
+      <div class="container">
+
+        <!-- Officers -->
+        <div class="board-officers" data-animate="fade-up">
+          <div class="board-card" onclick="openBio('mullins')">
+            <img src="images/Mullins-1-450x529.jpg" alt="Brad Mullins" class="board-card-photo" />
+            <div class="board-card-body">
+              <h4>Brad Mullins</h4>
+              <span class="board-card-role">Chairman</span>
+              <span class="board-card-cta">View Bio <i class="fas fa-arrow-right" style="font-size:0.65rem;margin-left:0.3rem;"></i></span>
+            </div>
+          </div>
+          <div class="board-card" onclick="openBio('zellers')">
+            <img src="images/JZellers-1-450x563.jpg" alt="Jeff Zellers" class="board-card-photo" />
+            <div class="board-card-body">
+              <h4>Jeff Zellers</h4>
+              <span class="board-card-role">Vice Chairman</span>
+              <span class="board-card-cta">View Bio <i class="fas fa-arrow-right" style="font-size:0.65rem;margin-left:0.3rem;"></i></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Board Members -->
+        <div class="board-grid">
+          <div class="board-card" data-animate="fade-up" data-delay="0" onclick="openBio('jakacki')">
+            <img src="images/JJakacki-450x562.jpg" alt="Jacqueline Jakacki" class="board-card-photo" />
+            <div class="board-card-body">
+              <h4>Jacqueline Jakacki</h4>
+              <span class="board-card-role">Board Member</span>
+              <span class="board-card-term">Term: May 2025 &ndash; May 2029</span>
+              <span class="board-card-cta">View Bio <i class="fas fa-arrow-right" style="font-size:0.65rem;margin-left:0.3rem;"></i></span>
+            </div>
+          </div>
+          <div class="board-card" data-animate="fade-up" data-delay="100" onclick="openBio('kiraly')">
+            <img src="images/HKiraly-1-450x562.jpg" alt="Hannah Kiraly" class="board-card-photo" />
+            <div class="board-card-body">
+              <h4>Hannah Kiraly</h4>
+              <span class="board-card-role">Board Member</span>
+              <span class="board-card-term">Appointed: May 2022</span>
+              <span class="board-card-cta">View Bio <i class="fas fa-arrow-right" style="font-size:0.65rem;margin-left:0.3rem;"></i></span>
+            </div>
+          </div>
+          <div class="board-card" data-animate="fade-up" data-delay="200" onclick="openBio('scott')">
+            <img src="images/Scott-2-450x496.jpg" alt="Vassie Scott" class="board-card-photo" />
+            <div class="board-card-body">
+              <h4>Vassie Scott</h4>
+              <span class="board-card-role">Board Member</span>
+              <span class="board-card-term">Appointed: February 2021</span>
+              <span class="board-card-cta">View Bio <i class="fas fa-arrow-right" style="font-size:0.65rem;margin-left:0.3rem;"></i></span>
+            </div>
+          </div>
+          <div class="board-card" data-animate="fade-up" data-delay="0" onclick="openBio('arredondo')">
+            <img src="images/Silva-Arredondo-1-450x542.jpg" alt="Michele Silva Arredondo" class="board-card-photo" />
+            <div class="board-card-body">
+              <h4>Michele Silva Arredondo</h4>
+              <span class="board-card-role">Board Member</span>
+              <span class="board-card-term">Appointed: November 2022</span>
+              <span class="board-card-cta">View Bio <i class="fas fa-arrow-right" style="font-size:0.65rem;margin-left:0.3rem;"></i></span>
+            </div>
+          </div>
+          <div class="board-card" data-animate="fade-up" data-delay="100" onclick="openBio('simmons')">
+            <img src="images/Simmons-1-450x534.jpg" alt="Aaron Simmons" class="board-card-photo" />
+            <div class="board-card-body">
+              <h4>Aaron Simmons</h4>
+              <span class="board-card-role">Board Member</span>
+              <span class="board-card-term">Term: May 2024 &ndash; May 2028</span>
+              <span class="board-card-cta">View Bio <i class="fas fa-arrow-right" style="font-size:0.65rem;margin-left:0.3rem;"></i></span>
+            </div>
+          </div>
+          <div class="board-card" data-animate="fade-up" data-delay="200" onclick="openBio('veard')">
+            <img src="images/Veard-1-450x506.jpg" alt="Jon Veard Jr." class="board-card-photo" />
+            <div class="board-card-body">
+              <h4>Jon Veard Jr.</h4>
+              <span class="board-card-role">Board Member</span>
+              <span class="board-card-term">Appointed: June 2020</span>
+              <span class="board-card-cta">View Bio <i class="fas fa-arrow-right" style="font-size:0.65rem;margin-left:0.3rem;"></i></span>
+            </div>
+          </div>
+          <div class="board-card" data-animate="fade-up" data-delay="0" onclick="openBio('zgonc')">
+            <img src="images/AZgonc-1-450x562.jpg" alt="Alan Zgonc" class="board-card-photo" />
+            <div class="board-card-body">
+              <h4>Alan Zgonc</h4>
+              <span class="board-card-role">Board Member</span>
+              <span class="board-card-term">Appointed: January 2015</span>
+              <span class="board-card-cta">View Bio <i class="fas fa-arrow-right" style="font-size:0.65rem;margin-left:0.3rem;"></i></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT CTA -->
+    <section class="section" style="background:var(--navy);position:relative;overflow:hidden;">
+      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 70% 50%,rgba(27,139,235,0.18) 0%,transparent 60%);pointer-events:none;"></div>
+      <div class="container" style="position:relative;z-index:1;text-align:center;">
+        <div data-animate="fade-up">
+          <div class="section-label">Get Involved</div>
+          <h2 style="color:#fff;margin-bottom:1rem;">Interested in Our Public Meetings?</h2>
+          <p style="color:rgba(255,255,255,0.65);font-size:1.05rem;max-width:560px;margin:0 auto 2rem;">Board meetings are open to the public. Contact our office for schedules and agendas.</p>
+          <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+            <a href="contact.html" class="btn btn-gold">Contact Our Office</a>
+            <a href="about.html" class="btn btn-outline-white">About the Authority</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- BIO MODAL -->
+  <div class="bio-modal-overlay" id="bioModal" onclick="if(event.target===this)closeBio()">
+    <div class="bio-modal">
+      <div class="bio-modal-header">
+        <img id="bioPhoto" src="" alt="" class="bio-modal-photo" />
+        <div>
+          <h3 id="bioName"></h3>
+          <span class="board-card-role" id="bioRole"></span>
+        </div>
+        <button class="bio-modal-close" onclick="closeBio()" aria-label="Close"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="bio-modal-content" id="bioContent"></div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-main"><div class="container"><div class="footer-grid">
+      <div class="footer-brand"><a href="index.html" class="logo footer-logo"><div class="logo-icon"><i class="fas fa-anchor"></i></div><div class="logo-text"><span class="logo-main">Lorain Port</span><span class="logo-sub">&amp; Finance Authority</span></div></a><p class="footer-tagline">Economic Development &middot; Waterborne Commerce &middot; Public Access to Waterways</p><div class="footer-social"><a href="https://www.facebook.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a><a href="https://www.instagram.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a><a href="https://www.youtube.com/@LorainPortandFinanceAuthority" target="_blank" rel="noopener" aria-label="YouTube"><i class="fab fa-youtube"></i></a><a href="https://www.linkedin.com/company/lorainport" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a></div></div>
+      <div class="footer-links"><h4>Quick Links</h4><ul><li><a href="index.html">Home</a></li><li><a href="development.html">Development &amp; Finance</a></li><li><a href="events.html">Events</a></li><li><a href="recreation.html">Boat Tours &amp; Recreation</a></li><li><a href="facilities.html">Facilities</a></li><li><a href="news.html">News</a></li><li><a href="about.html">About Us</a></li><li><a href="contact.html">Contact</a></li></ul></div>
+      <div class="footer-links"><h4>Development</h4><ul><li><a href="development.html#brownfields">Brownfields Program</a></li><li><a href="development.html#financing">Property Financing</a></li><li><a href="development.html#rfp">RFPs &amp; Bids</a></li><li><a href="development.html#commerce">Waterborne Commerce</a></li></ul></div>
+      <div class="footer-contact-col"><h4>Contact Us</h4><address><div class="footer-contact-item"><i class="fas fa-map-marker-alt"></i><div><p>319 Black River Lane</p><p>Lorain, OH 44052</p></div></div><div class="footer-contact-item"><i class="fas fa-phone-alt"></i><a href="tel:4402042269">440.204.2269</a></div><div class="footer-contact-item"><i class="fas fa-envelope"></i><a href="mailto:info@lorainport.com">info@lorainport.com</a></div></address><a href="contact.html" class="btn btn-gold btn-sm" style="margin-top:1.25rem;display:inline-flex;">Send a Message</a></div>
+    </div></div></div>
+    <div class="footer-bottom"><div class="container"><p>&copy; 2026 Lorain Port &amp; Finance Authority. All rights reserved.</p><div class="footer-bottom-links"><a href="#">Privacy Policy</a><a href="#">Terms of Use</a><a href="#">Accessibility</a></div></div></div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    var bios = {
+      mullins: {
+        name: 'Brad Mullins',
+        role: 'Chairman',
+        photo: 'images/Mullins-1-450x529.jpg',
+        bio: '<p>Brad Mullins is Chief Operating Officer of Amware Companies. He provides over 22 years experience in executive management, specializing in sales and marketing, distribution, logistics, and business development. Brad is a results-oriented individual with innovative initiatives to drive growth, recognize efficiencies, implement and execute strategies associated with business plans and build strong customer relations.</p><p>His experience in business development has provided him a keen understanding of all facets of running a successful business. Brad brings a wide range of experience at an executive level with large companies like Frito-Lay, Nestle USA, and Michael Foods. His 12 years of experience with a private equity group has provided Brad with experience in purchasing companies and developing business plans to grow sales and reduce costs, making them attractive targets for an eventual acquisition.</p><p>Brad holds an undergraduate degree from Wittenberg University where he played four years of NCAA collegiate football, playing in the NCAA Division III National Championship in 1979. Brad was the defensive captain his senior year and earned multiple honors in the Ohio Athletic Conference. He was inducted into the Lorain Sports Hall of Fame in 2002.</p><p>Brad is also co-owner in a real estate management company with properties throughout the city of Lorain.</p><p>Brad commits a large portion of his free time using his business experience to sit on the Board of Directors for private companies as well as non profit organizations that include: Lorain County Board of Advisors for Junior Achievement, Board of Advisors for Teamsters Retirement Funds with 3 different locals, Board of Directors for Balanced Asset Management wealth management company, Board of Directors for Samuel Felton Foundation, and Board of Directors Vice Chair for Lorain Port Authority.</p>'
+      },
+      zellers: {
+        name: 'Jeff Zellers',
+        role: 'Vice Chairman',
+        photo: 'images/JZellers-1-450x563.jpg',
+        bio: '<p>A native of Westlake who has lived in Lorain since 1985, Jeff Zellers is Vice President with The Brewer-Garrett Company. He has over 37 years of experience in engineering, energy services, construction support service maintenance and accounting to produce innovative and award-winning solutions.</p><p>Jeff is actively involved in developing the correct and cost-effective solutions for customers. He assembles the team of in-house professionals who are best suited for each specific project. He continues to be engaged with the project from development through final customer acceptance and implementation.</p><p>Jeff\'s attention to detail, standards of quality and commitment to the client have made him a respected member of the HVAC industry. He has spoken on the benefits of Design/Build Contracting. He served as Treasurer for MCA, and has served on the Pipefitting Apprenticeship Committee and the Supplemental Unemployment Committee with Local 120 Pipefitters.</p><p>Jeff received his undergraduate degree in Industrial Technology from Ball State University. He and his wife Jane have three daughters and attend St. Anthony\'s Parish. For the last three years, Jeff has played an integral role in the City of Lorain\'s Zoning Board and Planning Commission.</p>'
+      },
+      jakacki: {
+        name: 'Jacqueline Jakacki',
+        role: 'Board Member',
+        photo: 'images/JJakacki-450x562.jpg',
+        bio: '<p>Jacqueline Jakacki was appointed to the port\'s board of directors in May 2025. She was officially sworn in by Lorain Municipal Court Judge Mark Mihok before her first board meeting on June 10.</p><p>Jakacki is a realtor and team leader for the RE/MAX Above &amp; Beyond real estate company. In addition to the port board, Jakacki also serves as an executive board member for Main Street Lorain, as a committee member for the Cinco de Mayo Parade, and as co-chair of the Pets 4 Vets Golf Outing.</p><p>Jakacki\'s four-year term began May 13, 2025, and continues through May 12, 2029.</p>'
+      },
+      kiraly: {
+        name: 'Hannah Kiraly',
+        role: 'Board Member',
+        photo: 'images/HKiraly-1-450x562.jpg',
+        bio: '<p>Hannah Kiraly was appointed to the Lorain Port and Finance Authority Board of Directors in May 2022.</p><p>With nearly a decade dedicated to urban environments, Ms. Kiraly specializes in research, analysis, and data-driven solutions for complex community challenges. Her public service experience underscores the importance of informed policy development in addressing societal issues. She serves as Program Manager overseeing the Community and Economic Development Division at the City of Lorain\'s Department of Building, Housing and Planning and holds positions as Board Member of the Lorain Port and Finance Authority, an Active Member of Main Street Lorain, and APA Ohio.</p><p>Ms. Kiraly earned her A.A. Degree from Cuyahoga Community College (2015), where she was named Ohio\'s 2015 New Century Scholar for achieving the state\'s top score among All-USA Community College Academic Team nominees. She pursued her passion further with a B.A. in Regional Planning and a Minor in Sustainable Urban Development from the Levin College of Urban Affairs at Cleveland State University (2017), followed by a Masters of Nonprofit Organizations from the Jack Joseph and Morton Mandel School of Applied Social Sciences at Case Western Reserve University (2021).</p><p>Throughout her academic and professional career, Ms. Kiraly has presented research at the American Association of Behavioral and Social Sciences Conference on urban environmental perspectives, served as a Panelist for Women in GIS for the Ohio Chapter of URISA, and been a guest speaker at her alma maters and local community organizations in Lorain, Ohio. In 2017, she was honored with the OCCDF Karen Kerns-Dresser Award for Public Service for her commitment and work towards increasing accessible food systems through urban agriculture in Northeast, Ohio.</p><p>Some of her career highlights include designing and implementing Master Plans, Strategic Plans, and Climate Action Plans for various jurisdictions, non-governmental agencies, nonprofits, and foundations in Northeast Ohio. She also pioneered the development and certification of the Lorain County Building Department through the Ohio Board of Building Standards and introduced the first bivariate mapping tool in Cuyahoga County to identify at-risk populations due to climate change implications.</p><p>Beyond her professional endeavors, she enjoys engaging in her photography and traveling with her husband.</p>'
+      },
+      scott: {
+        name: 'Vassie Scott',
+        role: 'Board Member',
+        photo: 'images/Scott-2-450x496.jpg',
+        bio: '<p>Vassie Scott was appointed to the Lorain Port and Finance Authority Board of Directors in February 2021. He was born in Elyria, Ohio, raised in Lorain, Ohio, graduated from Clearview High School, and attended the University of Dayton.</p><p>He retired from Prudential Financial after 34 years of service, and is currently a member of The Scott Group, Inc., located at 520 Broadway Avenue in Lorain, Ohio. During his career he has received several awards with the Company and industry-wide, including several President Citations, the Prudential Leaders Council Award, and Lifetime status with the Million Dollar Round Table, which is achieved by consistently performing in the top ten percent of all financial advisors worldwide. During his career, he has earned the designations of Chartered Life Underwriter (CLU), Chartered Financial Consultant (ChFC), and Accredited Estate Planner (AEP).</p><p>Having been blessed with an exceptional professional career, his passions now include being of service to our local communities and sharing his experience, strengths and hope with the youth within our community. He was past president of the Lake Erie Landlord\'s Association, past president of the Lorain County Board of Developmental Disabilities and was past treasurer for the Board of the Lorain County Community Action Agency. In the past, Vassie has mentored in Lorain City Schools in conjunction with the Lorain County Urban League, Elyria Salvation Army, and 100 Men of Lorain County.</p><p>He currently resides in Amherst, Ohio with his family. His personal interests include golf, chess, biking and traveling.</p>'
+      },
+      arredondo: {
+        name: 'Michele Silva Arredondo',
+        role: 'Board Member',
+        photo: 'images/Silva-Arredondo-1-450x542.jpg',
+        bio: '<p>Michele Silva Arredondo was appointed to the Lorain Port and Finance Authority Board of Directors in November 2022. Her term will continue through January 8, 2025.</p>'
+      },
+      simmons: {
+        name: 'Aaron Simmons',
+        role: 'Board Member',
+        photo: 'images/Simmons-1-450x534.jpg',
+        bio: '<p>Aaron Simmons (Jevon Terance) was appointed to the Lorain Port and Finance Authority Board of Directors May 7, 2024. His term continues through May 6, 2028.</p>'
+      },
+      veard: {
+        name: 'Jon Veard Jr.',
+        role: 'Board Member',
+        photo: 'images/Veard-1-450x506.jpg',
+        bio: '<p>Jon R. Veard Jr. was appointed to the Lorain Port and Finance Authority Board of Directors in June 2020. He is the owner of Veard Construction Inc. in Lorain, OH.</p>'
+      },
+      zgonc: {
+        name: 'Alan Zgonc',
+        role: 'Board Member',
+        photo: 'images/AZgonc-1-450x562.jpg',
+        bio: '<p>Alan Zgonc is a Lorain resident who was appointed to the Lorain Port and Finance Authority Board of Directors in January 2015. He graduated from Lorain Admiral King in 1965 and went on to study psychology at The Ohio State University.</p>'
+      }
+    };
+
+    function openBio(key) {
+      var data = bios[key];
+      if (!data) return;
+      document.getElementById('bioPhoto').src = data.photo;
+      document.getElementById('bioPhoto').alt = data.name;
+      document.getElementById('bioName').textContent = data.name;
+      document.getElementById('bioRole').textContent = data.role;
+      document.getElementById('bioContent').innerHTML = data.bio;
+      document.getElementById('bioModal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeBio() {
+      document.getElementById('bioModal').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeBio();
+    });
+  </script>
+</body>
+</html>

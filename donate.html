@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Support the Black River Landing expansion — donate to help construct the Green Room and Storage Facility at Lorain's premier waterfront venue." />
+  <title>Donate Now | Lorain Port & Finance Authority</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    /* ── Hero Feature Image ── */
+    .hero-feature {
+      position: relative; width: 100%; max-height: 520px; overflow: hidden;
+    }
+    .hero-feature img {
+      width: 100%; height: 520px; object-fit: cover; display: block;
+    }
+    .hero-feature::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 120px;
+      background: linear-gradient(to top, var(--white) 0%, transparent 100%);
+    }
+
+    /* ── Progress Thermometer ── */
+    .funding-progress { max-width: 700px; margin: 0 auto 3rem; }
+    .progress-numbers {
+      display: flex; justify-content: space-between; align-items: flex-end;
+      margin-bottom: 0.75rem;
+    }
+    .progress-raised {
+      font-family: var(--font-heading); font-weight: 800;
+      font-size: clamp(1.8rem, 4vw, 2.5rem); color: var(--navy);
+      line-height: 1;
+    }
+    .progress-raised span { font-size: 0.85rem; font-weight: 500; color: var(--gray-500); display: block; margin-top: 0.25rem; }
+    .progress-goal {
+      font-family: var(--font-heading); font-weight: 700;
+      font-size: 1rem; color: var(--gray-500); text-align: right;
+    }
+    .progress-goal strong { color: var(--navy); font-size: 1.15rem; }
+    .progress-bar-track {
+      width: 100%; height: 52px;
+      background: var(--gray-100); border-radius: 26px;
+      overflow: hidden; position: relative;
+      border: 1px solid var(--gray-200);
+    }
+    .progress-bar-fill {
+      height: 100%; border-radius: 26px;
+      background: linear-gradient(90deg, var(--blue-accent), #0ea5e9);
+      position: relative; width: 0;
+      transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .progress-bar-fill::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, transparent 60%);
+      border-radius: 26px;
+    }
+    .progress-bar-fill.animate { width: 76.8%; }
+    .progress-remaining {
+      text-align: center; margin-top: 1rem;
+      font-family: var(--font-heading); font-weight: 700;
+      font-size: 1.05rem; color: var(--gold);
+    }
+    .progress-remaining i { margin-right: 0.35rem; }
+
+    /* ── Funding Sources ── */
+    .funding-sources { max-width: 640px; margin: 0 auto; }
+    .funding-source {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.9rem 0; border-bottom: 1px solid var(--gray-200);
+    }
+    .funding-source:last-child { border-bottom: none; }
+    .funding-source-name {
+      font-weight: 500; color: var(--navy); font-size: 0.95rem;
+    }
+    .funding-source-amount {
+      font-family: var(--font-heading); font-weight: 700;
+      color: var(--blue-accent); font-size: 1rem;
+    }
+
+    /* ── Naming Opportunities ── */
+    .naming-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.25rem; margin-top: 2rem;
+    }
+    .naming-card {
+      background: var(--white); border: 1px solid var(--gray-200);
+      border-radius: var(--radius); padding: 1.5rem;
+      text-align: center; transition: all var(--transition);
+      box-shadow: var(--shadow-sm); position: relative; overflow: hidden;
+    }
+    .naming-card:hover {
+      box-shadow: var(--shadow-md); transform: translateY(-3px);
+      border-color: rgba(27,139,235,0.2);
+    }
+    .naming-card.featured {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 1px var(--gold), var(--shadow-sm);
+    }
+    .naming-card.featured::before {
+      content: 'PREMIER'; position: absolute; top: 12px; right: -28px;
+      background: var(--gold); color: #fff;
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em;
+      padding: 0.2rem 2rem; transform: rotate(45deg);
+      font-family: var(--font-heading);
+    }
+    .naming-card.claimed {
+      border-color: #d1d5db; opacity: 0.75;
+    }
+    .naming-card.claimed:hover { transform: none; box-shadow: var(--shadow-sm); }
+    .naming-card.claimed::before {
+      content: 'CLAIMED'; position: absolute; top: 12px; right: -28px;
+      background: #059669; color: #fff;
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em;
+      padding: 0.2rem 2rem; transform: rotate(45deg);
+      font-family: var(--font-heading);
+    }
+    .claimed-badge {
+      display: inline-block; background: #059669; color: #fff;
+      font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.75rem;
+      border-radius: 20px; margin-top: 0.5rem;
+      font-family: var(--font-heading); letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    .naming-icon {
+      width: 52px; height: 52px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1rem; font-size: 1.3rem;
+    }
+    .naming-icon.gold { background: rgba(217,119,6,0.1); color: var(--gold); }
+    .naming-icon.blue { background: rgba(27,139,235,0.1); color: var(--blue-accent); }
+    .naming-icon.navy { background: rgba(11,31,58,0.08); color: var(--navy); }
+    .naming-card h4 { margin-bottom: 0.35rem; font-size: 1rem; }
+    .naming-card .naming-price {
+      font-family: var(--font-heading); font-weight: 800;
+      font-size: 1.35rem; color: var(--navy); margin-bottom: 0.5rem;
+    }
+    .naming-card p { font-size: 0.85rem; color: var(--gray-500); }
+
+    /* ── Donate CTA Banner ── */
+    .donate-cta-banner {
+      background: var(--navy); border-radius: var(--radius-lg);
+      padding: 3.5rem 2.5rem; text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .donate-cta-banner::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(27,139,235,0.25) 0%, transparent 60%);
+    }
+    .donate-cta-banner * { position: relative; }
+    .donate-cta-banner h2 { color: #fff; margin-bottom: 1rem; }
+    .donate-cta-banner p { color: rgba(255,255,255,0.65); font-size: 1.05rem; max-width: 560px; margin: 0 auto 2rem; }
+    .btn-donate {
+      display: inline-flex; align-items: center; gap: 0.6rem;
+      background: var(--gold); color: #fff;
+      padding: 1rem 2.5rem; border-radius: var(--radius);
+      font-family: var(--font-heading); font-weight: 700;
+      font-size: 1.15rem; text-decoration: none;
+      transition: all var(--transition);
+      box-shadow: 0 4px 14px rgba(217,119,6,0.4);
+    }
+    .btn-donate:hover {
+      background: #c26a05; transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(217,119,6,0.5);
+    }
+
+    /* ── Project Info Grid ── */
+    .project-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start; }
+    .project-visual {
+      background: url('images/Black River Landing Image 1.jpg') center/cover no-repeat;
+      border-radius: var(--radius-lg); height: 400px;
+      position: relative; overflow: hidden; box-shadow: var(--shadow-lg);
+    }
+    .project-visual::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(11,31,58,0.7) 0%, rgba(11,31,58,0.1) 50%, transparent 100%);
+    }
+    .project-visual-badge {
+      position: absolute; bottom: 1.5rem; left: 1.5rem; right: 1.5rem;
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px; padding: 1.25rem; backdrop-filter: blur(8px);
+    }
+    .project-stats {
+      display: flex; gap: 1.5rem; flex-wrap: wrap;
+    }
+    .project-stat { text-align: center; flex: 1; }
+    .project-stat-number {
+      font-family: var(--font-heading); font-weight: 800;
+      font-size: 1.5rem; color: #fff;
+    }
+    .project-stat-label {
+      font-size: 0.72rem; color: rgba(255,255,255,0.5); white-space: nowrap;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .project-grid { grid-template-columns: 1fr; }
+      .project-visual { height: 280px; }
+      .naming-grid { grid-template-columns: 1fr; }
+      .progress-numbers { flex-direction: column; gap: 0.5rem; }
+      .progress-goal { text-align: left; }
+    }
+  </style>
+  <script>(function(){var t=localStorage.getItem('lpfa-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.setAttribute('data-theme','dark')})()</script>
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="site-header" id="site-header">
+    <div class="header-top">
+      <div class="container">
+        <div class="header-top-inner">
+          <div class="header-contact">
+            <a href="tel:4402042269"><i class="fas fa-phone-alt"></i> 440.204.2269</a>
+            <a href="mailto:info@lorainport.com"><i class="fas fa-envelope"></i> info@lorainport.com</a>
+            <span class="header-address"><i class="fas fa-map-marker-alt"></i> 319 Black River Lane, Lorain, OH 44052</span>
+          </div>
+          <div class="header-social">
+            <a href="https://www.facebook.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="https://www.instagram.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.youtube.com/@LorainPortandFinanceAuthority" target="_blank" rel="noopener" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+            <a href="https://www.linkedin.com/company/lorainport" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav class="main-nav" id="main-nav">
+      <div class="container">
+        <div class="nav-inner">
+          <a href="index.html" class="logo" aria-label="Lorain Port & Finance Authority Home"><img src="images/logo.png" alt="Lorain Port & Finance Authority" class="logo-img" /></a>
+          <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+          <ul class="nav-menu" id="nav-menu">
+            <li><a href="index.html">Home</a></li>
+            <li class="has-dropdown"><a href="development.html">Development &amp; Finance <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="development.html#brownfields">Brownfields Program</a></li><li><a href="development.html#financing">Property Financing</a></li><li><a href="development.html#rfp">RFPs &amp; Bids</a></li><li><a href="development.html#commerce">Waterborne Commerce</a></li></ul></li>
+            <li><a href="events.html">Events</a></li>
+            <li class="has-dropdown"><a href="recreation.html">Recreation <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="recreation.html#history-tours">History &amp; Lighthouse Tours</a></li><li><a href="recreation.html#nature-tours">Nature &amp; Sunset Cruises</a></li><li><a href="recreation.html#water-taxi">Water Taxi</a></li><li><a href="recreation.html#charters">Private Charters</a></li></ul></li>
+            <li class="has-dropdown"><a href="facilities.html">Facilities <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="facilities.html#black-river-landing">Black River Landing</a></li><li><a href="facilities.html#lakeside-landing">Lakeside Landing</a></li><li><a href="facilities.html#mile-long-pier">Mile-Long Pier</a></li><li><a href="facilities.html#boat-launch">Boat Launch</a></li></ul></li>
+            <li><a href="news.html">News</a></li>
+            <li class="has-dropdown"><a href="about.html">About <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="about.html">About Us</a></li><li><a href="staff.html">Staff</a></li><li><a href="board.html">Board of Directors</a></li><li><a href="didyouknow.html">Did You Know?</a></li></ul></li>
+            <li><a href="donate.html" class="active">Stage Project</a></li>
+            <li><a href="contact.html" class="nav-cta">Contact Us</a></li>
+          </ul>
+          <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode"><svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg><svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <!-- PAGE HERO -->
+    <section class="page-hero">
+      <div class="container">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="index.html">Home</a>
+          <span class="sep"><i class="fas fa-chevron-right"></i></span>
+          <span class="current">Donate</span>
+        </nav>
+        <div class="page-hero-label">Support Our Mission</div>
+        <h1>Help Us Build the Future of Black River Landing</h1>
+        <p>Your contribution directly supports the expansion of Lorain's premier waterfront venue — bringing bigger acts, better facilities, and more opportunities to our community.</p>
+      </div>
+    </section>
+
+    <!-- HERO FEATURE IMAGE -->
+    <div class="hero-feature">
+      <img src="images/Stage Project 1.jpg" alt="Black River Landing Stage Project — aerial rendering of the new facility" />
+    </div>
+
+    <!-- PROJECT OVERVIEW -->
+    <section class="section">
+      <div class="container">
+        <div class="project-grid">
+          <div data-animate="fade-right">
+            <div class="section-label">The Project</div>
+            <h2 style="margin-bottom:1.25rem;">Green Room &amp; Storage Facility</h2>
+            <p style="margin-bottom:1rem;">We're raising additional funds to construct a <strong>Green Room and Storage Facility</strong> at Black River Landing. These critical additions will enable us to attract larger, higher-profile entertainment acts and provide professional-grade backstage amenities for performers.</p>
+            <p style="margin-bottom:1rem;">Black River Landing draws over <strong>150,000 visitors annually</strong> for concerts, festivals, and community events. This expansion will elevate the venue to a regional destination, driving economic activity and community pride for years to come.</p>
+            <p style="margin-bottom:1.5rem;">Construction began <strong>September 15, 2025</strong>. With your help, we can close the funding gap and deliver a world-class facility for Lorain.</p>
+            <a href="https://www.paypal.com/donate/?hosted_button_id=MF4TABMWYKT3Q" target="_blank" rel="noopener" class="btn btn-gold"><i class="fas fa-heart"></i> &nbsp;Donate Now</a>
+          </div>
+          <div class="project-visual" data-animate="fade-left">
+            <div class="project-visual-badge">
+              <div class="project-stats">
+                <div class="project-stat">
+                  <div class="project-stat-number">150K+</div>
+                  <div class="project-stat-label">Annual Visitors</div>
+                </div>
+                <div class="project-stat">
+                  <div class="project-stat-number">$11.9M</div>
+                  <div class="project-stat-label">Total Project</div>
+                </div>
+                <div class="project-stat">
+                  <div class="project-stat-number">2025</div>
+                  <div class="project-stat-label">Construction Start</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FUNDING PROGRESS -->
+    <section class="section bg-light">
+      <div class="container">
+        <div class="section-header center" data-animate="fade-up">
+          <div class="section-label">Campaign Progress</div>
+          <h2 class="section-title">Funding Status</h2>
+          <p class="section-desc">Thanks to our partners and donors, we've raised the majority of the funds needed. Help us close the gap.</p>
+        </div>
+
+        <div class="funding-progress" data-animate="fade-up">
+          <div class="progress-numbers">
+            <div class="progress-raised">$9,140,000 <span>raised so far</span></div>
+            <div class="progress-goal">Goal: <strong>$11,900,000</strong></div>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+          </div>
+          <div class="progress-remaining">
+            <i class="fas fa-bullseye"></i> $2,760,000 remaining to reach our goal
+          </div>
+        </div>
+
+        <!-- Funding Sources -->
+        <div class="section-header center" data-animate="fade-up" style="margin-top:2rem;">
+          <h3 style="margin-bottom:1.5rem;">Funding Partners</h3>
+        </div>
+        <div class="funding-sources" data-animate="fade-up">
+          <div class="funding-source">
+            <span class="funding-source-name"><i class="fas fa-anchor" style="color:var(--blue-accent);margin-right:0.5rem;"></i> Lorain Port & Finance Authority</span>
+            <span class="funding-source-amount">$5,250,000</span>
+          </div>
+          <div class="funding-source">
+            <span class="funding-source-name"><i class="fas fa-landmark" style="color:var(--blue-accent);margin-right:0.5rem;"></i> City of Lorain</span>
+            <span class="funding-source-amount">$995,000</span>
+          </div>
+          <div class="funding-source">
+            <span class="funding-source-name"><i class="fas fa-building-columns" style="color:var(--blue-accent);margin-right:0.5rem;"></i> Lorain County</span>
+            <span class="funding-source-amount">$995,000</span>
+          </div>
+          <div class="funding-source">
+            <span class="funding-source-name"><i class="fas fa-flag-usa" style="color:var(--blue-accent);margin-right:0.5rem;"></i> State of Ohio</span>
+            <span class="funding-source-amount">$500,000</span>
+          </div>
+          <div class="funding-source">
+            <span class="funding-source-name"><i class="fas fa-map-signs" style="color:var(--blue-accent);margin-right:0.5rem;"></i> Lorain County Visitors Bureau</span>
+            <span class="funding-source-amount">$750,000</span>
+          </div>
+          <div class="funding-source">
+            <span class="funding-source-name"><i class="fas fa-hand-holding-heart" style="color:var(--blue-accent);margin-right:0.5rem;"></i> Philanthropic Commitments</span>
+            <span class="funding-source-amount">$650,000</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NAMING / SPONSORSHIP OPPORTUNITIES -->
+    <section class="section">
+      <div class="container">
+        <div class="section-header center" data-animate="fade-up">
+          <div class="section-label">Recognition</div>
+          <h2 class="section-title">Naming &amp; Sponsorship Opportunities</h2>
+          <p class="section-desc">Leave a lasting mark on Lorain's waterfront. Naming rights are available at a variety of levels for individuals, families, and organizations.</p>
+        </div>
+
+        <div class="naming-grid">
+          <div class="naming-card featured" data-animate="fade-up" data-delay="0">
+
+            <h4>Amphitheater</h4>
+            <div class="naming-price">$1,000,000</div>
+            <p>Premier naming rights for the main amphitheater — the centerpiece of Black River Landing.</p>
+          </div>
+          <div class="naming-card claimed" data-animate="fade-up" data-delay="50">
+
+            <h4>Main Stage</h4>
+            <div class="naming-price">$750,000</div>
+            <p>Name the main performance stage where headlining acts perform for thousands.</p>
+            <div class="claimed-badge"><i class="fas fa-check" style="margin-right:0.3rem;"></i> Claimed</div>
+          </div>
+          <div class="naming-card claimed" data-animate="fade-up" data-delay="75">
+
+            <h4>Amphitheater Lawn Seating</h4>
+            <div class="naming-price">$400,000</div>
+            <p>Naming rights for the amphitheater lawn seating area overlooking the main stage.</p>
+            <div class="claimed-badge"><i class="fas fa-check" style="margin-right:0.3rem;"></i> Claimed</div>
+          </div>
+          <div class="naming-card" data-animate="fade-up" data-delay="100">
+
+            <h4>Peel Building</h4>
+            <div class="naming-price">$500,000</div>
+            <p>Naming rights for the historic Peel Building at the heart of the venue campus.</p>
+          </div>
+          <div class="naming-card" data-animate="fade-up" data-delay="150">
+
+            <h4>Green Room</h4>
+            <div class="naming-price">$250,000</div>
+            <p>Name the new backstage green room used by performers and VIP guests.</p>
+          </div>
+          <div class="naming-card" data-animate="fade-up" data-delay="200">
+
+            <h4>Storage Facility</h4>
+            <div class="naming-price">$150,000</div>
+            <p>Name the new storage facility supporting year-round venue operations.</p>
+          </div>
+          <div class="naming-card" data-animate="fade-up" data-delay="250">
+
+            <h4>Concession Area</h4>
+            <div class="naming-price">$100,000</div>
+            <p>Naming rights for the concession and food service area at events.</p>
+          </div>
+          <div class="naming-card" data-animate="fade-up" data-delay="300">
+
+            <h4>Box Office</h4>
+            <div class="naming-price">$50,000</div>
+            <p>Name the venue's box office and ticketing area.</p>
+          </div>
+          <div class="naming-card" data-animate="fade-up" data-delay="350">
+
+            <h4>Benches</h4>
+            <div class="naming-price">$25,000 <span style="font-size:0.75rem;font-weight:500;color:var(--gray-500);">each</span></div>
+            <p>Dedicate a bench in honor of a loved one or your organization.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DONATE CTA -->
+    <section class="section bg-light">
+      <div class="container">
+        <div class="donate-cta-banner" data-animate="fade-up">
+          <div class="section-label" style="color:rgba(255,255,255,0.5);">Make a Difference</div>
+          <h2>Ready to Support Lorain's Waterfront?</h2>
+          <p>Every contribution — no matter the size — brings us closer to completing this transformative project for our community.</p>
+          <a href="https://www.paypal.com/donate/?hosted_button_id=MF4TABMWYKT3Q" target="_blank" rel="noopener" class="btn-donate">
+            <i class="fab fa-paypal"></i> Donate via PayPal
+          </a>
+          <p style="margin-top:1.5rem;font-size:0.85rem;color:rgba(255,255,255,0.4);">
+            For naming opportunities or major gifts, please <a href="contact.html" style="color:var(--gold);">contact our office</a> directly.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT INFO -->
+    <section class="section">
+      <div class="container" style="text-align:center;" data-animate="fade-up">
+        <div class="section-label">Questions?</div>
+        <h2 style="margin-bottom:1rem;">Get in Touch About Donating</h2>
+        <p style="max-width:520px;margin:0 auto 2rem;color:var(--gray-500);">
+          For questions about sponsorship, naming rights, or making a donation, please contact us at our office.
+        </p>
+        <div style="display:flex;gap:1.5rem;justify-content:center;flex-wrap:wrap;">
+          <a href="tel:4402042269" class="btn btn-primary"><i class="fas fa-phone-alt"></i> &nbsp;440.204.2269</a>
+          <a href="mailto:info@lorainport.com" class="btn btn-outline"><i class="fas fa-envelope"></i> &nbsp;info@lorainport.com</a>
+          <a href="contact.html" class="btn btn-outline"><i class="fas fa-paper-plane"></i> &nbsp;Contact Form</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-main"><div class="container"><div class="footer-grid">
+      <div class="footer-brand"><a href="index.html" class="logo footer-logo"><div class="logo-icon"><i class="fas fa-anchor"></i></div><div class="logo-text"><span class="logo-main">Lorain Port</span><span class="logo-sub">&amp; Finance Authority</span></div></a><p class="footer-tagline">Economic Development &middot; Waterborne Commerce &middot; Public Access to Waterways</p><div class="footer-social"><a href="https://www.facebook.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a><a href="https://www.instagram.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a><a href="https://www.youtube.com/@LorainPortandFinanceAuthority" target="_blank" rel="noopener" aria-label="YouTube"><i class="fab fa-youtube"></i></a><a href="https://www.linkedin.com/company/lorainport" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a></div></div>
+      <div class="footer-links"><h4>Quick Links</h4><ul><li><a href="index.html">Home</a></li><li><a href="development.html">Development &amp; Finance</a></li><li><a href="events.html">Events</a></li><li><a href="recreation.html">Boat Tours &amp; Recreation</a></li><li><a href="facilities.html">Facilities</a></li><li><a href="news.html">News</a></li><li><a href="about.html">About Us</a></li><li><a href="contact.html">Contact</a></li></ul></div>
+      <div class="footer-links"><h4>Development</h4><ul><li><a href="development.html#brownfields">Brownfields Program</a></li><li><a href="development.html#financing">Property Financing</a></li><li><a href="development.html#rfp">RFPs &amp; Bids</a></li><li><a href="development.html#commerce">Waterborne Commerce</a></li></ul></div>
+      <div class="footer-contact-col"><h4>Contact Us</h4><address><div class="footer-contact-item"><i class="fas fa-map-marker-alt"></i><div><p>319 Black River Lane</p><p>Lorain, OH 44052</p></div></div><div class="footer-contact-item"><i class="fas fa-phone-alt"></i><a href="tel:4402042269">440.204.2269</a></div><div class="footer-contact-item"><i class="fas fa-envelope"></i><a href="mailto:info@lorainport.com">info@lorainport.com</a></div></address><a href="contact.html" class="btn btn-gold btn-sm" style="margin-top:1.25rem;display:inline-flex;">Send a Message</a></div>
+    </div></div></div>
+    <div class="footer-bottom"><div class="container"><p>&copy; 2026 Lorain Port &amp; Finance Authority. All rights reserved.</p><div class="footer-bottom-links"><a href="#">Privacy Policy</a><a href="#">Terms of Use</a><a href="#">Accessibility</a></div></div></div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    // Animate the progress bar when it scrolls into view
+    const fill = document.getElementById('progress-fill');
+    if (fill) {
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            fill.classList.add('animate');
+            obs.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.3 });
+      obs.observe(fill);
+    }
+  </script>
+</body>
+</html>

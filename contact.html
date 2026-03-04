@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Contact the Lorain Port & Finance Authority — 319 Black River Lane, Lorain, OH 44052. Phone: 440.204.2269." />
+  <title>Contact Us | Lorain Port & Finance Authority</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .map-embed {
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      height: 300px;
+      background: linear-gradient(135deg, #0a2a3d 0%, #0e3a5a 50%, #0a2a3d 100%);
+      background-image: url('images/contact-aerial.jpg');
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 1.25rem;
+      border: 1px solid rgba(255,255,255,0.08);
+      margin-top: 1.5rem;
+      position: relative;
+    }
+    .map-embed::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(transparent 30%, rgba(0,0,0,0.75) 100%);
+    }
+    .map-embed-placeholder { position: relative; z-index: 1; }
+    .map-embed-placeholder {
+      text-align: center;
+      color: rgba(255,255,255,0.45);
+      font-size: 0.9rem;
+    }
+    .map-embed-placeholder .fas { font-size: 2.5rem; margin-bottom: 0.75rem; display: block; color: var(--gold-muted); }
+    .map-embed-placeholder a { color: var(--gold-muted); text-decoration: underline; }
+    .contact-hours { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); }
+    .contact-hours h5 { color: rgba(255,255,255,0.5); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; }
+    .hours-row { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .hours-row:last-child { border-bottom: none; }
+    .hours-row .day { font-size: 0.85rem; color: rgba(255,255,255,0.6); }
+    .hours-row .time { font-size: 0.85rem; color: rgba(255,255,255,0.85); font-weight: 500; }
+    .faq-list { display: flex; flex-direction: column; gap: 1rem; }
+    .faq-item {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .faq-question {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.1rem 1.5rem;
+      cursor: pointer;
+      background: var(--white);
+      transition: background var(--transition);
+      font-family: var(--font-heading);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--navy);
+      gap: 1rem;
+    }
+    .faq-question:hover { background: var(--gray-50); }
+    .faq-question .fas { color: var(--gold); transition: transform var(--transition); flex-shrink: 0; font-size: 0.8rem; }
+    .faq-item.open .faq-question .fas { transform: rotate(180deg); }
+    .faq-answer {
+      padding: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease, padding 0.35s ease;
+      background: var(--gray-50);
+      font-size: 0.93rem;
+      color: var(--gray-600);
+      line-height: 1.7;
+    }
+    .faq-item.open .faq-answer { max-height: 300px; padding: 1.1rem 1.5rem; }
+  </style>
+  <script>(function(){var t=localStorage.getItem('lpfa-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.setAttribute('data-theme','dark')})()</script>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="site-header" id="site-header">
+    <div class="header-top">
+      <div class="container">
+        <div class="header-top-inner">
+          <div class="header-contact">
+            <a href="tel:4402042269"><i class="fas fa-phone-alt"></i> 440.204.2269</a>
+            <a href="mailto:info@lorainport.com"><i class="fas fa-envelope"></i> info@lorainport.com</a>
+            <span class="header-address"><i class="fas fa-map-marker-alt"></i> 319 Black River Lane, Lorain, OH 44052</span>
+          </div>
+          <div class="header-social">
+            <a href="https://www.facebook.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="https://www.instagram.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.youtube.com/@LorainPortandFinanceAuthority" target="_blank" rel="noopener" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+            <a href="https://www.linkedin.com/company/lorainport" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav class="main-nav" id="main-nav">
+      <div class="container">
+        <div class="nav-inner">
+          <a href="index.html" class="logo" aria-label="Lorain Port & Finance Authority Home"><img src="images/logo.png" alt="Lorain Port & Finance Authority" class="logo-img" /></a>
+          <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+          <ul class="nav-menu" id="nav-menu">
+            <li><a href="index.html">Home</a></li>
+            <li class="has-dropdown"><a href="development.html">Development &amp; Finance <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="development.html#brownfields">Brownfields Program</a></li><li><a href="development.html#financing">Property Financing</a></li><li><a href="development.html#rfp">RFPs &amp; Bids</a></li><li><a href="development.html#commerce">Waterborne Commerce</a></li></ul></li>
+            <li><a href="events.html">Events</a></li>
+            <li class="has-dropdown"><a href="recreation.html">Recreation <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="recreation.html#history-tours">History &amp; Lighthouse Tours</a></li><li><a href="recreation.html#nature-tours">Nature &amp; Sunset Cruises</a></li><li><a href="recreation.html#water-taxi">Water Taxi</a></li><li><a href="recreation.html#charters">Private Charters</a></li></ul></li>
+            <li class="has-dropdown"><a href="facilities.html">Facilities <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="facilities.html#black-river-landing">Black River Landing</a></li><li><a href="facilities.html#lakeside-landing">Lakeside Landing</a></li><li><a href="facilities.html#mile-long-pier">Mile-Long Pier</a></li><li><a href="facilities.html#boat-launch">Boat Launch</a></li></ul></li>
+            <li><a href="news.html">News</a></li>
+            <li class="has-dropdown"><a href="about.html">About <i class="fas fa-chevron-down"></i></a><ul class="dropdown"><li><a href="about.html">About Us</a></li><li><a href="staff.html">Staff</a></li><li><a href="board.html">Board of Directors</a></li><li><a href="didyouknow.html">Did You Know?</a></li></ul></li>
+            <li><a href="donate.html">Stage Project</a></li>
+            <li><a href="contact.html" class="active nav-cta">Contact Us</a></li>
+          </ul>
+          <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode"><svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg><svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <nav class="breadcrumb" aria-label="Breadcrumb"><a href="index.html">Home</a><span class="sep"><i class="fas fa-chevron-right"></i></span><span class="current">Contact</span></nav>
+        <div class="page-hero-label">Get in Touch</div>
+        <h1>Contact Us</h1>
+        <p>Whether you have a question about development, events, boat tours, or facility rentals — we'd love to hear from you.</p>
+      </div>
+    </section>
+
+    <!-- CONTACT GRID -->
+    <section class="section">
+      <div class="container">
+        <div class="contact-grid">
+
+          <!-- INFO COLUMN -->
+          <div>
+            <div class="contact-info-card" data-animate="fade-right">
+              <h3>Get in Touch</h3>
+
+              <div class="contact-info-item">
+                <div class="contact-info-icon"><i class="fas fa-map-marker-alt"></i></div>
+                <div>
+                  <h5>Address</h5>
+                  <p>319 Black River Lane<br />Lorain, OH 44052</p>
+                </div>
+              </div>
+
+              <div class="contact-info-item">
+                <div class="contact-info-icon"><i class="fas fa-phone-alt"></i></div>
+                <div>
+                  <h5>Phone</h5>
+                  <a href="tel:4402042269">440.204.2269</a>
+                </div>
+              </div>
+
+              <div class="contact-info-item">
+                <div class="contact-info-icon"><i class="fas fa-envelope"></i></div>
+                <div>
+                  <h5>Email</h5>
+                  <a href="mailto:info@lorainport.com">info@lorainport.com</a>
+                </div>
+              </div>
+
+              <div class="contact-info-item">
+                <div class="contact-info-icon"><i class="fab fa-facebook-f"></i></div>
+                <div>
+                  <h5>Social Media</h5>
+                  <a href="https://www.facebook.com/lorainportfinance" target="_blank" rel="noopener">Facebook</a> &nbsp;·&nbsp;
+                  <a href="https://www.instagram.com/lorainportfinance" target="_blank" rel="noopener">Instagram</a> &nbsp;·&nbsp;
+                  <a href="https://www.youtube.com/@LorainPortandFinanceAuthority" target="_blank" rel="noopener">YouTube</a>
+                </div>
+              </div>
+
+              <div class="contact-hours">
+                <h5>Office Hours</h5>
+                <div class="hours-row"><span class="day">Monday – Friday</span><span class="time">8:30 AM – 4:30 PM</span></div>
+                <div class="hours-row"><span class="day">Saturday</span><span class="time">Closed</span></div>
+                <div class="hours-row"><span class="day">Sunday</span><span class="time">Closed</span></div>
+                <p style="font-size:0.78rem;color:rgba(255,255,255,0.35);margin-top:0.75rem;">Hours may vary on holidays. Contact us to confirm.</p>
+              </div>
+            </div>
+
+            <!-- MAP PLACEHOLDER -->
+            <div class="map-embed" data-animate="fade-up">
+              <div class="map-embed-placeholder">
+                <span class="fas fa-map-marker-alt"></span>
+                <p>319 Black River Lane, Lorain, OH 44052</p>
+                <p style="margin-top:0.5rem;"><a href="https://maps.google.com/?q=319+Black+River+Lane+Lorain+OH+44052" target="_blank" rel="noopener">Open in Google Maps <i class="fas fa-external-link-alt" style="font-size:0.75rem;"></i></a></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- FORM COLUMN -->
+          <div class="contact-form" data-animate="fade-left">
+            <h3>Send Us a Message</h3>
+            <form id="contact-form" novalidate>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="cf-first">First Name *</label>
+                  <input type="text" id="cf-first" name="first_name" required autocomplete="given-name" />
+                </div>
+                <div class="form-group">
+                  <label for="cf-last">Last Name *</label>
+                  <input type="text" id="cf-last" name="last_name" required autocomplete="family-name" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="cf-email">Email Address *</label>
+                  <input type="email" id="cf-email" name="email" required autocomplete="email" />
+                </div>
+                <div class="form-group">
+                  <label for="cf-phone">Phone Number</label>
+                  <input type="tel" id="cf-phone" name="phone" autocomplete="tel" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="cf-subject">Subject / Topic *</label>
+                <select id="cf-subject" name="subject" required>
+                  <option value="">Please select a topic...</option>
+                  <option value="development">Economic Development &amp; Financing</option>
+                  <option value="brownfields">Brownfields Program</option>
+                  <option value="rfp">RFPs &amp; Bids</option>
+                  <option value="events">Events &amp; Programming</option>
+                  <option value="boat-tours">Boat Tours &amp; Recreation</option>
+                  <option value="facility-rental">Facility Rental Inquiry</option>
+                  <option value="media">Media &amp; Press</option>
+                  <option value="general">General Inquiry</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="cf-org">Organization / Company</label>
+                <input type="text" id="cf-org" name="organization" autocomplete="organization" />
+              </div>
+              <div class="form-group">
+                <label for="cf-message">Message *</label>
+                <textarea id="cf-message" name="message" required placeholder="Please describe your inquiry, question, or how we can help you..."></textarea>
+              </div>
+              <div class="form-group" style="display:flex;align-items:flex-start;gap:0.75rem;">
+                <input type="checkbox" id="cf-newsletter" name="newsletter" style="width:auto;margin-top:0.2rem;flex-shrink:0;" />
+                <label for="cf-newsletter" style="font-size:0.85rem;color:var(--gray-600);font-family:var(--font-body);font-weight:400;cursor:pointer;">Sign me up for the LPFA newsletter to receive event and development updates.</label>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem;">Send Message <i class="fas fa-paper-plane"></i></button>
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section bg-light">
+      <div class="container">
+        <div style="max-width:800px;margin:0 auto;">
+          <div class="section-header center" data-animate="fade-up">
+            <div class="section-label">Help &amp; Support</div>
+            <h2 class="section-title">Frequently Asked Questions</h2>
+          </div>
+          <div class="faq-list" data-animate="fade-up">
+
+            <div class="faq-item">
+              <div class="faq-question">How do I rent Black River Landing for a private event? <i class="fas fa-chevron-down"></i></div>
+              <div class="faq-answer">To inquire about renting Black River Landing or other LPFA facilities for a private event, please use the contact form above and select "Facility Rental Inquiry" as your topic. Our team will follow up to discuss availability, rates, and requirements.</div>
+            </div>
+
+            <div class="faq-item">
+              <div class="faq-question">How do I book a boat tour or private charter? <i class="fas fa-chevron-down"></i></div>
+              <div class="faq-answer">Visit our <a href="recreation.html" style="color:var(--blue-accent);">Recreation page</a> to learn about available tours and submit an inquiry. You can also call us at 440.204.2269 or email info@lorainport.com to check availability and pricing.</div>
+            </div>
+
+            <div class="faq-item">
+              <div class="faq-question">How do I learn about development financing opportunities? <i class="fas fa-chevron-down"></i></div>
+              <div class="faq-answer">Visit our <a href="development.html" style="color:var(--blue-accent);">Development &amp; Finance page</a> for an overview of our programs, including brownfields grants, property financing, and active RFPs. Contact our office directly to discuss a specific project or opportunity.</div>
+            </div>
+
+            <div class="faq-item">
+              <div class="faq-question">Is the Mile-Long Pier open to the public? <i class="fas fa-chevron-down"></i></div>
+              <div class="faq-answer">Yes, the Mile-Long Pier is generally open to the public for walking, fishing, and sightseeing, weather permitting. There is no admission fee. Please contact us for current accessibility and seasonal hours information.</div>
+            </div>
+
+            <div class="faq-item">
+              <div class="faq-question">How do I stay informed about upcoming events? <i class="fas fa-chevron-down"></i></div>
+              <div class="faq-answer">Subscribe to our newsletter using the form on our <a href="index.html#newsletter" style="color:var(--blue-accent);">homepage</a>, and follow us on <a href="https://www.facebook.com/lorainportfinance" target="_blank" rel="noopener" style="color:var(--blue-accent);">Facebook</a> and <a href="https://www.instagram.com/lorainportfinance" target="_blank" rel="noopener" style="color:var(--blue-accent);">Instagram</a> for the latest event announcements and waterfront news.</div>
+            </div>
+
+            <div class="faq-item">
+              <div class="faq-question">Is the Black River Wharf Boat Launch free to use? <i class="fas fa-chevron-down"></i></div>
+              <div class="faq-answer">Please contact our office at 440.204.2269 or info@lorainport.com for current information on boat launch fees, hours, and seasonal operation.</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-main"><div class="container"><div class="footer-grid">
+      <div class="footer-brand"><a href="index.html" class="logo footer-logo"><div class="logo-icon"><i class="fas fa-anchor"></i></div><div class="logo-text"><span class="logo-main">Lorain Port</span><span class="logo-sub">&amp; Finance Authority</span></div></a><p class="footer-tagline">Economic Development &middot; Waterborne Commerce &middot; Public Access to Waterways</p><div class="footer-social"><a href="https://www.facebook.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a><a href="https://www.instagram.com/lorainportfinance" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a><a href="https://www.youtube.com/@LorainPortandFinanceAuthority" target="_blank" rel="noopener" aria-label="YouTube"><i class="fab fa-youtube"></i></a><a href="https://www.linkedin.com/company/lorainport" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a></div></div>
+      <div class="footer-links"><h4>Quick Links</h4><ul><li><a href="index.html">Home</a></li><li><a href="development.html">Development &amp; Finance</a></li><li><a href="events.html">Events</a></li><li><a href="recreation.html">Boat Tours &amp; Recreation</a></li><li><a href="facilities.html">Facilities</a></li><li><a href="news.html">News</a></li><li><a href="about.html">About Us</a></li><li><a href="contact.html">Contact</a></li></ul></div>
+      <div class="footer-links"><h4>Development</h4><ul><li><a href="development.html#brownfields">Brownfields Program</a></li><li><a href="development.html#financing">Property Financing</a></li><li><a href="development.html#rfp">RFPs &amp; Bids</a></li><li><a href="development.html#commerce">Waterborne Commerce</a></li></ul></div>
+      <div class="footer-contact-col"><h4>Contact Us</h4><address><div class="footer-contact-item"><i class="fas fa-map-marker-alt"></i><div><p>319 Black River Lane</p><p>Lorain, OH 44052</p></div></div><div class="footer-contact-item"><i class="fas fa-phone-alt"></i><a href="tel:4402042269">440.204.2269</a></div><div class="footer-contact-item"><i class="fas fa-envelope"></i><a href="mailto:info@lorainport.com">info@lorainport.com</a></div></address><a href="contact.html" class="btn btn-gold btn-sm" style="margin-top:1.25rem;display:inline-flex;">Send a Message</a></div>
+    </div></div></div>
+    <div class="footer-bottom"><div class="container"><p>&copy; 2026 Lorain Port &amp; Finance Authority. All rights reserved.</p><div class="footer-bottom-links"><a href="#">Privacy Policy</a><a href="#">Terms of Use</a><a href="#">Accessibility</a></div></div></div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    // FAQ Accordion
+    document.querySelectorAll('.faq-question').forEach(q => {
+      q.addEventListener('click', () => {
+        const item = q.closest('.faq-item');
+        const isOpen = item.classList.contains('open');
+        document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+        if (!isOpen) item.classList.add('open');
+      });
+    });
+  </script>
+</body>
+</html>
