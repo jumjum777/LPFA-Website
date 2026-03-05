@@ -35,17 +35,10 @@
       box-shadow: var(--shadow-sm);
     }
     .event-list-card:hover { box-shadow: var(--shadow-md); transform: translateY(-4px); border-color: rgba(27,139,235,0.15); }
-    .elc-visual { height: 180px; position: relative; display: flex; align-items: flex-start; justify-content: space-between; padding: 1.25rem; }
-    .elc-fireworks { background: linear-gradient(135deg, #1a0533 0%, #2d0a5e 40%, #4a127a 70%, #1a0533 100%); background-image: url('images/event-concert-1.jpg'); background-size: cover; background-position: center top; }
-    .elc-concert { background: linear-gradient(135deg, #0a1a3a 0%, #1a3a6e 50%, #0d2b52 100%); background-image: url('images/event-concert-2.jpg'); background-size: cover; background-position: center; }
-    .elc-boattour { background: linear-gradient(135deg, #062a3d 0%, #0a4a6e 50%, #0d3a5c 100%); background-image: url('images/tour-history.jpg'); background-size: cover; background-position: center; }
-    .elc-community { background: linear-gradient(135deg, #0a2a0a 0%, #1a4a1a 50%, #0d3a0d 100%); background-image: url('images/fac-brl-1.jpg'); background-size: cover; background-position: center; }
-    .elc-recreation { background: linear-gradient(135deg, #0a2a3d 0%, #0a3a5e 50%, #0d2a4a 100%); background-image: url('images/tour-nature.jpg'); background-size: cover; background-position: center; }
-    .elc-date-badge { background: var(--gold); border-radius: var(--radius-sm); padding: 0.5rem 0.75rem; text-align: center; min-width: 52px; box-shadow: 0 4px 12px rgba(217,119,6,0.4); z-index: 2; }
-    .elc-month { display: block; font-family: var(--font-heading); font-weight: 800; font-size: 0.65rem; letter-spacing: 0.1em; color: rgba(255,255,255,0.8); text-transform: uppercase; }
-    .elc-day { display: block; font-family: var(--font-heading); font-weight: 900; font-size: 1.5rem; color: #fff; line-height: 1; }
-    .elc-tag { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.85); font-family: var(--font-heading); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 100px; align-self: flex-start; z-index: 2; }
     .elc-body { padding: 1.5rem; }
+    .elc-body-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+    .elc-tag { background: rgba(27,139,235,0.1); border: 1px solid rgba(27,139,235,0.2); color: var(--blue-accent); font-family: var(--font-heading); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 100px; }
+    .elc-date-inline { font-family: var(--font-heading); font-size: 0.75rem; font-weight: 700; color: var(--gold); letter-spacing: 0.02em; }
     .elc-body h3 { font-size: 1.05rem; margin-bottom: 0.5rem; }
     .elc-body p { font-size: 0.88rem; color: var(--gray-500); line-height: 1.6; margin-bottom: 1rem; }
     .elc-meta { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem; }
@@ -161,21 +154,17 @@
         <!-- FILTER BUTTONS -->
         <div class="events-filter" data-animate="fade-up">
           <button class="filter-btn active">All Events</button>
-          <button class="filter-btn">Concerts</button>
-          <button class="filter-btn">Family</button>
-          <button class="filter-btn">Recreation</button>
+          <button class="filter-btn">Rockin' On The River</button>
           <button class="filter-btn">Community</button>
+          <button class="filter-btn">Boat Tours</button>
         </div>
 
         <!-- EVENTS GRID -->
         <div class="events-list">
 
           <div class="event-list-card" data-animate="fade-up" data-delay="0">
-            <div class="elc-visual elc-concert">
-              <div class="elc-date-badge"><span class="elc-month">Every</span><span class="elc-day" style="font-size:0.9rem;padding-top:0.2rem;">Friday</span></div>
-              <span class="elc-tag">Concert Series</span>
-            </div>
             <div class="elc-body">
+              <div class="elc-body-header"><span class="elc-tag">Rockin' On The River</span><span class="elc-date-inline">Every Friday</span></div>
               <h3>Rockin' on the River</h3>
               <p>Lorain's beloved summer concert series features live music on the Black River Landing stage, drawing thousands of music fans each summer Friday night.</p>
               <div class="elc-meta">
@@ -188,11 +177,8 @@
           </div>
 
           <div class="event-list-card" data-animate="fade-up" data-delay="100">
-            <div class="elc-visual elc-fireworks">
-              <div class="elc-date-badge"><span class="elc-month">Jul</span><span class="elc-day">4</span></div>
-              <span class="elc-tag">Annual</span>
-            </div>
             <div class="elc-body">
+              <div class="elc-body-header"><span class="elc-tag">Community</span><span class="elc-date-inline">Jul 4</span></div>
               <h3>Independence Day Fireworks</h3>
               <p>Lorain's spectacular Independence Day celebration with fireworks over Lake Erie at Black River Landing. Free for the whole family.</p>
               <div class="elc-meta">
@@ -205,11 +191,8 @@
           </div>
 
           <div class="event-list-card" data-animate="fade-up" data-delay="200">
-            <div class="elc-visual elc-boattour">
-              <div class="elc-date-badge" style="display:flex;align-items:center;justify-content:center;min-width:52px;"><i class="fas fa-sailboat" style="color:#fff;font-size:1.4rem;"></i></div>
-              <span class="elc-tag">Year-Round</span>
-            </div>
             <div class="elc-body">
+              <div class="elc-body-header"><span class="elc-tag">Boat Tours</span><span class="elc-date-inline">Seasonal</span></div>
               <h3>History Boat Tours</h3>
               <p>Narrated cruises exploring the history and heritage of Lorain's waterfront, Black River, and Lake Erie. Perfect for history buffs and families.</p>
               <div class="elc-meta">
@@ -221,11 +204,8 @@
           </div>
 
           <div class="event-list-card" data-animate="fade-up" data-delay="0">
-            <div class="elc-visual elc-recreation">
-              <div class="elc-date-badge" style="display:flex;align-items:center;justify-content:center;min-width:52px;"><i class="fas fa-leaf" style="color:#fff;font-size:1.4rem;"></i></div>
-              <span class="elc-tag">Recreation</span>
-            </div>
             <div class="elc-body">
+              <div class="elc-body-header"><span class="elc-tag">Boat Tours</span><span class="elc-date-inline">Spring&ndash;Fall</span></div>
               <h3>Nature Cruises</h3>
               <p>Relaxing nature-focused boat tours exploring the wildlife and natural beauty of the Black River estuary and Lake Erie shoreline.</p>
               <div class="elc-meta">
@@ -237,11 +217,8 @@
           </div>
 
           <div class="event-list-card" data-animate="fade-up" data-delay="100">
-            <div class="elc-visual elc-community">
-              <div class="elc-date-badge" style="display:flex;align-items:center;justify-content:center;min-width:52px;"><i class="fas fa-users" style="color:#fff;font-size:1.4rem;"></i></div>
-              <span class="elc-tag">Community</span>
-            </div>
             <div class="elc-body">
+              <div class="elc-body-header"><span class="elc-tag">Community</span><span class="elc-date-inline">Year-Round</span></div>
               <h3>Community Gatherings</h3>
               <p>Black River Landing hosts a variety of community events, festivals, and public gatherings throughout the year. Check our newsletter for upcoming dates.</p>
               <div class="elc-meta">
@@ -253,11 +230,8 @@
           </div>
 
           <div class="event-list-card" data-animate="fade-up" data-delay="200">
-            <div class="elc-visual elc-boattour" style="background: linear-gradient(135deg, #1a1a0a 0%, #3a3a10 50%, #2a2a0a 100%);">
-              <div class="elc-date-badge" style="display:flex;align-items:center;justify-content:center;min-width:52px;"><i class="fas fa-star" style="color:#fff;font-size:1.4rem;"></i></div>
-              <span class="elc-tag">Private</span>
-            </div>
             <div class="elc-body">
+              <div class="elc-body-header"><span class="elc-tag">Boat Tours</span><span class="elc-date-inline">By Appointment</span></div>
               <h3>Private Charters &amp; Events</h3>
               <p>Host your private event, corporate outing, or group charter on the water. Our team will coordinate a memorable experience on Lake Erie.</p>
               <div class="elc-meta">
