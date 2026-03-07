@@ -29,10 +29,10 @@ export default function Footer() {
               <ul>
                 <li><Link href="/">Home</Link></li>
                 <li><Link href="/development">Development &amp; Finance</Link></li>
-                <li><Link href="/events">Events</Link></li>
-                <li><Link href="/recreation">Boat Tours &amp; Recreation</Link></li>
+                <li><Link href="/events">Events &amp; Boat Tours</Link></li>
                 <li><Link href="/facilities">Facilities</Link></li>
                 <li><Link href="/news">News</Link></li>
+                <li><Link href="/marine">Marine Forecast</Link></li>
                 <li><Link href="/about">About Us</Link></li>
                 <li><Link href="/contact">Contact</Link></li>
               </ul>

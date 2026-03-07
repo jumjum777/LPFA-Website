@@ -1,5 +1,6 @@
 import HeaderClient from './HeaderClient';
 import ThemeToggle from '../ui/ThemeToggle';
+import MarineAlertBanner from './MarineAlertBanner';
 import Link from 'next/link';
 
 export default function Header() {
@@ -36,6 +37,8 @@ export default function Header() {
 
             <ul className="nav-menu" id="nav-menu" role="menubar">
               <li role="none"><Link href="/" role="menuitem">Home</Link></li>
+              <li role="none"><Link href="/news" role="menuitem">News</Link></li>
+              <li role="none"><Link href="/donate" role="menuitem">Stage Project</Link></li>
               <li className="has-dropdown" role="none">
                 <Link href="/development" role="menuitem" aria-haspopup="true" aria-expanded="false">Development &amp; Finance <i className="fas fa-chevron-down"></i></Link>
                 <ul className="dropdown" role="menu" aria-label="Development & Finance">
@@ -45,42 +48,25 @@ export default function Header() {
                   <li role="none"><Link href="/development#commerce" role="menuitem">Waterborne Commerce</Link></li>
                 </ul>
               </li>
-              <li role="none"><Link href="/events" role="menuitem">Events</Link></li>
+              <li role="none"><Link href="/events" role="menuitem">Events &amp; Boat Tours</Link></li>
+              <li role="none"><Link href="/marine" role="menuitem">Marine Forecast</Link></li>
               <li className="has-dropdown" role="none">
-                <Link href="/recreation" role="menuitem" aria-haspopup="true" aria-expanded="false">Recreation <i className="fas fa-chevron-down"></i></Link>
-                <ul className="dropdown" role="menu" aria-label="Recreation">
-                  <li role="none"><Link href="/recreation#history-tours" role="menuitem">History &amp; Lighthouse Tours</Link></li>
-                  <li role="none"><Link href="/recreation#nature-tours" role="menuitem">Nature &amp; Sunset Cruises</Link></li>
-                  <li role="none"><Link href="/recreation#water-taxi" role="menuitem">Water Taxi</Link></li>
-                  <li role="none"><Link href="/recreation#charters" role="menuitem">Private Charters</Link></li>
+                <Link href="/about" role="menuitem" aria-haspopup="true" aria-expanded="false">About <i className="fas fa-chevron-down"></i></Link>
+                <ul className="dropdown" role="menu" aria-label="About">
+                  <li role="none"><Link href="/about" role="menuitem">About Us</Link></li>
+                  <li role="none"><Link href="/staff" role="menuitem">Staff</Link></li>
+                  <li role="none"><Link href="/board" role="menuitem">Board of Directors</Link></li>
+                  <li role="none"><Link href="/didyouknow" role="menuitem">Did You Know?</Link></li>
+                  <li role="none"><Link href="/facilities" role="menuitem">Facilities</Link></li>
                 </ul>
               </li>
-              <li className="has-dropdown" role="none">
-                <Link href="/facilities" role="menuitem" aria-haspopup="true" aria-expanded="false">Facilities <i className="fas fa-chevron-down"></i></Link>
-                <ul className="dropdown" role="menu" aria-label="Facilities">
-                  <li role="none"><Link href="/facilities#black-river-landing" role="menuitem">Black River Landing</Link></li>
-                  <li role="none"><Link href="/facilities#lakeside-landing" role="menuitem">Lakeside Landing</Link></li>
-                  <li role="none"><Link href="/facilities#mile-long-pier" role="menuitem">Mile-Long Pier</Link></li>
-                  <li role="none"><Link href="/facilities#boat-launch" role="menuitem">Boat Launch</Link></li>
-                  <li role="none"><Link href="/facilities#riverside-park" role="menuitem">Riverside Park</Link></li>
-                </ul>
-              </li>
-              <li role="none"><Link href="/news" role="menuitem">News</Link></li>
-              <li className="has-dropdown"><Link href="/about">About <i className="fas fa-chevron-down"></i></Link>
-                <ul className="dropdown">
-                  <li><Link href="/about">About Us</Link></li>
-                  <li><Link href="/staff">Staff</Link></li>
-                  <li><Link href="/board">Board of Directors</Link></li>
-                  <li><Link href="/didyouknow">Did You Know?</Link></li>
-                </ul>
-              </li>
-              <li><Link href="/donate">Stage Project</Link></li>
               <li role="none"><Link href="/contact" className="nav-cta" role="menuitem">Contact Us</Link></li>
             </ul>
             <ThemeToggle />
           </div>
         </div>
       </nav>
+      <MarineAlertBanner />
     </HeaderClient>
   );
 }

@@ -67,8 +67,12 @@ export default function HeaderClient({ children }: { children: React.ReactNode }
       if (e.key === 'Escape') closeMenu();
     };
 
-    const handleLinkClick = () => {
-      if (window.innerWidth < 768) closeMenu();
+    const handleLinkClick = (e: Event) => {
+      if (window.innerWidth < 768) {
+        const target = e.currentTarget as HTMLElement;
+        if (target.closest('.has-dropdown') && target.parentElement?.classList.contains('has-dropdown')) return;
+        closeMenu();
+      }
     };
 
     toggle.addEventListener('click', handleToggle);
@@ -118,13 +122,13 @@ export default function HeaderClient({ children }: { children: React.ReactNode }
       '/': '/',
       '/development': '/development',
       '/events': '/events',
-      '/recreation': '/recreation',
       '/facilities': '/facilities',
       '/news': '/news',
       '/about': '/about',
       '/staff': '/about',
       '/board': '/about',
       '/didyouknow': '/about',
+      '/marine': '/marine',
       '/donate': '/donate',
       '/contact': '/contact',
     };

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import ScrollAnimator from '@/components/ui/ScrollAnimator';
+import FacilityJumpNav from '@/components/facilities/FacilityJumpNav';
 
 export const metadata = { title: 'Facilities' };
 
@@ -22,18 +23,7 @@ export default function FacilitiesPage() {
       </section>
 
       {/* JUMP LINKS */}
-      <div className="facility-jump-nav">
-        <div className="container">
-          <div className="facility-jump-nav-inner">
-            <span className="facility-jump-label">Jump to:</span>
-            <a href="#black-river-landing" className="facility-jump-link">Black River Landing</a>
-            <a href="#mile-long-pier" className="facility-jump-link">Mile-Long Pier</a>
-            <a href="#lakeside-landing" className="facility-jump-link">Lakeside Landing</a>
-            <a href="#boat-launch" className="facility-jump-link">Boat Launch</a>
-            <a href="#riverside-park" className="facility-jump-link">Riverside Park</a>
-          </div>
-        </div>
-      </div>
+      <FacilityJumpNav />
 
       {/* BLACK RIVER LANDING */}
       <section className="section" id="black-river-landing">

@@ -11,15 +11,13 @@ const tourCategories = ['History Excursion', 'Lighthouse Tour', 'Lighthouse Dinn
 const DEFAULT_POLICY = 'ALL SALES ARE FINAL. No refunds. The Lorain Port and Finance Authority reserves the right to cancel boat trips due to inclement weather and will exchange for future trips to the registrant. Customers will be notified of cancellations via phone and email.';
 const SIP_N_SWAY_POLICY = DEFAULT_POLICY + '\n\nEach passenger is permitted to bring 36 oz. of beer or 18 oz. of wine. (Three 12 oz. cans OR a 32 oz. growler per person). You could also bring a 6-pack of beer or a full bottle of wine for two people to share. Absolutely NO liquor is allowed on board.';
 
-const TOUR_DEFAULTS: Record<string, { name: string; description: string; departure_location: string; duration: string; price: string; age_restriction: string; booking_info: string }> = {
+const TOUR_DEFAULTS: Record<string, { name: string; description: string; departure_location: string; duration: string; price: string }> = {
   'History Excursion': {
     name: 'History Excursion',
     description: `<p>Brush up on Lorain's past and learn the importance the waterways played in the development of the International City. This two-hour history tour is narrated by a Lorain Historical Society member and cruises past the Lorain Lighthouse and other historic landmarks along the Black River. Imagine what life was like in the early days of Lorain while passing the sites of industrial giants, American Shipbuilding and United States Steel, and witness the rebirth of wildlife preserves on the Black River.</p>`,
     departure_location: 'Alliance Marine at Port Lorain Dock A',
     duration: '2 hours',
     price: '$25',
-    age_restriction: '',
-    booking_info: '',
   },
   'Lighthouse Tour': {
     name: 'Lighthouse Tour',
@@ -27,8 +25,6 @@ const TOUR_DEFAULTS: Record<string, { name: string; description: string; departu
     departure_location: 'Alliance Marine at Port Lorain Dock A',
     duration: 'Shuttles run every 45 minutes',
     price: '$25',
-    age_restriction: '',
-    booking_info: '',
   },
   'Lighthouse Dinner': {
     name: 'Lighthouse Dinner',
@@ -36,8 +32,6 @@ const TOUR_DEFAULTS: Record<string, { name: string; description: string; departu
     departure_location: 'Alliance Marine at Port Lorain Dock A',
     duration: '',
     price: '',
-    age_restriction: '',
-    booking_info: '440-752-8955',
   },
   'River Nature': {
     name: 'River Nature',
@@ -45,8 +39,6 @@ const TOUR_DEFAULTS: Record<string, { name: string; description: string; departu
     departure_location: 'Alliance Marine at Port Lorain Dock A',
     duration: '2 hours',
     price: '$20',
-    age_restriction: '',
-    booking_info: '',
   },
   'Sunset Cruise': {
     name: 'Sunset Cruise',
@@ -54,8 +46,6 @@ const TOUR_DEFAULTS: Record<string, { name: string; description: string; departu
     departure_location: 'Alliance Marine at Port Lorain Dock A',
     duration: '1.5 hours',
     price: '$20',
-    age_restriction: '',
-    booking_info: '',
   },
   "Sip N' Sway": {
     name: "Sip N' Sway",
@@ -63,8 +53,6 @@ const TOUR_DEFAULTS: Record<string, { name: string; description: string; departu
     departure_location: 'Alliance Marine at Port Lorain Dock A',
     duration: '2 hours',
     price: '$25',
-    age_restriction: '21+',
-    booking_info: '',
   },
   'Water Taxi': {
     name: 'Water Taxi',
@@ -72,13 +60,64 @@ const TOUR_DEFAULTS: Record<string, { name: string; description: string; departu
     departure_location: 'Alliance Marine at Port Lorain Dock A',
     duration: '',
     price: 'Free',
-    age_restriction: '',
-    booking_info: '',
   },
 };
 
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const MONTH_ORDER: Record<string, number> = Object.fromEntries(MONTHS.map((m, i) => [m, i + 1]));
+const MONTH_ABBR_TO_IDX: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+
 function slugify(text: string) {
   return text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').trim();
+}
+
+function formatTimeDisplay(time: string): string {
+  const [h, m] = time.split(':').map(Number);
+  const period = h >= 12 ? 'pm' : 'am';
+  const hour = h % 12 || 12;
+  return m === 0 ? `${hour}${period}` : `${hour}:${m.toString().padStart(2, '0')}${period}`;
+}
+
+function formatDateEntry(dateStr: string, timeStr: string): string {
+  const d = new Date(dateStr + 'T12:00:00');
+  if (isNaN(d.getTime())) return '';
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()} \u2014 ${formatTimeDisplay(timeStr)}`;
+}
+
+function formatDatePreview(dateStr: string, timeStr: string): string {
+  const d = new Date(dateStr + 'T12:00:00');
+  if (isNaN(d.getTime())) return '';
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const day = d.getDate();
+  const suffix = day === 1 || day === 21 || day === 31 ? 'st' : day === 2 || day === 22 ? 'nd' : day === 3 || day === 23 ? 'rd' : 'th';
+  return `${days[d.getDay()]}, ${months[d.getMonth()]} ${day}${suffix} at ${formatTimeDisplay(timeStr)}`;
+}
+
+function getMonthDateRange(month: string, year: number): { min: string; max: string } | null {
+  const idx = MONTHS.indexOf(month);
+  if (idx === -1) return null;
+  const m = (idx + 1).toString().padStart(2, '0');
+  const lastDay = new Date(year, idx + 1, 0).getDate();
+  return { min: `${year}-${m}-01`, max: `${year}-${m}-${lastDay}` };
+}
+
+function parseDateString(display: string, year: number): { date: string; time: string } | null {
+  const match = display.match(/\w+,\s+(\w+)\s+(\d+)\s*[\u2014\u2013\-]+\s*(\d+)(?::(\d+))?\s*(am|pm)/i);
+  if (!match) return null;
+  const [, monthAbbr, day, hours, minutes, period] = match;
+  const monthIdx = MONTH_ABBR_TO_IDX[monthAbbr];
+  if (monthIdx === undefined) return null;
+  let h = parseInt(hours);
+  if (period.toLowerCase() === 'pm' && h !== 12) h += 12;
+  if (period.toLowerCase() === 'am' && h === 12) h = 0;
+  const m = minutes ? parseInt(minutes) : 0;
+  return {
+    date: `${year}-${(monthIdx + 1).toString().padStart(2, '0')}-${day.padStart(2, '0')}`,
+    time: `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`,
+  };
 }
 
 export default function TourEditorPage() {
@@ -88,12 +127,13 @@ export default function TourEditorPage() {
   const isNew = id === 'new';
 
   const [form, setForm] = useState({
-    name: '', slug: '', section: tourCategories[0], price: '', price_note: '/ person',
+    name: '', slug: '', section: '', price: '',
     description: '', duration: '', departure_location: 'Alliance Marine at Port Lorain Dock A',
-    age_restriction: '', booking_info: '', sort_order: 0, is_published: true,
-    peekpro_product_id: '', event_policy: DEFAULT_POLICY,
+    sort_order: 0, is_published: true, peekpro_product_id: '', event_policy: DEFAULT_POLICY,
   });
   const [schedules, setSchedules] = useState<Partial<TourSchedule>[]>([]);
+  const [monthDates, setMonthDates] = useState<{ date: string; time: string }[][]>([]);
+  const [seasonYear, setSeasonYear] = useState(new Date().getFullYear());
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!isNew);
 
@@ -105,7 +145,17 @@ export default function TourEditorPage() {
         supabase.from('tour_schedules').select('*').eq('tour_id', id).order('month_order'),
       ]).then(([tourRes, schedRes]) => {
         if (tourRes.data) setForm(prev => ({ ...prev, ...tourRes.data }));
-        if (schedRes.data) setSchedules(schedRes.data);
+        if (schedRes.data) {
+          setSchedules(schedRes.data);
+          const entries = schedRes.data.map(sched => {
+            const yr = sched.year || new Date().getFullYear();
+            return (sched.dates || [])
+              .map((d: string) => parseDateString(d, yr))
+              .filter(Boolean) as { date: string; time: string }[];
+          });
+          setMonthDates(entries);
+          if (schedRes.data[0]?.year) setSeasonYear(schedRes.data[0].year);
+        }
         setLoading(false);
       });
     }
@@ -125,8 +175,6 @@ export default function TourEditorPage() {
         departure_location: defaults.departure_location || prev.departure_location,
         duration: defaults.duration || prev.duration,
         price: defaults.price || prev.price,
-        age_restriction: defaults.age_restriction || prev.age_restriction,
-        booking_info: defaults.booking_info || prev.booking_info,
         event_policy: cat === "Sip N' Sway" ? SIP_N_SWAY_POLICY : DEFAULT_POLICY,
       }));
       if (isNew) {
@@ -136,21 +184,57 @@ export default function TourEditorPage() {
   }
 
   function addScheduleMonth() {
-    setSchedules([...schedules, {
-      year: new Date().getFullYear(),
+    setSchedules(prev => [...prev, {
+      year: seasonYear,
       month: '',
-      month_order: schedules.length + 1,
+      month_order: prev.length + 1,
       dates: [],
       source: 'manual',
     }]);
+    setMonthDates(prev => [...prev, []]);
   }
 
-  function updateSchedule(index: number, field: string, value: unknown) {
-    setSchedules(prev => prev.map((s, i) => i === index ? { ...s, [field]: value } : s));
+  function addSeasonMonths() {
+    const existing = schedules.map(s => s.month);
+    const toAdd = ['June', 'July', 'August', 'September'].filter(m => !existing.includes(m));
+    if (toAdd.length === 0) return;
+    setSchedules(prev => [...prev, ...toAdd.map(m => ({
+      year: seasonYear, month: m, month_order: MONTH_ORDER[m],
+      dates: [] as string[], source: 'manual' as const,
+    }))]);
+    setMonthDates(prev => [...prev, ...toAdd.map(() => [] as { date: string; time: string }[])]);
+  }
+
+  function updateScheduleMonth(index: number, month: string) {
+    setSchedules(prev => prev.map((s, i) => i === index ? { ...s, month, month_order: MONTH_ORDER[month] || i + 1 } : s));
   }
 
   function removeSchedule(index: number) {
     setSchedules(prev => prev.filter((_, i) => i !== index));
+    setMonthDates(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function addDateToMonth(monthIndex: number) {
+    const sched = schedules[monthIndex];
+    const range = sched?.month ? getMonthDateRange(sched.month, seasonYear) : null;
+    const defaultDate = range ? range.min : '';
+    setMonthDates(prev => prev.map((dates, i) =>
+      i === monthIndex ? [...dates, { date: defaultDate, time: '14:00' }] : dates
+    ));
+  }
+
+  function updateDateEntry(monthIndex: number, dateIndex: number, field: 'date' | 'time', value: string) {
+    setMonthDates(prev => prev.map((dates, mi) =>
+      mi === monthIndex ? dates.map((entry, di) =>
+        di === dateIndex ? { ...entry, [field]: value } : entry
+      ) : dates
+    ));
+  }
+
+  function removeDateEntry(monthIndex: number, dateIndex: number) {
+    setMonthDates(prev => prev.map((dates, mi) =>
+      mi === monthIndex ? dates.filter((_, di) => di !== dateIndex) : dates
+    ));
   }
 
   async function handleSave() {
@@ -174,8 +258,10 @@ export default function TourEditorPage() {
       await supabase.from('tour_schedules').delete().eq('tour_id', id).eq('source', 'manual');
     }
 
-    // Insert schedules
-    const manualSchedules = schedules.filter(s => s.source === 'manual' && s.month);
+    // Insert schedules with formatted dates from monthDates
+    const manualSchedules = schedules
+      .map((s, i) => ({ ...s, dates: (monthDates[i] || []).filter(e => e.date).map(e => formatDateEntry(e.date, e.time)).filter(Boolean) }))
+      .filter(s => s.source === 'manual' && s.month);
     if (manualSchedules.length > 0) {
       await supabase.from('tour_schedules').insert(
         manualSchedules.map(s => ({ ...s, tour_id: tourId }))
@@ -215,15 +301,9 @@ export default function TourEditorPage() {
               <label>Description</label>
               <RichTextEditor content={form.description} onChange={(val) => update('description', val)} />
             </div>
-            <div className="admin-form-row">
-              <div className="admin-form-group">
-                <label>Price</label>
-                <input type="text" value={form.price} onChange={e => update('price', e.target.value)} placeholder="$25" />
-              </div>
-              <div className="admin-form-group">
-                <label>Price Note</label>
-                <input type="text" value={form.price_note || ''} onChange={e => update('price_note', e.target.value)} placeholder="/ person" />
-              </div>
+            <div className="admin-form-group">
+              <label>Price</label>
+              <input type="text" value={form.price} onChange={e => update('price', e.target.value)} placeholder="$25" />
             </div>
             <div className="admin-form-row">
               <div className="admin-form-group">
@@ -233,16 +313,6 @@ export default function TourEditorPage() {
               <div className="admin-form-group">
                 <label>Departure Location</label>
                 <input type="text" value={form.departure_location || ''} onChange={e => update('departure_location', e.target.value)} />
-              </div>
-            </div>
-            <div className="admin-form-row">
-              <div className="admin-form-group">
-                <label>Age Restriction</label>
-                <input type="text" value={form.age_restriction || ''} onChange={e => update('age_restriction', e.target.value)} placeholder="All ages" />
-              </div>
-              <div className="admin-form-group">
-                <label>Booking Info</label>
-                <input type="text" value={form.booking_info || ''} onChange={e => update('booking_info', e.target.value)} placeholder="Phone or URL" />
               </div>
             </div>
             <div className="admin-form-group">
@@ -255,50 +325,112 @@ export default function TourEditorPage() {
           <div className="admin-card" style={{ marginTop: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h3>Schedule</h3>
-              <button onClick={addScheduleMonth} className="admin-btn admin-btn-secondary" type="button">
-                <i className="fas fa-plus"></i> Add Month
-              </button>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button onClick={addSeasonMonths} className="admin-btn admin-btn-secondary" type="button">
+                  <i className="fas fa-sun"></i> Add Season
+                </button>
+                <button onClick={addScheduleMonth} className="admin-btn admin-btn-secondary" type="button">
+                  <i className="fas fa-plus"></i> Add Month
+                </button>
+              </div>
+            </div>
+
+            <div className="admin-form-group" style={{ maxWidth: '160px', marginBottom: '1rem' }}>
+              <label>Season Year</label>
+              <input type="number" value={seasonYear} onChange={e => setSeasonYear(parseInt(e.target.value) || new Date().getFullYear())} />
             </div>
 
             {schedules.length === 0 ? (
-              <p style={{ color: '#64748B', fontSize: '0.9rem' }}>No schedule entries yet. Click &ldquo;Add Month&rdquo; to add dates.</p>
+              <p style={{ color: '#64748B', fontSize: '0.9rem' }}>No schedule entries yet. Use &ldquo;Add Season&rdquo; to quickly add June&ndash;September, or &ldquo;Add Month&rdquo; for individual months.</p>
             ) : (
               schedules.map((sched, i) => (
                 <div key={i} className="admin-schedule-row">
-                  {sched.source === 'peekpro' && (
-                    <div className="admin-badge" style={{ marginBottom: '0.5rem', background: '#05966915', color: '#059669' }}>
-                      <i className="fas fa-sync"></i> Synced from PeekPro
-                    </div>
-                  )}
-                  <div className="admin-form-row">
-                    <div className="admin-form-group">
-                      <label>Month</label>
-                      <input type="text" value={sched.month || ''} onChange={e => updateSchedule(i, 'month', e.target.value)} placeholder="June" disabled={sched.source === 'peekpro'} />
-                    </div>
-                    <div className="admin-form-group">
-                      <label>Year</label>
-                      <input type="number" value={sched.year || new Date().getFullYear()} onChange={e => updateSchedule(i, 'year', parseInt(e.target.value))} disabled={sched.source === 'peekpro'} />
-                    </div>
-                    <div className="admin-form-group">
-                      <label>Order</label>
-                      <input type="number" value={sched.month_order || 0} onChange={e => updateSchedule(i, 'month_order', parseInt(e.target.value))} />
+                  {/* Month Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      {sched.source === 'peekpro' ? (
+                        <>
+                          <span className="admin-badge" style={{ background: '#05966915', color: '#059669' }}>
+                            <i className="fas fa-sync"></i> PeekPro
+                          </span>
+                          <strong>{sched.month} {sched.year}</strong>
+                        </>
+                      ) : (
+                        <>
+                          <select
+                            value={sched.month || ''}
+                            onChange={e => updateScheduleMonth(i, e.target.value)}
+                            style={{ width: 'auto', minWidth: '140px' }}
+                          >
+                            <option value="">Select Month</option>
+                            {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+                          </select>
+                          <span style={{ fontSize: '0.85rem', color: '#64748B' }}>{seasonYear}</span>
+                        </>
+                      )}
                     </div>
                     {sched.source !== 'peekpro' && (
-                      <button onClick={() => removeSchedule(i)} className="admin-btn-icon danger" style={{ alignSelf: 'flex-end', marginBottom: '0.5rem' }}>
+                      <button onClick={() => removeSchedule(i)} className="admin-btn-icon danger" title="Remove Month">
                         <i className="fas fa-trash"></i>
                       </button>
                     )}
                   </div>
-                  <div className="admin-form-group">
-                    <label>Dates (comma separated)</label>
-                    <input
-                      type="text"
-                      value={(sched.dates || []).join(', ')}
-                      onChange={e => updateSchedule(i, 'dates', e.target.value.split(',').map(d => d.trim()).filter(Boolean))}
-                      placeholder="Sun, Jun 8 — 2pm, Fri, Jun 13 — 2pm"
-                      disabled={sched.source === 'peekpro'}
-                    />
-                  </div>
+
+                  {/* Date Entries */}
+                  {(monthDates[i] || []).map((entry, j) => (
+                    <div key={j} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <input
+                        type="date"
+                        value={entry.date}
+                        onChange={e => updateDateEntry(i, j, 'date', e.target.value)}
+                        disabled={sched.source === 'peekpro'}
+                        style={{ flex: '0 0 160px' }}
+                        {...(sched.month ? (() => { const r = getMonthDateRange(sched.month!, seasonYear); return r ? { min: r.min, max: r.max } : {}; })() : {})}
+                      />
+                      <input
+                        type="time"
+                        value={entry.time}
+                        onChange={e => updateDateEntry(i, j, 'time', e.target.value)}
+                        disabled={sched.source === 'peekpro'}
+                        style={{ flex: '0 0 120px' }}
+                      />
+                      {entry.date && (
+                        <span style={{ fontSize: '0.82rem', color: '#64748B', whiteSpace: 'nowrap' }}>
+                          {formatDatePreview(entry.date, entry.time)}
+                        </span>
+                      )}
+                      {sched.source !== 'peekpro' && (
+                        <button
+                          onClick={() => removeDateEntry(i, j)}
+                          className="admin-btn-icon danger"
+                          style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem' }}
+                          title="Remove date"
+                          type="button"
+                        >
+                          <i className="fas fa-times"></i>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* PeekPro dates shown as read-only text */}
+                  {sched.source === 'peekpro' && (monthDates[i] || []).length === 0 && (sched.dates || []).length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                      {(sched.dates || []).map((d, j) => (
+                        <span key={j} style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.3rem 0.6rem', fontSize: '0.78rem', fontWeight: 500 }}>{d}</span>
+                      ))}
+                    </div>
+                  )}
+
+                  {sched.source !== 'peekpro' && (
+                    <button
+                      onClick={() => addDateToMonth(i)}
+                      type="button"
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.5rem', padding: '0.4rem 0.75rem', fontSize: '0.82rem', color: '#1B8BEB', background: 'rgba(27,139,235,0.08)', border: '1px dashed rgba(27,139,235,0.3)', borderRadius: '6px', cursor: 'pointer' }}
+                    >
+                      <i className="fas fa-plus" style={{ fontSize: '0.7rem' }}></i> Add Date
+                    </button>
+                  )}
                 </div>
               ))
             )}
@@ -311,16 +443,9 @@ export default function TourEditorPage() {
             <div className="admin-form-group">
               <label>Category</label>
               <select value={form.section} onChange={e => handleCategoryChange(e.target.value)}>
+                <option value="" disabled>Select Tour</option>
                 {tourCategories.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
-            </div>
-            <div className="admin-form-group">
-              <label>URL Slug</label>
-              <input type="text" value={form.slug} onChange={e => update('slug', e.target.value)} />
-            </div>
-            <div className="admin-form-group">
-              <label>Sort Order</label>
-              <input type="number" value={form.sort_order} onChange={e => update('sort_order', parseInt(e.target.value) || 0)} />
             </div>
             <div className="admin-form-group">
               <label>PeekPro Product ID</label>

@@ -49,7 +49,8 @@
   /* Header heights */
   --header-top-h: 38px;
   --nav-h: 72px;
-  --header-total: calc(var(--header-top-h) + var(--nav-h));
+  --alert-banner-h: 0px;
+  --header-total: calc(var(--header-top-h) + var(--nav-h) + var(--alert-banner-h));
 }
 
 /* ---------------------------------------------------------
@@ -343,6 +344,10 @@ p { line-height: 1.7; color: var(--gray-600); }
   color: var(--gold-muted);
 }
 
+@media (max-width: 768px) {
+  .header-top { display: none; }
+}
+
 /* Main Nav */
 .main-nav {
   background: var(--white);
@@ -577,9 +582,9 @@ p { line-height: 1.7; color: var(--gray-600); }
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at 30% 20%, rgba(11,31,58,0.55) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 60%, rgba(7,25,46,0.7) 0%, transparent 60%),
-    linear-gradient(160deg, rgba(11,31,58,0.82) 0%, rgba(13,43,78,0.78) 35%, rgba(10,32,64,0.75) 65%, rgba(7,25,46,0.85) 100%);
+    radial-gradient(ellipse at 30% 20%, rgba(11,31,58,0.15) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 60%, rgba(7,25,46,0.18) 0%, transparent 60%),
+    linear-gradient(160deg, rgba(11,31,58,0.3) 0%, rgba(13,43,78,0.25) 35%, rgba(10,32,64,0.2) 65%, rgba(7,25,46,0.3) 100%);
 }
 
 .hero-bg-photo {
@@ -1805,11 +1810,25 @@ p { line-height: 1.7; color: var(--gray-600); }
 @media (max-width: 768px) {
   :root {
     --section-padding: 3.5rem;
+    --header-top-h: 0px;
   }
 
-  .header-address { display: none; }
+  .nav-inner {
+    justify-content: center;
+    position: relative;
+  }
 
-  .nav-toggle { display: flex; }
+  .logo {
+    margin: 0 auto;
+  }
+
+  .nav-toggle {
+    display: flex;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+  }
 
   .nav-menu {
     position: fixed;
@@ -1935,7 +1954,7 @@ p { line-height: 1.7; color: var(--gray-600); }
   .theme-toggle {
     position: absolute;
     top: 50%;
-    right: 60px;
+    right: 44px;
     transform: translateY(-50%);
     margin-left: 0;
   }
@@ -2642,6 +2661,110 @@ p { line-height: 1.7; color: var(--gray-600); }
 @media (max-width: 900px) { .events-list { grid-template-columns: 1fr 1fr; } .featured-event-banner { grid-template-columns: 1fr; text-align: center; } .feb-meta { justify-content: center; } }
 @media (max-width: 600px) { .events-list { grid-template-columns: 1fr; } }
 
+/* Compact event/tour cards — 6 per row on desktop */
+.events-list-compact { grid-template-columns: repeat(6, 1fr); gap: 1rem; }
+.event-card-compact .elc-body { padding: 0.85rem; }
+.event-card-compact .elc-tag { font-size: 0.6rem; padding: 0.2rem 0.5rem; }
+.event-card-compact .elc-tag-tour { background: rgba(217,119,6,0.1); border-color: rgba(217,119,6,0.2); color: var(--gold); }
+.event-card-compact .elc-event-date { font-size: 0.88rem; margin-bottom: 0.35rem; }
+.event-card-compact .elc-body h3 { font-size: 0.85rem; margin-bottom: 0.35rem; }
+.event-card-compact .elc-body-header { margin-bottom: 0.5rem; }
+.event-card-compact .elc-compact-lineup { margin-bottom: 0.5rem; }
+/* Compact header image */
+.elc-compact-img {
+  width: 100%; height: 100px; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--gray-50);
+}
+.elc-compact-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.elc-compact-img .logo-dark { display: none; }
+.elc-compact-img-logo { padding: 0.75rem; background: #fff; }
+.elc-compact-img-logo img { width: auto !important; height: auto !important; max-height: 70px; max-width: 100%; object-fit: contain !important; }
+.elc-compact-img-placeholder {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--blue-accent) 100%);
+  color: rgba(255,255,255,0.35); font-size: 1.8rem;
+}
+.elc-compact-img-tour {
+  background: linear-gradient(135deg, var(--navy) 0%, #1a5276 50%, var(--blue-accent) 100%);
+  color: rgba(255,255,255,0.4); font-size: 1.8rem;
+}
+.elc-compact-next-date {
+  font-size: 0.72rem; color: var(--gray-500); margin-bottom: 0.25rem;
+}
+.elc-compact-next-date .fas { font-size: 0.62rem; margin-right: 0.2rem; color: var(--blue-accent); }
+.elc-compact-price {
+  font-family: var(--font-heading); font-weight: 700; font-size: 0.78rem;
+  color: var(--navy); margin-bottom: 0.25rem;
+}
+.elc-compact-artist { display: flex; flex-direction: column; margin-bottom: 0.25rem; }
+.elc-compact-label { font-family: var(--font-heading); font-weight: 700; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-400); }
+.elc-compact-name { font-weight: 600; font-size: 0.82rem; line-height: 1.2; }
+.elc-read-more {
+  display: flex; align-items: center; gap: 0.35rem;
+  background: none; border: none; cursor: pointer;
+  font-family: var(--font-heading); font-size: 0.7rem; font-weight: 700;
+  color: var(--blue-accent); text-transform: uppercase; letter-spacing: 0.05em;
+  padding: 0.4rem 0 0; transition: color var(--transition);
+}
+.elc-read-more:hover { color: var(--navy); }
+.elc-read-more .fas { font-size: 0.55rem; }
+[data-theme="dark"] .elc-compact-img .logo-light { display: none; }
+[data-theme="dark"] .elc-compact-img .logo-dark { display: block; }
+[data-theme="dark"] .elc-compact-img-logo { background: var(--navy); }
+@media (max-width: 1200px) { .events-list-compact { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 900px) { .events-list-compact { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 600px) { .events-list-compact { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 400px) { .events-list-compact { grid-template-columns: 1fr; } }
+
+/* Detail modal overlay */
+.etg-modal-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 2rem;
+  animation: etgFadeIn 0.2s ease;
+}
+@keyframes etgFadeIn { from { opacity: 0; } to { opacity: 1; } }
+.etg-modal {
+  background: var(--white); border-radius: var(--radius-lg);
+  max-width: 520px; width: 100%; max-height: 85vh;
+  overflow-y: auto; box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+  position: relative;
+  animation: etgSlideUp 0.25s ease;
+}
+@keyframes etgSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.etg-modal-close {
+  position: absolute; top: 0.75rem; right: 0.75rem; z-index: 2;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(0,0,0,0.5); border: none; cursor: pointer;
+  color: #fff; font-size: 0.85rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--transition);
+}
+.etg-modal-close:hover { background: rgba(0,0,0,0.7); }
+.etg-modal-img {
+  width: 100%; height: 200px; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--gray-50); border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.etg-modal-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.etg-modal-img .logo-dark { display: none; }
+.etg-modal-img-logo { padding: 2rem; background: #fff; }
+.etg-modal-img-logo img { width: auto !important; height: auto !important; max-height: 120px; max-width: 100%; object-fit: contain !important; }
+.etg-modal-img-tour {
+  background: linear-gradient(135deg, var(--navy) 0%, #1a5276 50%, var(--blue-accent) 100%);
+  color: rgba(255,255,255,0.3); font-size: 3rem;
+}
+.etg-modal-body { padding: 1.5rem; }
+[data-theme="dark"] .etg-modal { background: var(--navy-dark, #0a1628); }
+[data-theme="dark"] .etg-modal-img .logo-light { display: none; }
+[data-theme="dark"] .etg-modal-img .logo-dark { display: block; }
+[data-theme="dark"] .etg-modal-img-logo { background: var(--navy); }
+@media (max-width: 600px) {
+  .etg-modal-overlay { padding: 1rem; }
+  .etg-modal { max-height: 90vh; }
+}
+
 /* ---------------------------------------------------------
    RECREATION PAGE — inline styles extracted
    --------------------------------------------------------- */
@@ -2878,12 +3001,16 @@ p { line-height: 1.7; color: var(--gray-600); }
 .facility-section-divider { border: none; border-top: 1px solid var(--gray-200); margin: 0; }
 
 .facility-jump-nav {
-  background: var(--gray-50);
+  background: #F9FAFB;
   border-bottom: 1px solid var(--gray-200);
   padding: 1rem 0;
   position: sticky;
-  top: var(--header-total);
-  z-index: 50;
+  top: 0;
+  z-index: 90;
+}
+[data-theme="dark"] .facility-jump-nav {
+  background: #0F172A;
+  border-bottom-color: #334155;
 }
 .facility-jump-nav-inner {
   display: flex;
@@ -2914,6 +3041,60 @@ p { line-height: 1.7; color: var(--gray-600); }
   background: var(--blue-accent);
   color: #fff;
   border-color: var(--blue-accent);
+}
+
+/* Mobile jump dropdown */
+.facility-jump-mobile { display: none; }
+.facility-jump-select-wrap {
+  position: relative;
+  flex: 1;
+}
+.facility-jump-select {
+  width: 100%;
+  padding: 0.6rem 2.5rem 0.6rem 1rem;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius);
+  background: #fff;
+  font-family: var(--font-heading);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--navy);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.facility-jump-select:focus {
+  outline: none;
+  border-color: var(--blue-accent);
+}
+.facility-jump-select-icon {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gray-400);
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+[data-theme="dark"] .facility-jump-select {
+  background: #1E293B;
+  border-color: #334155;
+  color: #F1F5F9;
+}
+[data-theme="dark"] .facility-jump-select:focus {
+  border-color: #60A5FA;
+}
+[data-theme="dark"] .facility-jump-select-icon {
+  color: #94A3B8;
+}
+
+@media (max-width: 640px) {
+  .facility-jump-desktop { display: none; }
+  .facility-jump-mobile {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
 }
 
 @media (max-width: 768px) {
@@ -3898,3 +4079,794 @@ body:has(.admin-login-wrapper) > footer {
   .admin-stats-grid { grid-template-columns: 1fr; }
   .admin-form-row { grid-template-columns: 1fr; }
 }
+
+/* ---------------------------------------------------------
+   MARINE FORECAST
+   --------------------------------------------------------- */
+
+/* ---- Alert Banner (global, below nav) ---- */
+.marine-alert-banner {
+  padding: 0.55rem 0;
+  font-size: 0.82rem;
+  color: #fff;
+  background: var(--blue-accent);
+  position: relative;
+  z-index: 999;
+}
+.marine-alert-banner.severity-extreme { background: #DC2626; }
+.marine-alert-banner.severity-severe { background: #EA580C; }
+.marine-alert-banner.severity-moderate { background: var(--gold); }
+.marine-alert-banner.severity-minor { background: var(--blue-accent); }
+
+.marine-alert-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.marine-alert-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.marine-alert-text {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  transition: opacity 0.3s;
+}
+.marine-alert-text.marine-alert-fade {
+  opacity: 0;
+}
+.marine-alert-text strong {
+  white-space: nowrap;
+}
+.marine-alert-headline {
+  opacity: 0.9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.marine-alert-counter {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  opacity: 0.7;
+  white-space: nowrap;
+  padding: 0.15rem 0.5rem;
+  border-radius: 100px;
+  background: rgba(255,255,255,0.15);
+}
+.marine-alert-link {
+  flex-shrink: 0;
+  padding: 0.25rem 0.75rem;
+  border-radius: 100px;
+  background: rgba(255,255,255,0.2);
+  font-weight: 600;
+  font-size: 0.78rem;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.marine-alert-link:hover {
+  background: rgba(255,255,255,0.35);
+}
+.marine-alert-close {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  opacity: 0.7;
+  transition: opacity 0.2s, background 0.2s;
+}
+.marine-alert-close:hover {
+  opacity: 1;
+  background: rgba(255,255,255,0.15);
+}
+
+/* ---- Marine Tabs ---- */
+.marine-tabs-bar {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding-bottom: 1.5rem;
+  margin-bottom: 0;
+  border-bottom: 2px solid var(--gray-200);
+  flex-wrap: wrap;
+}
+.marine-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1.2rem;
+  border: 2px solid var(--gray-200);
+  border-radius: 100px;
+  background: #fff;
+  font-family: var(--font-heading);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.marine-tab-btn i { font-size: 0.8rem; }
+.marine-tab-btn:hover {
+  border-color: var(--blue-accent);
+  color: var(--blue-accent);
+}
+.marine-tab-btn.active {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #fff;
+}
+.marine-tab-btn.alert-tab {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.marine-tab-btn.alert-tab:hover {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #fff;
+}
+.marine-tab-btn.alert-tab.active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #fff;
+}
+.marine-tab-content {
+  min-height: 300px;
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: 2.5rem 2rem;
+}
+
+/* Mobile tab dropdown */
+.marine-tabs-select-wrap {
+  display: none;
+  position: relative;
+  margin-bottom: 0;
+}
+.marine-tabs-select {
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius);
+  background: #fff;
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--navy);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.marine-tabs-select:focus {
+  outline: none;
+  border-color: var(--blue-accent);
+}
+.marine-tabs-select-icon {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gray-400);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .marine-tabs-bar { display: none; }
+  .marine-tabs-select-wrap { display: block; }
+  .marine-tab-content {
+    padding: 1.5rem 1rem;
+    border-top: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+  }
+}
+
+/* ---- Marine Alerts Accordion (page) ---- */
+.marine-alerts-accordion {
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.maa-item {
+  border-bottom: 1px solid var(--gray-200);
+}
+.maa-item:last-child { border-bottom: none; }
+.maa-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.9rem 1.25rem;
+  background: #fff;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--navy);
+  text-align: left;
+  transition: background 0.2s;
+}
+.maa-header:hover { background: var(--gray-50); }
+.maa-item.open .maa-header {
+  background: var(--navy);
+  color: #fff;
+}
+.maa-severity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.maa-item.open .maa-severity-dot { box-shadow: 0 0 0 2px rgba(255,255,255,0.4); }
+.maa-title { flex: 1; }
+.maa-icon {
+  font-size: 0.75rem;
+  transition: transform 0.25s;
+}
+.maa-icon.rotated { transform: rotate(180deg); }
+.maa-item.open .maa-icon { color: var(--gold-muted); }
+.maa-body {
+  padding: 1.25rem;
+  font-size: 0.88rem;
+  line-height: 1.85;
+  color: var(--gray-600);
+  background: #fff;
+  text-align: center;
+}
+.maa-headline {
+  font-weight: 600;
+  color: var(--navy);
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+.maa-description {
+  color: var(--gray-500);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  font-size: 0.85rem;
+}
+.maa-meta {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  font-size: 0.78rem;
+  color: var(--gray-400);
+}
+@media (max-width: 640px) {
+  .maa-body { text-align: left; }
+  .maa-meta {
+    justify-content: flex-start;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+}
+
+.marine-severity-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #fff;
+}
+.marine-severity-badge.severity-extreme { background: #DC2626; }
+.marine-severity-badge.severity-severe { background: #EA580C; }
+.marine-severity-badge.severity-moderate { background: var(--gold); }
+.marine-severity-badge.severity-minor { background: var(--blue-accent); }
+
+/* ---- Current Conditions Grid ---- */
+.marine-conditions-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+.marine-condition-card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 1.5rem 1rem;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.marine-condition-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.condition-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  margin: 0 auto 0.75rem;
+  background: rgba(27,139,235,0.1);
+  color: var(--blue-accent);
+}
+.condition-value {
+  font-family: var(--font-heading);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1.2;
+}
+.condition-unit {
+  font-size: 0.85rem;
+  font-weight: 500;
+  opacity: 0.6;
+}
+.condition-label {
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+
+@media (max-width: 900px) {
+  .marine-conditions-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .marine-conditions-grid { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .marine-condition-card { padding: 1rem 0.75rem; }
+  .condition-value { font-size: 1.4rem; }
+}
+
+/* ---- Sub-headings (for merged sections) ---- */
+.marine-sub-heading {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 2.5rem 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.marine-sub-heading i {
+  font-size: 0.9rem;
+  color: var(--blue-accent);
+}
+.marine-sub-heading:first-child { margin-top: 0; }
+.marine-sub-desc {
+  font-size: 0.85rem;
+  color: var(--gray-400);
+  margin: -0.5rem 0 1rem;
+  line-height: 1.5;
+}
+
+/* ---- Live Cam ---- */
+.marine-livecam-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding-top: 56.25%; /* 16:9 */
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+}
+.marine-livecam-wrap iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* ---- Buoy Offline Notice ---- */
+.marine-offline-notice {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: #fff;
+  border-radius: var(--radius);
+  border: 2px dashed var(--gray-300);
+  max-width: 600px;
+  margin: 0 auto;
+}
+.marine-offline-notice i {
+  font-size: 2rem;
+  color: var(--blue-accent);
+  margin-bottom: 1rem;
+}
+.marine-offline-notice h3 {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  color: var(--navy);
+}
+.marine-offline-notice p {
+  font-size: 0.88rem;
+  color: var(--gray-500);
+  line-height: 1.7;
+}
+
+/* ---- Marine Text Block ---- */
+.marine-text-block {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 2rem;
+  font-size: 0.9rem;
+  line-height: 1.85;
+  color: var(--gray-600);
+  white-space: pre-wrap;
+  border: 1px solid var(--gray-200);
+  box-shadow: var(--shadow-sm);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* ---- Extended Forecast Strip ---- */
+.marine-forecast-strip {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.75rem;
+  -webkit-overflow-scrolling: touch;
+}
+.marine-forecast-strip::-webkit-scrollbar { height: 6px; }
+.marine-forecast-strip::-webkit-scrollbar-track { background: transparent; }
+.marine-forecast-strip::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+
+.marine-forecast-card {
+  flex: 0 0 160px;
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 1.25rem 1rem;
+  text-align: center;
+  border: 1px solid var(--gray-200);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s;
+}
+.marine-forecast-card:hover { transform: translateY(-2px); }
+.marine-forecast-card.night {
+  background: var(--navy);
+  color: #E2E8F0;
+  border-color: transparent;
+}
+.marine-forecast-card.night .fc-name { color: var(--blue-light); }
+.marine-forecast-card.night .fc-wind { color: #CBD5E1; }
+.marine-forecast-card.night .fc-condition { color: #CBD5E1; }
+
+.fc-name {
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 0.5rem;
+}
+.fc-temp {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+.fc-wind {
+  font-size: 0.78rem;
+  color: var(--gray-500);
+  margin-bottom: 0.35rem;
+}
+.fc-condition {
+  font-size: 0.78rem;
+  color: var(--gray-500);
+  line-height: 1.4;
+}
+
+/* ---- Hourly Forecast Table ---- */
+.marine-hourly-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  background: #fff;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--gray-200);
+  box-shadow: var(--shadow-sm);
+}
+.marine-hourly-table thead {
+  background: var(--navy);
+  color: #fff;
+}
+.marine-hourly-table th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.marine-hourly-table td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--gray-100);
+}
+.marine-hourly-table tbody tr:hover {
+  background: var(--gray-50);
+}
+.marine-hourly-day-row td {
+  background: var(--gray-50);
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  color: var(--navy);
+  padding: 0.5rem 1rem;
+  border-bottom: 2px solid var(--gray-200);
+}
+@media (max-width: 640px) {
+  .marine-hourly-table { font-size: 0.78rem; }
+  .marine-hourly-table th { padding: 0.55rem 0.5rem; font-size: 0.7rem; }
+  .marine-hourly-table td { padding: 0.45rem 0.5rem; }
+  .marine-hourly-day-row td { padding: 0.4rem 0.5rem; }
+}
+
+/* ---- Boating Resources Grid ---- */
+.marine-resources-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+.marine-resource-card {
+  display: block;
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  border: 1px solid var(--gray-200);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+.marine-resource-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+  border-color: var(--blue-accent);
+}
+.mr-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  margin-bottom: 0.75rem;
+}
+.marine-resource-card h3 {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 0.35rem;
+}
+.marine-resource-card p {
+  font-size: 0.82rem;
+  color: var(--gray-500);
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .marine-resources-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .marine-resources-grid { grid-template-columns: 1fr; }
+}
+
+/* ---- Marine Update Notice ---- */
+.marine-update-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: rgba(27,139,235,0.06);
+  border: 1px solid rgba(27,139,235,0.15);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  color: var(--gray-500);
+}
+.marine-update-notice i {
+  color: var(--blue-accent);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+[data-theme="dark"] .marine-update-notice {
+  background: rgba(27,139,235,0.08);
+  border-color: rgba(27,139,235,0.2);
+  color: #94A3B8;
+}
+
+/* ---- Marine Zone Accordion ---- */
+.marine-zone-accordion {
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.mza-item {
+  border-bottom: 1px solid var(--gray-200);
+}
+.mza-item:last-child { border-bottom: none; }
+.mza-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: #fff;
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--navy);
+  text-align: left;
+  transition: background 0.2s;
+}
+.mza-header:hover { background: var(--gray-50); }
+.mza-item.open .mza-header {
+  background: var(--navy);
+  color: #fff;
+}
+.mza-icon {
+  font-size: 0.75rem;
+  transition: transform 0.25s;
+}
+.mza-icon.rotated { transform: rotate(180deg); }
+.mza-item.open .mza-icon { color: var(--gold-muted); }
+.mza-body {
+  padding: 1.25rem;
+  font-size: 0.88rem;
+  line-height: 1.85;
+  color: var(--gray-600);
+  background: #fff;
+  white-space: pre-wrap;
+}
+
+/* ---- Marine Dark Mode ---- */
+[data-theme="dark"] .marine-tab-btn {
+  background: #1E293B;
+  border-color: #334155;
+  color: #94A3B8;
+}
+[data-theme="dark"] .marine-tab-btn:hover {
+  border-color: #60A5FA;
+  color: #60A5FA;
+}
+[data-theme="dark"] .marine-tab-btn.active {
+  background: #0F172A;
+  border-color: #60A5FA;
+  color: #fff;
+}
+[data-theme="dark"] .marine-tabs-bar {
+  border-bottom-color: #334155;
+}
+[data-theme="dark"] .marine-tab-btn.alert-tab {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+[data-theme="dark"] .marine-tab-btn.alert-tab:hover,
+[data-theme="dark"] .marine-tab-btn.alert-tab.active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #0F172A;
+}
+[data-theme="dark"] .marine-tab-content {
+  background: #1E293B;
+  border-color: #334155;
+}
+[data-theme="dark"] .marine-tabs-select {
+  background: #1E293B;
+  border-color: #334155;
+  color: #F1F5F9;
+}
+[data-theme="dark"] .marine-tabs-select:focus {
+  border-color: #60A5FA;
+}
+[data-theme="dark"] .marine-tabs-select-icon {
+  color: #94A3B8;
+}
+[data-theme="dark"] .marine-zone-accordion {
+  border-color: #334155;
+}
+[data-theme="dark"] .mza-item { border-bottom-color: #334155; }
+[data-theme="dark"] .mza-header {
+  background: #1E293B;
+  color: #F1F5F9;
+}
+[data-theme="dark"] .mza-header:hover { background: #263548; }
+[data-theme="dark"] .mza-item.open .mza-header {
+  background: #0F172A;
+  color: #fff;
+}
+[data-theme="dark"] .mza-body {
+  background: #1E293B;
+  color: #CBD5E1;
+}
+[data-theme="dark"] .marine-alerts-accordion {
+  border-color: #334155;
+}
+[data-theme="dark"] .maa-item { border-bottom-color: #334155; }
+[data-theme="dark"] .maa-header {
+  background: #1E293B;
+  color: #F1F5F9;
+}
+[data-theme="dark"] .maa-header:hover { background: #263548; }
+[data-theme="dark"] .maa-item.open .maa-header {
+  background: #0F172A;
+  color: #fff;
+}
+[data-theme="dark"] .maa-body {
+  background: #1E293B;
+  color: #CBD5E1;
+}
+[data-theme="dark"] .maa-body p { color: #CBD5E1; }
+[data-theme="dark"] .maa-headline { color: #F1F5F9; }
+[data-theme="dark"] .maa-description { color: #94A3B8; }
+[data-theme="dark"] .maa-meta { color: #64748B; }
+[data-theme="dark"] .marine-condition-card {
+  background: #1E293B;
+  border-color: #334155;
+}
+[data-theme="dark"] .condition-value { color: #F1F5F9; }
+[data-theme="dark"] .condition-label { color: #94A3B8; }
+[data-theme="dark"] .condition-unit { color: #94A3B8; }
+[data-theme="dark"] .marine-sub-heading { color: #F1F5F9; }
+[data-theme="dark"] .marine-sub-desc { color: #94A3B8; }
+[data-theme="dark"] .marine-offline-notice {
+  background: #1E293B;
+  border-color: #334155;
+}
+[data-theme="dark"] .marine-offline-notice h3 { color: #F1F5F9; }
+[data-theme="dark"] .marine-offline-notice p { color: #94A3B8; }
+[data-theme="dark"] .marine-text-block {
+  background: #1E293B;
+  border-color: #334155;
+  color: #CBD5E1;
+}
+[data-theme="dark"] .marine-forecast-card {
+  background: #1E293B;
+  border-color: #334155;
+}
+[data-theme="dark"] .marine-forecast-card .fc-name { color: var(--blue-light); }
+[data-theme="dark"] .marine-forecast-card .fc-wind { color: #94A3B8; }
+[data-theme="dark"] .marine-forecast-card .fc-condition { color: #94A3B8; }
+[data-theme="dark"] .marine-forecast-card .fc-temp { color: #F1F5F9; }
+[data-theme="dark"] .marine-forecast-card.night {
+  background: #0B1222;
+  border-color: #1E293B;
+}
+[data-theme="dark"] .marine-hourly-table {
+  background: #1E293B;
+  border-color: #334155;
+}
+[data-theme="dark"] .marine-hourly-table td {
+  border-bottom-color: #334155;
+  color: #CBD5E1;
+}
+[data-theme="dark"] .marine-hourly-table tbody tr:hover {
+  background: #263548;
+}
+[data-theme="dark"] .marine-hourly-day-row td {
+  background: #0F172A;
+  color: var(--blue-light);
+  border-bottom-color: #334155;
+}
+[data-theme="dark"] .marine-resource-card {
+  background: #1E293B;
+  border-color: #334155;
+}
+[data-theme="dark"] .marine-resource-card:hover {
+  border-color: var(--blue-accent);
+}
+[data-theme="dark"] .marine-resource-card h3 { color: #F1F5F9; }
+[data-theme="dark"] .marine-resource-card p { color: #94A3B8; }
+[data-theme="dark"] .marine-forecast-strip::-webkit-scrollbar-thumb { background: #475569; }
