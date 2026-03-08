@@ -1,10 +1,22 @@
 import Link from 'next/link';
 import ScrollAnimator from '@/components/ui/ScrollAnimator';
 import BoardPage from '@/components/board/BoardPage';
+import { createServerClient } from '@/lib/supabase/server';
+import type { BoardMember } from '@/lib/types';
 
 export const metadata = { title: 'Board of Directors' };
+export const revalidate = 60;
 
-export default function BoardOfDirectorsPage() {
+export default async function BoardOfDirectorsPage() {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from('board_members')
+    .select('*')
+    .eq('is_published', true)
+    .order('sort_order');
+
+  const members: BoardMember[] = data || [];
+
   return (
     <main id="main-content">
       <ScrollAnimator />
@@ -25,7 +37,7 @@ export default function BoardOfDirectorsPage() {
         </div>
       </section>
 
-      <BoardPage />
+      <BoardPage members={members} />
 
       {/* CONTACT CTA */}
       <section className="section" style={{ background: 'var(--navy)', position: 'relative', overflow: 'hidden' }}>

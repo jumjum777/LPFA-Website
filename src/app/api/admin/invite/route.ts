@@ -29,7 +29,10 @@ export async function POST(request: Request) {
 
   // Use admin client to invite user
   const adminClient = createAdminClient();
-  const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
+    redirectTo: `${siteUrl}/auth/callback`,
+  });
 
   if (inviteError) {
     return NextResponse.json({ error: inviteError.message }, { status: 400 });

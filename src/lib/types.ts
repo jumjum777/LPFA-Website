@@ -100,6 +100,35 @@ export interface BoardDocument {
   created_at: string;
 }
 
+export interface StaffMember {
+  id: string;
+  name: string;
+  title: string;
+  phone?: string;
+  email?: string;
+  photo_url?: string;
+  bio?: string;
+  sort_order: number;
+  is_special: boolean;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BoardMember {
+  id: string;
+  name: string;
+  role: string;
+  photo_url?: string;
+  bio?: string;
+  term_text?: string;
+  sort_order: number;
+  is_officer: boolean;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AdminUser {
   id: string;
   user_id: string;

@@ -45,7 +45,7 @@ export default function Header() {
                   <li role="none"><Link href="/development#brownfields" role="menuitem">Brownfields Program</Link></li>
                   <li role="none"><Link href="/development#financing" role="menuitem">Property Financing</Link></li>
                   <li role="none"><Link href="/development#rfp" role="menuitem">RFPs &amp; Bids</Link></li>
-                  <li role="none"><Link href="/development#commerce" role="menuitem">Waterborne Commerce</Link></li>
+                  <li role="none"><Link href="/commerce" role="menuitem">Waterborne Commerce</Link></li>
                 </ul>
               </li>
               <li role="none"><Link href="/events" role="menuitem">Events &amp; Boat Tours</Link></li>

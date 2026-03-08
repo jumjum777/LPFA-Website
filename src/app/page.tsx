@@ -1,7 +1,28 @@
 import Link from 'next/link';
 import ScrollAnimator from '@/components/ui/ScrollAnimator';
+import { createServerClient } from '@/lib/supabase/server';
 
-export default function HomePage() {
+export const revalidate = 60;
+
+export default async function HomePage() {
+  const supabase = await createServerClient();
+  const today = new Date().toISOString().split('T')[0];
+
+  const { data: upcomingEvents } = await supabase
+    .from('events')
+    .select('id, title, event_date, location, category, image_url, gallery_images, headliner, opening_band')
+    .eq('is_published', true)
+    .gte('event_date', today)
+    .order('event_date', { ascending: true })
+    .limit(5);
+
+  const { data: tours } = await supabase
+    .from('tours')
+    .select('id, name, section, price')
+    .eq('is_published', true)
+    .order('sort_order')
+    .limit(5);
+
   return (
     <main id="main-content">
       <ScrollAnimator />
@@ -13,47 +34,19 @@ export default function HomePage() {
             <source src="/images/Website Main Header 2.mp4" type="video/mp4" />
           </video>
           <div className="hero-gradient"></div>
-          <svg className="hero-waves" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden="true">
-            <path className="wave wave-1" fill="rgba(255,255,255,0.04)" d="M0,160L48,165.3C96,171,192,181,288,181.3C384,181,480,171,576,160C672,149,768,139,864,144C960,149,1056,171,1152,176C1248,181,1344,171,1392,165.3L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-            <path className="wave wave-2" fill="rgba(255,255,255,0.06)" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,213.3C672,224,768,224,864,208C960,192,1056,160,1152,154.7C1248,149,1344,171,1392,181.3L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-            <path className="wave wave-3" fill="rgba(255,255,255,0.03)" d="M0,288L48,272C96,256,192,224,288,218.7C384,213,480,235,576,245.3C672,256,768,256,864,240C960,224,1056,192,1152,186.7C1248,181,1344,203,1392,213.3L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-          </svg>
         </div>
 
         <div className="container">
           <div className="hero-content" data-animate="fade-up">
             <div className="hero-badge"><i className="fas fa-map-marker-alt"></i> Lorain, Ohio</div>
             <h1 className="hero-title">
-              Driving Development<br /><span className="hero-highlight">Through Our Waterways</span>
+              Driving Development<br />Through Our Waterways
             </h1>
-            <p className="hero-tagline">Economic Development &nbsp;&middot;&nbsp; Waterborne Commerce &nbsp;&middot;&nbsp; Public Access to Waterways</p>
             <div className="hero-actions">
-              <Link href="/development" className="btn btn-gold">Explore Opportunities</Link>
-              <Link href="/events" className="btn btn-outline-white">Upcoming Events</Link>
+              <Link href="/development" className="btn btn-gold">Learn More</Link>
             </div>
           </div>
 
-          <div className="hero-stats" data-animate="fade-up" data-delay="200">
-            <div className="hero-stat">
-              <span className="hero-stat-number">5+</span>
-              <span className="hero-stat-label">Public Facilities</span>
-            </div>
-            <div className="hero-stat-divider"></div>
-            <div className="hero-stat">
-              <span className="hero-stat-number">$50M+</span>
-              <span className="hero-stat-label">in Development</span>
-            </div>
-            <div className="hero-stat-divider"></div>
-            <div className="hero-stat">
-              <span className="hero-stat-number">1800s</span>
-              <span className="hero-stat-label">Est. Port of Lorain</span>
-            </div>
-            <div className="hero-stat-divider"></div>
-            <div className="hero-stat">
-              <span className="hero-stat-number">Lake Erie</span>
-              <span className="hero-stat-label">World-Class Waterway</span>
-            </div>
-          </div>
         </div>
 
         <a href="#services" className="scroll-indicator" aria-label="Scroll down">
@@ -79,7 +72,7 @@ export default function HomePage() {
               </div>
               <h3>Economic Development</h3>
               <p>Financing waterfront property development, brownfields remediation, and attracting private investment to revitalize Lorain&apos;s economic landscape.</p>
-              <Link href="/development" className="pillar-link">Explore Development <i className="fas fa-arrow-right"></i></Link>
+              <Link href="/development" className="pillar-link">Learn More <i className="fas fa-arrow-right"></i></Link>
             </div>
 
             <div className="pillar-card pillar-featured" data-animate="fade-up" data-delay="100">
@@ -88,87 +81,99 @@ export default function HomePage() {
               </div>
               <h3>Waterborne Commerce</h3>
               <p>Supporting commercial shipping, maritime operations, and trade along the Black River and Lake Erie — connecting Lorain to regional and global markets.</p>
-              <Link href="/development#commerce" className="pillar-link">Learn More <i className="fas fa-arrow-right"></i></Link>
+              <Link href="/commerce" className="pillar-link">Learn More <i className="fas fa-arrow-right"></i></Link>
             </div>
 
             <div className="pillar-card" data-animate="fade-up" data-delay="200">
               <div className="pillar-icon-wrap">
                 <div className="pillar-icon"><i className="fas fa-water"></i></div>
               </div>
-              <h3>Public Waterway Access</h3>
+              <h3>Events &amp; Boat Tours</h3>
               <p>Providing parks, boat launches, tours, and world-class events that connect the Lorain community to the beauty and recreation of Lake Erie.</p>
-              <Link href="/recreation" className="pillar-link">Explore Recreation <i className="fas fa-arrow-right"></i></Link>
+              <Link href="/events" className="pillar-link">Learn More <i className="fas fa-arrow-right"></i></Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ===== EVENTS ===== */}
+      {/* ===== UPCOMING EVENTS & TOURS ===== */}
       <section className="section events-section bg-dark-navy" id="events-home">
         <div className="container">
           <div className="section-header light center" data-animate="fade-up">
-            <div className="section-label">Community Programming</div>
-            <h2 className="section-title">Events at the Waterfront</h2>
-            <p className="section-desc">From summer concerts to holiday fireworks, the waterfront is alive all year long.</p>
+            <div className="section-label">Events &amp; Boat Tours</div>
+            <h2 className="section-title">Coming Up at the Waterfront</h2>
           </div>
 
-          <div className="events-grid">
-            <div className="event-card event-featured" data-animate="fade-up" data-delay="0">
-              <div className="event-visual ev-fireworks">
-                <div className="event-date-badge">
-                  <span className="ev-month">JUL</span>
-                  <span className="ev-day">4</span>
-                </div>
-                <div className="event-tag-pill">Annual</div>
-              </div>
-              <div className="event-body">
-                <h3>Independence Day Fireworks</h3>
-                <p>Join thousands at Black River Landing for Lorain&apos;s spectacular Fourth of July fireworks display over Lake Erie — one of the region&apos;s best celebrations.</p>
-                <div className="event-meta-row">
-                  <span><i className="fas fa-map-marker-alt"></i> Black River Landing</span>
-                  <span><i className="fas fa-clock"></i> Dusk</span>
-                </div>
-                <Link href="/events" className="btn btn-gold btn-sm">Event Details</Link>
-              </div>
-            </div>
+          {(upcomingEvents && upcomingEvents.length > 0) || (tours && tours.length > 0) ? (
+            <div className="events-list events-list-compact" data-animate="fade-up">
+              {upcomingEvents?.map(event => {
+                const imgSrc = event.image_url || event.gallery_images?.[0]?.url;
+                const isROTR = event.category === "Rockin' On The River";
+                const isLogo = imgSrc ? /\/logo(-stacked)?\.png$/.test(imgSrc) : false;
 
-            <div className="event-card" data-animate="fade-up" data-delay="100">
-              <div className="event-visual ev-concert">
-                <div className="event-date-badge ev-summer">
-                  <i className="fas fa-music"></i>
-                </div>
-                <div className="event-tag-pill">Summer Series</div>
-              </div>
-              <div className="event-body">
-                <h3>Rockin&apos; on the River</h3>
-                <p>Live music all summer long at the Black River Landing waterfront. Bring the family and enjoy great bands, food, and the lakeside atmosphere.</p>
-                <div className="event-meta-row">
-                  <span><i className="fas fa-map-marker-alt"></i> Black River Landing</span>
-                </div>
-                <Link href="/events" className="btn btn-outline-gold btn-sm">Learn More</Link>
-              </div>
-            </div>
+                const d = new Date(event.event_date + 'T00:00:00');
+                const dateStr = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
-            <div className="event-card" data-animate="fade-up" data-delay="200">
-              <div className="event-visual ev-boattour">
-                <div className="event-date-badge ev-summer">
-                  <i className="fas fa-sailboat"></i>
-                </div>
-                <div className="event-tag-pill">Year-Round</div>
-              </div>
-              <div className="event-body">
-                <h3>Boat Tours &amp; Cruises</h3>
-                <p>History excursions, nature cruises, and private charters on Lake Erie and the Black River. An unforgettable experience for all ages.</p>
-                <div className="event-meta-row">
-                  <span><i className="fas fa-map-marker-alt"></i> Black River Wharf</span>
-                </div>
-                <Link href="/recreation" className="btn btn-outline-gold btn-sm">Book a Tour</Link>
-              </div>
+                return (
+                  <Link href="/events" key={event.id} className="event-list-card event-card-compact" style={{ textDecoration: 'none' }}>
+                    {imgSrc ? (
+                      <div className={`elc-compact-img${isLogo ? ' elc-compact-img-logo' : ''}`}>
+                        <img src={imgSrc} alt={event.title} loading="lazy" />
+                      </div>
+                    ) : (
+                      <div className="elc-compact-img elc-compact-img-placeholder">
+                        <i className="fas fa-calendar-alt"></i>
+                      </div>
+                    )}
+                    <div className="elc-body">
+                      <div className="elc-body-header">
+                        <span className="elc-tag">{event.category}</span>
+                      </div>
+                      <div className="elc-event-date">{dateStr}</div>
+                      {!isROTR && event.title && <h3>{event.title}</h3>}
+                      {isROTR && (event.headliner || event.opening_band) && (
+                        <div className="elc-compact-lineup">
+                          {event.headliner && (
+                            <div className="elc-compact-artist">
+                              <span className="elc-compact-label">Headliner</span>
+                              <span className="elc-compact-name" style={{ color: 'var(--gold)' }}>{event.headliner}</span>
+                            </div>
+                          )}
+                          {event.opening_band && (
+                            <div className="elc-compact-artist">
+                              <span className="elc-compact-label">Opener</span>
+                              <span className="elc-compact-name" style={{ color: 'var(--blue-accent)' }}>{event.opening_band}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <span className="elc-read-more">Details <i className="fas fa-chevron-right"></i></span>
+                    </div>
+                  </Link>
+                );
+              })}
+              {tours?.map(tour => (
+                <Link href="/events" key={tour.id} className="event-list-card event-card-compact" style={{ textDecoration: 'none' }}>
+                  <div className="elc-compact-img elc-compact-img-tour">
+                    <i className="fas fa-ship"></i>
+                  </div>
+                  <div className="elc-body">
+                    <div className="elc-body-header">
+                      <span className="elc-tag elc-tag-tour">{tour.section}</span>
+                    </div>
+                    <h3>{tour.name}</h3>
+                    {tour.price && <div className="elc-compact-price">{tour.price}</div>}
+                    <span className="elc-read-more">Details <i className="fas fa-chevron-right"></i></span>
+                  </div>
+                </Link>
+              ))}
             </div>
-          </div>
+          ) : (
+            <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.6)', padding: '2rem 0' }}>No upcoming events scheduled. Check back soon!</p>
+          )}
 
           <div className="section-cta" data-animate="fade-up">
-            <Link href="/events" className="btn btn-gold">View All Events</Link>
+            <Link href="/events" className="btn btn-gold">View All Events &amp; Tours</Link>
           </div>
         </div>
       </section>

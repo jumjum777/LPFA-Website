@@ -44,7 +44,7 @@ export default function Footer() {
                 <li><Link href="/development#brownfields">Brownfields Program</Link></li>
                 <li><Link href="/development#financing">Property Financing</Link></li>
                 <li><Link href="/development#rfp">RFPs &amp; Bids</Link></li>
-                <li><Link href="/development#commerce">Waterborne Commerce</Link></li>
+                <li><Link href="/commerce">Waterborne Commerce</Link></li>
               </ul>
               <h4 style={{ marginTop: '1.5rem' }}>Facilities</h4>
               <ul>

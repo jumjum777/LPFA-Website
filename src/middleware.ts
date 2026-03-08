@@ -36,8 +36,8 @@ export async function middleware(request: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // Protect admin routes (except login page)
-  if (request.nextUrl.pathname.startsWith('/admin') && !request.nextUrl.pathname.startsWith('/admin/login')) {
+  // Protect admin routes (except login and set-password pages)
+  if (request.nextUrl.pathname.startsWith('/admin') && !request.nextUrl.pathname.startsWith('/admin/login') && !request.nextUrl.pathname.startsWith('/admin/set-password')) {
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = '/admin/login';

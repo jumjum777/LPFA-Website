@@ -14,6 +14,8 @@ const navItems = [
   { href: '/admin/events', label: 'Events', icon: 'fas fa-calendar-alt' },
   { href: '/admin/tours', label: 'Tours', icon: 'fas fa-ship' },
   { href: '/admin/documents', label: 'Documents', icon: 'fas fa-file-pdf' },
+  { href: '/admin/staff', label: 'Staff', icon: 'fas fa-id-badge' },
+  { href: '/admin/board', label: 'Board', icon: 'fas fa-users' },
 ];
 
 const superAdminItems = [
