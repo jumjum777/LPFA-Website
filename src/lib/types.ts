@@ -134,7 +134,7 @@ export interface Photo {
   id: string;
   title: string;
   description?: string;
-  categories: string[];
+  category: string;
   file_url: string;
   thumbnail_url: string;
   file_name: string;

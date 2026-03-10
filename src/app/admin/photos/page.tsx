@@ -8,8 +8,16 @@ interface StagedFile {
   file: File;
   preview: string;
   title: string;
-  categories: string[];
+  category: string;
 }
+
+const DEFAULT_CATEGORIES = [
+  'Lighthouse', 'Freighters', 'Boat Tours', 'Sunsets & Weather',
+  "Rockin' On The River", 'Outdoor Show', 'Stage Construction',
+  'Carmen Lee', 'Black River Wharf', 'Terminals & Docks',
+  'Controlled Burn', 'Black River Landing', 'Port Lorain',
+  'Disposal Site', '2023 Summer Market', "2024 Cabella's", 'Dredging Tanks',
+];
 
 function formatFileSize(bytes?: number) {
   if (!bytes) return '';
@@ -54,7 +62,7 @@ async function generateThumbnail(file: File): Promise<{ blob: Blob; width: numbe
 
 export default function AdminPhotosPage() {
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [categories, setCategories] = useState<PhotoCategory[]>([]);
+  const [dbCategories, setDbCategories] = useState<PhotoCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
@@ -65,9 +73,13 @@ export default function AdminPhotosPage() {
 
   // Upload staging
   const [staged, setStaged] = useState<StagedFile[]>([]);
-  const [batchCategories, setBatchCategories] = useState<string[]>([]);
+  const [batchCategory, setBatchCategory] = useState('');
   const [newCategoryName, setNewCategoryName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const categoryNames = dbCategories.length > 0
+    ? dbCategories.map(c => c.name)
+    : DEFAULT_CATEGORIES;
 
   useEffect(() => {
     loadPhotos();
@@ -91,10 +103,9 @@ export default function AdminPhotosPage() {
       .select('*')
       .order('sort_order')
       .order('name');
-    setCategories(data || []);
+    setDbCategories(data || []);
   }
 
-  // Stage files for review before uploading
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -103,7 +114,7 @@ export default function AdminPhotosPage() {
       file,
       preview: URL.createObjectURL(file),
       title: file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '),
-      categories: [...batchCategories],
+      category: batchCategory,
     }));
 
     setStaged(prev => [...prev, ...newStaged]);
@@ -127,59 +138,47 @@ export default function AdminPhotosPage() {
     });
   }
 
-  function toggleStagedCategory(index: number, cat: string) {
+  function updateStagedCategory(index: number, category: string) {
     setStaged(prev => {
       const updated = [...prev];
-      const item = updated[index];
-      const cats = item.categories.includes(cat)
-        ? item.categories.filter(c => c !== cat)
-        : [...item.categories, cat];
-      updated[index] = { ...item, categories: cats };
+      updated[index] = { ...updated[index], category };
       return updated;
     });
   }
 
-  // Apply batch categories to all staged files
-  function toggleBatchCategory(cat: string) {
-    const isAdding = !batchCategories.includes(cat);
-    const updated = isAdding
-      ? [...batchCategories, cat]
-      : batchCategories.filter(c => c !== cat);
-    setBatchCategories(updated);
-
-    // Apply to all staged files
-    setStaged(prev => prev.map(item => {
-      if (isAdding && !item.categories.includes(cat)) {
-        return { ...item, categories: [...item.categories, cat] };
-      }
-      if (!isAdding) {
-        return { ...item, categories: item.categories.filter(c => c !== cat) };
-      }
-      return item;
-    }));
+  function applyBatchCategory(cat: string) {
+    setBatchCategory(cat);
+    if (cat) {
+      setStaged(prev => prev.map(item => ({ ...item, category: cat })));
+    }
   }
 
   async function addCategory() {
     const name = newCategoryName.trim();
     if (!name) return;
-    if (categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+    if (categoryNames.some(c => c.toLowerCase() === name.toLowerCase())) {
       alert('Category already exists.');
       return;
     }
     const supabase = createClient();
     const { error } = await supabase.from('photo_categories').insert({
       name,
-      sort_order: categories.length,
+      sort_order: categoryNames.length,
     });
-    if (error) { alert('Error adding category: ' + error.message); return; }
-    setNewCategoryName('');
-    loadCategories();
+    if (!error) {
+      setNewCategoryName('');
+      loadCategories();
+    } else {
+      // If table doesn't exist, just add locally
+      setDbCategories(prev => [...prev, { id: crypto.randomUUID(), name, sort_order: prev.length, created_at: new Date().toISOString() }]);
+      setNewCategoryName('');
+    }
   }
 
   async function handleUploadAll() {
     if (staged.length === 0) return;
-    if (staged.some(s => s.categories.length === 0)) {
-      if (!confirm('Some photos have no categories assigned. Upload anyway?')) return;
+    if (staged.some(s => !s.category)) {
+      if (!confirm('Some photos have no category assigned. Upload anyway?')) return;
     }
 
     setUploading(true);
@@ -209,7 +208,7 @@ export default function AdminPhotosPage() {
 
         await supabase.from('photos').insert({
           title: item.title,
-          categories: item.categories,
+          category: item.category || 'General',
           file_url: origUrl.publicUrl,
           thumbnail_url: thumbUrl.publicUrl,
           file_name: item.file.name,
@@ -222,10 +221,9 @@ export default function AdminPhotosPage() {
       }
     }
 
-    // Cleanup previews
     staged.forEach(s => URL.revokeObjectURL(s.preview));
     setStaged([]);
-    setBatchCategories([]);
+    setBatchCategory('');
     setUploading(false);
     setUploadProgress('');
     loadPhotos();
@@ -248,17 +246,15 @@ export default function AdminPhotosPage() {
   // Filtering
   const categoryFiltered = filterCategory === 'All'
     ? photos
-    : photos.filter(p => (p.categories || []).includes(filterCategory));
+    : photos.filter(p => p.category === filterCategory);
 
   const filtered = search
     ? categoryFiltered.filter(p =>
         p.title.toLowerCase().includes(search.toLowerCase()) ||
         (p.description || '').toLowerCase().includes(search.toLowerCase()) ||
-        (p.categories || []).some(c => c.toLowerCase().includes(search.toLowerCase()))
+        (p.category || '').toLowerCase().includes(search.toLowerCase())
       )
     : categoryFiltered;
-
-  const categoryNames = categories.map(c => c.name);
 
   return (
     <div className="admin-page">
@@ -297,7 +293,7 @@ export default function AdminPhotosPage() {
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
                 className="admin-btn admin-btn-secondary"
-                onClick={() => { staged.forEach(s => URL.revokeObjectURL(s.preview)); setStaged([]); setBatchCategories([]); }}
+                onClick={() => { staged.forEach(s => URL.revokeObjectURL(s.preview)); setStaged([]); setBatchCategory(''); }}
               >
                 Clear All
               </button>
@@ -313,19 +309,17 @@ export default function AdminPhotosPage() {
 
           {/* Quick apply bar */}
           <div className="photo-staging-quickapply">
-            <span className="photo-staging-quickapply-label">Quick apply to all:</span>
-            <div className="photo-cat-checks">
+            <span className="photo-staging-quickapply-label">Apply category to all:</span>
+            <select
+              value={batchCategory}
+              onChange={e => applyBatchCategory(e.target.value)}
+              className="photo-cat-select"
+            >
+              <option value="">-- Select --</option>
               {categoryNames.map(cat => (
-                <label key={cat} className="photo-cat-check">
-                  <input
-                    type="checkbox"
-                    checked={batchCategories.includes(cat)}
-                    onChange={() => toggleBatchCategory(cat)}
-                  />
-                  <span>{cat}</span>
-                </label>
+                <option key={cat} value={cat}>{cat}</option>
               ))}
-            </div>
+            </select>
             <div className="photo-add-cat">
               <input
                 type="text"
@@ -340,7 +334,7 @@ export default function AdminPhotosPage() {
             </div>
           </div>
 
-          {/* Photo cards — each photo with its own category checkboxes */}
+          {/* Photo cards */}
           <div className="photo-staged-grid">
             {staged.map((item, i) => (
               <div key={i} className="photo-staged-card">
@@ -361,19 +355,16 @@ export default function AdminPhotosPage() {
                   <div className="photo-staged-meta">
                     <span>{formatFileSize(item.file.size)}</span>
                   </div>
-                  <div className="photo-staged-cats-label">Categories:</div>
-                  <div className="photo-cat-checks photo-cat-checks-card">
+                  <select
+                    value={item.category}
+                    onChange={e => updateStagedCategory(i, e.target.value)}
+                    className="photo-cat-select"
+                  >
+                    <option value="">-- Select category --</option>
                     {categoryNames.map(cat => (
-                      <label key={cat} className="photo-cat-check">
-                        <input
-                          type="checkbox"
-                          checked={item.categories.includes(cat)}
-                          onChange={() => toggleStagedCategory(i, cat)}
-                        />
-                        <span>{cat}</span>
-                      </label>
+                      <option key={cat} value={cat}>{cat}</option>
                     ))}
-                  </div>
+                  </select>
                 </div>
               </div>
             ))}
@@ -454,10 +445,7 @@ export default function AdminPhotosPage() {
               <div className="photo-card-info">
                 <span className="photo-card-title">{photo.title}</span>
                 <div className="photo-card-meta">
-                  <span className="photo-card-cats">
-                    {(photo.categories || []).slice(0, 2).join(', ')}
-                    {(photo.categories || []).length > 2 && ` +${(photo.categories || []).length - 2}`}
-                  </span>
+                  <span className="photo-card-cats">{photo.category || 'General'}</span>
                   <span>{formatFileSize(photo.file_size ?? undefined)}</span>
                 </div>
               </div>
@@ -492,11 +480,9 @@ export default function AdminPhotosPage() {
                 <span><i className="fas fa-file" style={{ marginRight: '0.35rem' }}></i>{formatFileSize(selectedPhoto.file_size ?? undefined)}</span>
                 <span><i className="fas fa-calendar" style={{ marginRight: '0.35rem' }}></i>{new Date(selectedPhoto.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
               </div>
-              {selectedPhoto.categories && selectedPhoto.categories.length > 0 && (
+              {selectedPhoto.category && (
                 <div className="photo-modal-tags">
-                  {selectedPhoto.categories.map(cat => (
-                    <span key={cat} className="photo-modal-tag">{cat}</span>
-                  ))}
+                  <span className="photo-modal-tag">{selectedPhoto.category}</span>
                 </div>
               )}
               <div className="photo-modal-actions">

@@ -36,12 +36,12 @@ export default function PhotoPicker({ isOpen, onClose, onSelect }: PhotoPickerPr
 
   const categoryFiltered = filterCategory === 'All'
     ? photos
-    : photos.filter(p => (p.categories || []).includes(filterCategory));
+    : photos.filter(p => p.category === filterCategory);
 
   const filtered = search
     ? categoryFiltered.filter(p =>
         p.title.toLowerCase().includes(search.toLowerCase()) ||
-        (p.categories || []).some(c => c.toLowerCase().includes(search.toLowerCase()))
+        (p.category || '').toLowerCase().includes(search.toLowerCase())
       )
     : categoryFiltered;
 
