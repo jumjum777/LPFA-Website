@@ -42,20 +42,23 @@ export default function Header() {
               <li className="has-dropdown" role="none">
                 <Link href="/development" role="menuitem" aria-haspopup="true" aria-expanded="false">Development &amp; Finance <i className="fas fa-chevron-down"></i></Link>
                 <ul className="dropdown" role="menu" aria-label="Development & Finance">
-                  <li role="none"><Link href="/development#brownfields" role="menuitem">Brownfields Program</Link></li>
-                  <li role="none"><Link href="/development#financing" role="menuitem">Property Financing</Link></li>
+                  <li role="none"><Link href="/brownfields" role="menuitem">Brownfields Program</Link></li>
+                  <li role="none"><Link href="/financing" role="menuitem">Financing &amp; Projects</Link></li>
                   <li role="none"><Link href="/development#rfp" role="menuitem">RFPs &amp; Bids</Link></li>
                   <li role="none"><Link href="/commerce" role="menuitem">Waterborne Commerce</Link></li>
                 </ul>
               </li>
               <li role="none"><Link href="/events" role="menuitem">Events &amp; Boat Tours</Link></li>
               <li role="none"><Link href="/marine" role="menuitem">Marine Forecast</Link></li>
+              <li role="none"><Link href="/live-cams" role="menuitem">Live Cams</Link></li>
               <li className="has-dropdown" role="none">
                 <Link href="/about" role="menuitem" aria-haspopup="true" aria-expanded="false">About <i className="fas fa-chevron-down"></i></Link>
                 <ul className="dropdown" role="menu" aria-label="About">
                   <li role="none"><Link href="/about" role="menuitem">About Us</Link></li>
                   <li role="none"><Link href="/staff" role="menuitem">Staff</Link></li>
                   <li role="none"><Link href="/board" role="menuitem">Board of Directors</Link></li>
+                  <li role="none"><Link href="/meeting-minutes" role="menuitem">Meeting Minutes</Link></li>
+                  <li role="none"><Link href="/public-records" role="menuitem">Public Records Request</Link></li>
                   <li role="none"><Link href="/didyouknow" role="menuitem">Did You Know?</Link></li>
                   <li role="none"><Link href="/facilities" role="menuitem">Facilities</Link></li>
                 </ul>

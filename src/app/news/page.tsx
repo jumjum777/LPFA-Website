@@ -12,21 +12,14 @@ export default async function NewsPage() {
   const supabase = await createServerClient();
   const today = new Date().toISOString().split('T')[0];
 
-  const [{ data: articles }, { data: categoriesData }] = await Promise.all([
-    supabase
-      .from('news_articles')
-      .select('*')
-      .eq('is_published', true)
-      .lte('published_date', today)
-      .order('published_date', { ascending: false }),
-    supabase
-      .from('categories')
-      .select('name')
-      .order('sort_order'),
-  ]);
+  const { data: articles } = await supabase
+    .from('news_articles')
+    .select('*')
+    .eq('is_published', true)
+    .lte('published_date', today)
+    .order('published_date', { ascending: false });
 
   const newsList = (articles as NewsArticle[]) || [];
-  const categories = (categoriesData || []).map((c: { name: string }) => c.name);
 
   return (
     <main id="main-content">
@@ -52,7 +45,7 @@ export default async function NewsPage() {
               No news articles yet. Check back soon!
             </p>
           ) : (
-            <NewsGrid articles={newsList} categories={categories} />
+            <NewsGrid articles={newsList} />
           )}
         </div>
       </section>

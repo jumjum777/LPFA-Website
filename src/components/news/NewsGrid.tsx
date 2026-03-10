@@ -1,45 +1,10 @@
-'use client';
-
-import { useState } from 'react';
 import Link from 'next/link';
 import type { NewsArticle } from '@/lib/types';
 
-export default function NewsGrid({ articles, categories }: { articles: NewsArticle[]; categories: string[] }) {
-  const [activeFilter, setActiveFilter] = useState('All');
-
-  const filtered = activeFilter === 'All'
-    ? articles
-    : articles.filter(a => a.category === activeFilter);
-
+export default function NewsGrid({ articles }: { articles: NewsArticle[] }) {
   return (
-    <>
-      {categories.length > 1 && (
-        <div className="news-filters">
-          <button
-            className={`news-filter-btn ${activeFilter === 'All' ? 'active' : ''}`}
-            onClick={() => setActiveFilter('All')}
-          >
-            All
-          </button>
-          {categories.map(c => (
-            <button
-              key={c}
-              className={`news-filter-btn ${activeFilter === c ? 'active' : ''}`}
-              onClick={() => setActiveFilter(c)}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {filtered.length === 0 ? (
-        <p style={{ textAlign: 'center', color: 'var(--gray-500)', fontSize: '1.05rem', padding: '2rem 0' }}>
-          No articles in this category yet.
-        </p>
-      ) : (
-        <div className="news-grid" id="news-grid">
-          {filtered.map((article) => (
+    <div className="news-grid" id="news-grid">
+      {articles.map((article) => (
             <article key={article.id} className="news-card animated">
               <div className="news-card-image-link">
                 {(article.image_url || article.gallery_images?.[0]?.url) ? (
@@ -83,8 +48,6 @@ export default function NewsGrid({ articles, categories }: { articles: NewsArtic
               </div>
             </article>
           ))}
-        </div>
-      )}
-    </>
+    </div>
   );
 }

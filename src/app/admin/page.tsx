@@ -43,7 +43,7 @@ export default function AdminDashboard() {
     { title: 'News Articles', count: stats.news, href: '/admin/news', icon: 'fas fa-newspaper', color: '#1B8BEB' },
     { title: 'Events', count: stats.events, href: '/admin/events', icon: 'fas fa-calendar-alt', color: '#D97706' },
     { title: 'Boat Tours', count: stats.tours, href: '/admin/tours', icon: 'fas fa-ship', color: '#059669' },
-    { title: 'Documents', count: stats.documents, href: '/admin/documents', icon: 'fas fa-file-pdf', color: '#7C3AED' },
+    { title: 'Meeting Minutes', count: stats.documents, href: '/admin/documents', icon: 'fas fa-file-pdf', color: '#7C3AED' },
     { title: 'Staff', count: stats.staff, href: '/admin/staff', icon: 'fas fa-id-badge', color: '#EC4899' },
     { title: 'Board Members', count: stats.board, href: '/admin/board', icon: 'fas fa-users', color: '#0D9488' },
   ];

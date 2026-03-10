@@ -93,6 +93,7 @@ export interface BoardDocument {
   id: string;
   title: string;
   document_date: string;
+  document_type: 'agenda' | 'minutes' | 'resolution' | 'board_packet';
   file_url: string;
   file_name: string;
   file_size?: number;

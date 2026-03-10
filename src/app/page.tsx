@@ -56,41 +56,48 @@ export default async function HomePage() {
         </a>
       </section>
 
-      {/* ===== SERVICES / PILLARS ===== */}
-      <section className="section services-section" id="services">
+      {/* ===== DEVELOPMENT HIGHLIGHT ===== */}
+      <section className="section dev-highlight-section bg-light" id="services">
         <div className="container">
-          <div className="section-header center" data-animate="fade-up">
-            <div className="section-label">Our Mission</div>
-            <h2 className="section-title">Driving Lorain&apos;s Waterfront Economy</h2>
-            <p className="section-desc">The Lorain Port &amp; Finance Authority manages the economic vitality, maritime commerce, and public enjoyment of Lorain&apos;s irreplaceable Lake Erie waterfront.</p>
-          </div>
-
-          <div className="pillars-grid">
-            <div className="pillar-card" data-animate="fade-up" data-delay="0">
-              <div className="pillar-icon-wrap">
-                <div className="pillar-icon"><i className="fas fa-city"></i></div>
+          <div className="dev-highlight-inner">
+            <div className="dev-highlight-content" data-animate="fade-right">
+              <div className="section-label">Development &amp; Finance</div>
+              <h2>Investing in Lorain&apos;s Future</h2>
+              <p>The Lorain Port &amp; Finance Authority is actively driving economic growth through targeted brownfields remediation, innovative financing tools, and strategic partnerships with developers and community stakeholders.</p>
+              <ul className="check-list">
+                <li><i className="fas fa-check-circle"></i> Brownfields grants and environmental remediation programs</li>
+                <li><i className="fas fa-check-circle"></i> Property financing and development programs</li>
+                <li><i className="fas fa-check-circle"></i> Active RFPs for key waterfront parcels</li>
+                <li><i className="fas fa-check-circle"></i> Waterborne commerce infrastructure investment</li>
+                <li><i className="fas fa-check-circle"></i> City, county, and state agency collaboration</li>
+              </ul>
+              <div className="dev-highlight-actions">
+                <Link href="/development" className="btn btn-primary">View Opportunities</Link>
+                <Link href="/development#rfp" className="btn btn-outline">Current RFPs</Link>
               </div>
-              <h3>Economic Development</h3>
-              <p>Financing waterfront property development, brownfields remediation, and attracting private investment to revitalize Lorain&apos;s economic landscape.</p>
-              <Link href="/development" className="pillar-link">Learn More <i className="fas fa-arrow-right"></i></Link>
             </div>
 
-            <div className="pillar-card pillar-featured" data-animate="fade-up" data-delay="100">
-              <div className="pillar-icon-wrap">
-                <div className="pillar-icon"><i className="fas fa-ship"></i></div>
+            <div className="dev-highlight-stats" data-animate="fade-left">
+              <div className="dev-stat-card">
+                <div className="dev-stat-icon"><i className="fas fa-industry"></i></div>
+                <h4>Brownfields</h4>
+                <p>Environmental cleanup and redevelopment grants for underutilized industrial sites</p>
               </div>
-              <h3>Waterborne Commerce</h3>
-              <p>Supporting commercial shipping, maritime operations, and trade along the Black River and Lake Erie — connecting Lorain to regional and global markets.</p>
-              <Link href="/commerce" className="pillar-link">Learn More <i className="fas fa-arrow-right"></i></Link>
-            </div>
-
-            <div className="pillar-card" data-animate="fade-up" data-delay="200">
-              <div className="pillar-icon-wrap">
-                <div className="pillar-icon"><i className="fas fa-water"></i></div>
+              <div className="dev-stat-card">
+                <div className="dev-stat-icon"><i className="fas fa-hand-holding-dollar"></i></div>
+                <h4>Financing</h4>
+                <p>Flexible property financing programs to catalyze waterfront development</p>
               </div>
-              <h3>Events &amp; Boat Tours</h3>
-              <p>Providing parks, boat launches, tours, and world-class events that connect the Lorain community to the beauty and recreation of Lake Erie.</p>
-              <Link href="/events" className="pillar-link">Learn More <i className="fas fa-arrow-right"></i></Link>
+              <div className="dev-stat-card">
+                <div className="dev-stat-icon"><i className="fas fa-file-contract"></i></div>
+                <h4>Active RFPs</h4>
+                <p>Open requests for proposals on key waterfront development sites</p>
+              </div>
+              <div className="dev-stat-card">
+                <div className="dev-stat-icon"><i className="fas fa-handshake"></i></div>
+                <h4>Partnerships</h4>
+                <p>Collaborating with city, county, and state agencies to maximize impact</p>
+              </div>
             </div>
           </div>
         </div>
@@ -178,126 +185,47 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ===== FACILITIES ===== */}
-      <section className="section facilities-section" id="facilities-home">
+      {/* ===== LIVE CAMS ===== */}
+      <section className="section" id="live-cams-home">
         <div className="container">
           <div className="section-header center" data-animate="fade-up">
-            <div className="section-label">Our Properties</div>
-            <h2 className="section-title">Waterfront Facilities</h2>
-            <p className="section-desc">We manage and maintain Lorain&apos;s most treasured waterfront destinations — from premier event venues to public parks and boat launches.</p>
+            <div className="section-label">Live Cams</div>
+            <h2 className="section-title">Watch the Waterfront Live</h2>
           </div>
-
-          <div className="facilities-grid">
-            <div className="facility-card facility-large" data-animate="fade-up" data-delay="0">
-              <div className="facility-img fac-brl">
-                <div className="facility-overlay">
-                  <div className="facility-overlay-content">
-                    <h3>Black River Landing</h3>
-                    <p>Lorain&apos;s premier waterfront event venue and public gathering space on the Black River.</p>
-                    <Link href="/facilities#black-river-landing" className="btn btn-white btn-sm">Explore <i className="fas fa-arrow-right"></i></Link>
-                  </div>
-                </div>
+          <div className="home-cams-grid" data-animate="fade-up">
+            <div className="home-cam-card">
+              <div className="home-cam-frame">
+                <iframe
+                  src="https://www.youtube.com/embed/1MVB3fgg7kg?autoplay=0&mute=1&rel=0"
+                  title="Lake Erie Live Cam"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  loading="lazy"
+                />
+              </div>
+              <div className="home-cam-bar">
+                <span className="livecam-live-dot"></span>
+                <span>Lake Erie View</span>
               </div>
             </div>
-
-            <div className="facility-card" data-animate="fade-up" data-delay="100">
-              <div className="facility-img fac-pier">
-                <div className="facility-overlay">
-                  <div className="facility-overlay-content">
-                    <h3>Mile-Long Pier</h3>
-                    <p>Lorain&apos;s iconic landmark stretching into Lake Erie.</p>
-                    <Link href="/facilities#mile-long-pier" className="btn btn-white btn-sm">Explore <i className="fas fa-arrow-right"></i></Link>
-                  </div>
-                </div>
+            <div className="home-cam-card">
+              <div className="home-cam-frame">
+                <iframe
+                  src="https://www.youtube.com/embed/ZZevIUr2cTk?autoplay=0&mute=1&rel=0"
+                  title="Black River Live Cam"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  loading="lazy"
+                />
               </div>
-            </div>
-
-            <div className="facility-card" data-animate="fade-up" data-delay="150">
-              <div className="facility-img fac-lakeside">
-                <div className="facility-overlay">
-                  <div className="facility-overlay-content">
-                    <h3>Lakeside Landing</h3>
-                    <p>Beautiful waterfront venue for private events and gatherings.</p>
-                    <Link href="/facilities#lakeside-landing" className="btn btn-white btn-sm">Explore <i className="fas fa-arrow-right"></i></Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="facility-card" data-animate="fade-up" data-delay="200">
-              <div className="facility-img fac-launch">
-                <div className="facility-overlay">
-                  <div className="facility-overlay-content">
-                    <h3>Black River Wharf Boat Launch</h3>
-                    <p>Public access boat launch on the Black River.</p>
-                    <Link href="/facilities#boat-launch" className="btn btn-white btn-sm">Explore <i className="fas fa-arrow-right"></i></Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="facility-card" data-animate="fade-up" data-delay="250">
-              <div className="facility-img fac-river">
-                <div className="facility-overlay">
-                  <div className="facility-overlay-content">
-                    <h3>Riverside Park</h3>
-                    <p>Scenic public green space along the Black River.</p>
-                    <Link href="/facilities#riverside-park" className="btn btn-white btn-sm">Explore <i className="fas fa-arrow-right"></i></Link>
-                  </div>
-                </div>
+              <div className="home-cam-bar">
+                <span className="livecam-live-dot"></span>
+                <span>Black River View</span>
               </div>
             </div>
           </div>
-
           <div className="section-cta" data-animate="fade-up">
-            <Link href="/facilities" className="btn btn-primary">View All Facilities</Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== DEVELOPMENT HIGHLIGHT ===== */}
-      <section className="section dev-highlight-section bg-light" id="dev-highlight">
-        <div className="container">
-          <div className="dev-highlight-inner">
-            <div className="dev-highlight-content" data-animate="fade-right">
-              <div className="section-label">Development &amp; Finance</div>
-              <h2>Investing in Lorain&apos;s Future</h2>
-              <p>The Lorain Port &amp; Finance Authority is actively driving economic growth through targeted brownfields remediation, innovative financing tools, and strategic partnerships with developers and community stakeholders.</p>
-              <ul className="check-list">
-                <li><i className="fas fa-check-circle"></i> Brownfields grants and environmental remediation programs</li>
-                <li><i className="fas fa-check-circle"></i> Property financing and development programs</li>
-                <li><i className="fas fa-check-circle"></i> Active RFPs for key waterfront parcels</li>
-                <li><i className="fas fa-check-circle"></i> Waterborne commerce infrastructure investment</li>
-                <li><i className="fas fa-check-circle"></i> City, county, and state agency collaboration</li>
-              </ul>
-              <div className="dev-highlight-actions">
-                <Link href="/development" className="btn btn-primary">View Opportunities</Link>
-                <Link href="/development#rfp" className="btn btn-outline">Current RFPs</Link>
-              </div>
-            </div>
-
-            <div className="dev-highlight-stats" data-animate="fade-left">
-              <div className="dev-stat-card">
-                <div className="dev-stat-icon"><i className="fas fa-industry"></i></div>
-                <h4>Brownfields</h4>
-                <p>Environmental cleanup and redevelopment grants for underutilized industrial sites</p>
-              </div>
-              <div className="dev-stat-card">
-                <div className="dev-stat-icon"><i className="fas fa-hand-holding-dollar"></i></div>
-                <h4>Financing</h4>
-                <p>Flexible property financing programs to catalyze waterfront development</p>
-              </div>
-              <div className="dev-stat-card">
-                <div className="dev-stat-icon"><i className="fas fa-file-contract"></i></div>
-                <h4>Active RFPs</h4>
-                <p>Open requests for proposals on key waterfront development sites</p>
-              </div>
-              <div className="dev-stat-card">
-                <div className="dev-stat-icon"><i className="fas fa-handshake"></i></div>
-                <h4>Partnerships</h4>
-                <p>Collaborating with city, county, and state agencies to maximize impact</p>
-              </div>
-            </div>
+            <Link href="/live-cams" className="btn btn-gold">View Full Screen Cams</Link>
           </div>
         </div>
       </section>

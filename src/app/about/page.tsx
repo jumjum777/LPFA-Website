@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import ScrollAnimator from '@/components/ui/ScrollAnimator';
+import Timeline from '@/components/about/Timeline';
 
 export const metadata = { title: 'About Us' };
 
@@ -40,96 +41,15 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* MISSION BANNER */}
-      <div className="container">
-        <div className="mission-banner" data-animate="fade-up">
-          <div className="quote-mark">&ldquo;</div>
-          <h2>To advance economic development, facilitate waterborne commerce, and provide meaningful public access to Lorain&apos;s waterways for the benefit of all.</h2>
-          <div style={{ marginTop: '1.5rem', color: 'var(--gold-muted)', fontSize: '0.82rem', fontFamily: 'var(--font-heading)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, position: 'relative' as const }}>Our Mission</div>
-        </div>
-      </div>
-
-      {/* THREE PILLARS */}
+      {/* HISTORY TIMELINE */}
       <section className="section bg-light">
         <div className="container">
           <div className="section-header center" data-animate="fade-up">
-            <div className="section-label">What We Do</div>
-            <h2 className="section-title">Our Three Core Pillars</h2>
-          </div>
-          <div className="pillars-row">
-            <div className="content-card" data-animate="fade-up" data-delay="0" style={{ borderTop: '3px solid var(--blue-accent)' }}>
-              <div style={{ width: '50px', height: '50px', background: 'rgba(27,139,235,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', color: 'var(--blue-accent)', marginBottom: '1.25rem' }}><i className="fas fa-city"></i></div>
-              <h3 style={{ marginBottom: '0.75rem' }}>Economic Development</h3>
-              <p>We manage property financing, brownfields remediation grants, and strategic partnerships to attract private investment and catalyze the revitalization of Lorain&apos;s waterfront economy.</p>
-            </div>
-            <div className="content-card" data-animate="fade-up" data-delay="100" style={{ borderTop: '3px solid var(--gold)' }}>
-              <div style={{ width: '50px', height: '50px', background: 'rgba(217,119,6,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', color: 'var(--gold)', marginBottom: '1.25rem' }}><i className="fas fa-ship"></i></div>
-              <h3 style={{ marginBottom: '0.75rem' }}>Waterborne Commerce</h3>
-              <p>We support and facilitate commercial shipping, maritime operations, and trade activity along the Black River and Lake Erie — maintaining Lorain&apos;s proud heritage as a working port city.</p>
-            </div>
-            <div className="content-card" data-animate="fade-up" data-delay="200" style={{ borderTop: '3px solid #0D9488' }}>
-              <div style={{ width: '50px', height: '50px', background: 'rgba(13,148,136,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', color: '#0D9488', marginBottom: '1.25rem' }}><i className="fas fa-water"></i></div>
-              <h3 style={{ marginBottom: '0.75rem' }}>Public Waterway Access</h3>
-              <p>We operate parks, boat launches, event venues, and recreational programming to ensure that every Lorain resident and visitor can enjoy the beauty and opportunity of our Lake Erie waterfront.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* HISTORY */}
-      <section className="section bg-light">
-        <div className="container">
-          <div style={{ maxWidth: '700px' }} data-animate="fade-right">
             <div className="section-label">Our History</div>
-            <h2 style={{ marginBottom: '2rem' }}>A Legacy on the Water</h2>
-            <div className="history-timeline">
-              <div className="timeline-item">
-                <div className="timeline-year">1964</div>
-                <h4>Port Authority Founded</h4>
-                <p>The Lorain Port Authority was founded on May 4, 1964 by an act of the Council of the City of Lorain. Its first major projects included a $22 million port renovation and the construction of a 305-meter dry dock facility in 1967.</p>
-              </div>
-              <div className="timeline-item">
-                <div className="timeline-year">1974</div>
-                <h4>First Industrial Revenue Bond</h4>
-                <p>The Authority issued its first Industrial Revenue Bond, providing $3.5 million to assist Allied Oil in the construction of fuel storage tanks along the Black River.</p>
-              </div>
-              <div className="timeline-item">
-                <div className="timeline-year">1970s–1980s</div>
-                <h4>Port &amp; River Renovation</h4>
-                <p>The Authority led major renovations including the installation of the floating tire breakwall, renovation of the historic lighthouse, and construction of the east pier breakwall.</p>
-              </div>
-              <div className="timeline-item">
-                <div className="timeline-year">1995</div>
-                <h4>Riverside Expansion</h4>
-                <p>The Authority received a 10-hectare riverside plot from LTV Steel and led the creation of the $2.1 million Black River Wharf Boat Launch Ramp.</p>
-              </div>
-              <div className="timeline-item">
-                <div className="timeline-year">2000</div>
-                <h4>First Concert at Riverside Park</h4>
-                <p>The Authority hosted its first concert at Riverside Park, sparking the Black River Landing Concert Series that would transform Lorain&apos;s waterfront into a regional entertainment destination.</p>
-              </div>
-              <div className="timeline-item">
-                <div className="timeline-year">2010</div>
-                <h4>Mile Long Pier Renovation</h4>
-                <p>The Authority provided $3.37 million to renovate the Mile Long Pier, transforming it into a beloved public resource for the community.</p>
-              </div>
-              <div className="timeline-item">
-                <div className="timeline-year">2014–2015</div>
-                <h4>Black River Landing &amp; Rockin&apos; on the River</h4>
-                <p>The Authority moved into the Ferry Terminal Building at Black River Landing, and recruited Rockin&apos; on the River in 2015 — an event that now draws hundreds of thousands of visitors annually.</p>
-              </div>
-              <div className="timeline-item">
-                <div className="timeline-year">2025</div>
-                <h4>Rockin&apos; on the River Acquisition</h4>
-                <p>The Port Authority purchased the Rockin&apos; on the River concert series from its previous owners, taking full ownership and operational control of one of Northeast Ohio&apos;s largest outdoor entertainment events.</p>
-              </div>
-              <div className="timeline-item">
-                <div className="timeline-year">Present</div>
-                <h4>Lorain Port &amp; Finance Authority</h4>
-                <p>For more than 60 years, the Authority has provided over $50 million in conduit financing and continues to be a key player in the redevelopment of the port and surrounding area.</p>
-              </div>
-            </div>
+            <h2 className="section-title">A Legacy on the Water</h2>
+            <p style={{ maxWidth: '600px', margin: '0 auto', color: 'var(--gray-600)' }}>From our founding in 1964 to today, the Lorain Port &amp; Finance Authority has provided over $60 million in conduit financing and continues to drive the redevelopment of Lorain&apos;s waterfront. Click any milestone to learn more.</p>
           </div>
+          <Timeline />
         </div>
       </section>
 
