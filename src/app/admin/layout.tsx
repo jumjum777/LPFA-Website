@@ -11,9 +11,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const pathname = usePathname();
   const isLoginPage = pathname === '/admin/login';
+  const isSetPasswordPage = pathname === '/admin/set-password';
 
   useEffect(() => {
-    if (isLoginPage) return;
+    if (isLoginPage || isSetPasswordPage) return;
 
     const supabase = createClient();
 
@@ -46,10 +47,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
 
     checkAuth();
-  }, [router, isLoginPage]);
+  }, [router, isLoginPage, isSetPasswordPage]);
 
-  // Don't wrap the login page in the admin layout
-  if (isLoginPage) {
+  // Don't wrap the login/set-password page in the admin layout
+  if (isLoginPage || isSetPasswordPage) {
     return <>{children}</>;
   }
 
