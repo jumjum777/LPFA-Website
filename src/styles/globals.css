@@ -7654,7 +7654,178 @@ body:has(.admin-login-wrapper) > footer {
   display: block;
 }
 
-/* Dark mode */
+/* Photo staging area */
+.photo-staging-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 1rem 1.25rem;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 10px;
+}
+.photo-staging-quickapply {
+  padding: 1rem 1.25rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+.photo-staging-quickapply-label {
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: #475569;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.photo-cat-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.85rem;
+  margin-bottom: 0.65rem;
+}
+.photo-cat-check {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: #334155;
+  user-select: none;
+}
+.photo-cat-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #1B8BEB;
+  cursor: pointer;
+}
+.photo-cat-checks-card {
+  gap: 0.25rem 0.7rem;
+  margin-bottom: 0;
+}
+.photo-cat-checks-card .photo-cat-check {
+  font-size: 0.78rem;
+}
+.photo-add-cat {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.photo-add-cat input {
+  padding: 0.4rem 0.65rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-family: var(--font-body);
+  width: 200px;
+}
+.photo-staged-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+.photo-staged-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+.photo-staged-img {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #f1f5f9;
+}
+.photo-staged-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.photo-staged-card-body {
+  padding: 0.75rem;
+}
+.photo-staged-title-input {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: #0B1F3A;
+  background: #fff;
+  margin-bottom: 0.25rem;
+}
+.photo-staged-meta {
+  font-size: 0.72rem;
+  color: #64748B;
+  margin-bottom: 0.5rem;
+}
+.photo-staged-cats-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.3rem;
+}
+.photo-staged-remove {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.5);
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.photo-staged-remove:hover {
+  background: rgba(220,38,38,0.8);
+}
+.photo-card-cats {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+/* Dark mode staging */
+[data-theme="dark"] .photo-staging-topbar {
+  background: rgba(27,139,235,0.08);
+  border-color: rgba(27,139,235,0.2);
+}
+[data-theme="dark"] .photo-staging-quickapply {
+  background: #0F172A;
+  border-color: #334155;
+}
+[data-theme="dark"] .photo-staging-quickapply-label { color: #94A3B8; }
+[data-theme="dark"] .photo-cat-check { color: #CBD5E1; }
+[data-theme="dark"] .photo-add-cat input {
+  background: #1E293B;
+  border-color: #334155;
+  color: #F1F5F9;
+}
+[data-theme="dark"] .photo-staged-card {
+  background: #1E293B;
+  border-color: #334155;
+}
+[data-theme="dark"] .photo-staged-img { background: #0F172A; }
+[data-theme="dark"] .photo-staged-title-input {
+  background: #0F172A;
+  border-color: #334155;
+  color: #F1F5F9;
+}
+[data-theme="dark"] .photo-staged-cats-label { color: #94A3B8; }
 [data-theme="dark"] .photo-card {
   background: #1E293B;
   border-color: #334155;
@@ -7679,10 +7850,12 @@ body:has(.admin-login-wrapper) > footer {
 }
 @media (max-width: 1024px) {
   .photo-grid { grid-template-columns: repeat(3, 1fr); }
+  .photo-staged-grid { grid-template-columns: repeat(2, 1fr); }
   .photo-picker-grid { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 768px) {
   .photo-grid { grid-template-columns: repeat(2, 1fr); }
+  .photo-staged-grid { grid-template-columns: 1fr; }
   .photo-picker-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 480px) {

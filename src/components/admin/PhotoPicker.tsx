@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import type { Photo } from '@/lib/types';
-
-const CATEGORIES = ['All', 'Events', 'Facilities', 'Staff', 'Press', 'Historical', 'Brownfields', 'Development', 'General'];
+import type { Photo, PhotoCategory } from '@/lib/types';
 
 interface PhotoPickerProps {
   isOpen: boolean;
@@ -14,39 +12,36 @@ interface PhotoPickerProps {
 
 export default function PhotoPicker({ isOpen, onClose, onSelect }: PhotoPickerProps) {
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [categories, setCategories] = useState<PhotoCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [filterCategory, setFilterCategory] = useState('All');
 
   useEffect(() => {
     if (!isOpen) return;
     setSearch('');
-    setSelectedCategory('All');
-    loadPhotos();
-  }, [isOpen]);
-
-  async function loadPhotos() {
-    setLoading(true);
+    setFilterCategory('All');
     const supabase = createClient();
-    const { data } = await supabase
-      .from('photos')
-      .select('*')
-      .order('created_at', { ascending: false });
-    setPhotos(data || []);
-    setLoading(false);
-  }
+    Promise.all([
+      supabase.from('photos').select('*').order('created_at', { ascending: false }),
+      supabase.from('photo_categories').select('*').order('sort_order').order('name'),
+    ]).then(([photosRes, catsRes]) => {
+      setPhotos(photosRes.data || []);
+      setCategories(catsRes.data || []);
+      setLoading(false);
+    });
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const categoryFiltered = selectedCategory === 'All'
+  const categoryFiltered = filterCategory === 'All'
     ? photos
-    : photos.filter(p => p.category === selectedCategory);
+    : photos.filter(p => (p.categories || []).includes(filterCategory));
 
   const filtered = search
     ? categoryFiltered.filter(p =>
         p.title.toLowerCase().includes(search.toLowerCase()) ||
-        (p.description || '').toLowerCase().includes(search.toLowerCase()) ||
-        (p.tags || []).some(t => t.toLowerCase().includes(search.toLowerCase()))
+        (p.categories || []).some(c => c.toLowerCase().includes(search.toLowerCase()))
       )
     : categoryFiltered;
 
@@ -64,17 +59,23 @@ export default function PhotoPicker({ isOpen, onClose, onSelect }: PhotoPickerPr
           </button>
         </div>
         <div className="photo-picker-body">
-          {/* Filters */}
           <div style={{ marginBottom: '1rem' }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginBottom: '0.75rem' }}>
-              {CATEGORIES.map(cat => (
+              <button
+                onClick={() => { setFilterCategory('All'); setSearch(''); }}
+                className={`admin-year-tab${filterCategory === 'All' ? ' active' : ''}`}
+                style={{ fontSize: '0.75rem', padding: '0.25rem 0.65rem' }}
+              >
+                All
+              </button>
+              {categories.map(cat => (
                 <button
-                  key={cat}
-                  onClick={() => { setSelectedCategory(cat); setSearch(''); }}
-                  className={`admin-year-tab${cat === selectedCategory ? ' active' : ''}`}
+                  key={cat.id}
+                  onClick={() => { setFilterCategory(cat.name); setSearch(''); }}
+                  className={`admin-year-tab${cat.name === filterCategory ? ' active' : ''}`}
                   style={{ fontSize: '0.75rem', padding: '0.25rem 0.65rem' }}
                 >
-                  {cat}
+                  {cat.name}
                 </button>
               ))}
             </div>
@@ -96,7 +97,6 @@ export default function PhotoPicker({ isOpen, onClose, onSelect }: PhotoPickerPr
             />
           </div>
 
-          {/* Grid */}
           {loading ? (
             <p style={{ textAlign: 'center', padding: '2rem 0', color: '#64748B' }}>Loading...</p>
           ) : filtered.length === 0 ? (

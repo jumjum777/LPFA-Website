@@ -134,8 +134,7 @@ export interface Photo {
   id: string;
   title: string;
   description?: string;
-  category: string;
-  tags: string[];
+  categories: string[];
   file_url: string;
   thumbnail_url: string;
   file_name: string;
@@ -143,6 +142,13 @@ export interface Photo {
   width?: number;
   height?: number;
   uploaded_by?: string;
+  created_at: string;
+}
+
+export interface PhotoCategory {
+  id: string;
+  name: string;
+  sort_order: number;
   created_at: string;
 }
 
