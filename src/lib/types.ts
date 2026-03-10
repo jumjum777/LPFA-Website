@@ -130,6 +130,22 @@ export interface BoardMember {
   updated_at: string;
 }
 
+export interface Photo {
+  id: string;
+  title: string;
+  description?: string;
+  category: string;
+  tags: string[];
+  file_url: string;
+  thumbnail_url: string;
+  file_name: string;
+  file_size?: number;
+  width?: number;
+  height?: number;
+  uploaded_by?: string;
+  created_at: string;
+}
+
 export interface AdminUser {
   id: string;
   user_id: string;

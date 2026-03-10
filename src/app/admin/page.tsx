@@ -9,21 +9,23 @@ interface DashboardStats {
   events: number;
   tours: number;
   documents: number;
+  photos: number;
   staff: number;
   board: number;
 }
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<DashboardStats>({ news: 0, events: 0, tours: 0, documents: 0, staff: 0, board: 0 });
+  const [stats, setStats] = useState<DashboardStats>({ news: 0, events: 0, tours: 0, documents: 0, photos: 0, staff: 0, board: 0 });
 
   useEffect(() => {
     async function loadStats() {
       const supabase = createClient();
-      const [newsRes, eventsRes, toursRes, docsRes, staffRes, boardRes] = await Promise.all([
+      const [newsRes, eventsRes, toursRes, docsRes, photosRes, staffRes, boardRes] = await Promise.all([
         supabase.from('news_articles').select('id', { count: 'exact', head: true }),
         supabase.from('events').select('id', { count: 'exact', head: true }),
         supabase.from('tours').select('id', { count: 'exact', head: true }),
         supabase.from('board_documents').select('id', { count: 'exact', head: true }),
+        supabase.from('photos').select('id', { count: 'exact', head: true }),
         supabase.from('staff_members').select('id', { count: 'exact', head: true }),
         supabase.from('board_members').select('id', { count: 'exact', head: true }),
       ]);
@@ -32,6 +34,7 @@ export default function AdminDashboard() {
         events: eventsRes.count || 0,
         tours: toursRes.count || 0,
         documents: docsRes.count || 0,
+        photos: photosRes.count || 0,
         staff: staffRes.count || 0,
         board: boardRes.count || 0,
       });
@@ -44,6 +47,7 @@ export default function AdminDashboard() {
     { title: 'Events', count: stats.events, href: '/admin/events', icon: 'fas fa-calendar-alt', color: '#D97706' },
     { title: 'Boat Tours', count: stats.tours, href: '/admin/tours', icon: 'fas fa-ship', color: '#059669' },
     { title: 'Meeting Minutes', count: stats.documents, href: '/admin/documents', icon: 'fas fa-file-pdf', color: '#7C3AED' },
+    { title: 'Photos', count: stats.photos, href: '/admin/photos', icon: 'fas fa-images', color: '#06B6D4' },
     { title: 'Staff', count: stats.staff, href: '/admin/staff', icon: 'fas fa-id-badge', color: '#EC4899' },
     { title: 'Board Members', count: stats.board, href: '/admin/board', icon: 'fas fa-users', color: '#0D9488' },
   ];
