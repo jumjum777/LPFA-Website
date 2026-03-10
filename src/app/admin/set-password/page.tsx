@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
@@ -9,7 +9,18 @@ export default function SetPasswordPage() {
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [ready, setReady] = useState(false);
   const router = useRouter();
+
+  // Wait for Supabase to process the recovery token from the URL hash
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+        setReady(true);
+      }
+    });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,9 +95,11 @@ export default function SetPasswordPage() {
             />
           </div>
 
-          <button type="submit" className="admin-btn admin-btn-primary" disabled={loading}>
+          <button type="submit" className="admin-btn admin-btn-primary" disabled={loading || !ready}>
             {loading ? (
               <><i className="fas fa-spinner fa-spin"></i> Setting password...</>
+            ) : !ready ? (
+              <><i className="fas fa-spinner fa-spin"></i> Verifying...</>
             ) : (
               'Set Password & Continue'
             )}
