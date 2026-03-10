@@ -12,19 +12,33 @@ export default function SetPasswordPage() {
   const [ready, setReady] = useState(false);
   const router = useRouter();
 
-  // Wait for Supabase to process the recovery token from the URL hash
+  // Parse the recovery token from the URL hash and establish session
   useEffect(() => {
     const supabase = createClient();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
-        setReady(true);
+
+    async function handleRecoveryToken() {
+      const hash = window.location.hash.substring(1);
+      const params = new URLSearchParams(hash);
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+
+      if (accessToken && refreshToken) {
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        if (!error) {
+          setReady(true);
+          return;
+        }
       }
-    });
-    // Also check if session already exists (token was already processed)
-    supabase.auth.getSession().then(({ data: { session } }) => {
+
+      // Fallback: check if session already exists
+      const { data: { session } } = await supabase.auth.getSession();
       if (session) setReady(true);
-    });
-    return () => subscription.unsubscribe();
+    }
+
+    handleRecoveryToken();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
