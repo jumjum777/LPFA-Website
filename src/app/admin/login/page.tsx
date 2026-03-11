@@ -49,8 +49,8 @@ export default function AdminLoginPage() {
     <div className="admin-login-wrapper">
       <div className="admin-login-card">
         <div className="admin-login-header">
-          <i className="fas fa-anchor"></i>
-          <h1>LPFA Admin</h1>
+          <img src="/images/crowsnest-logo-white.png" alt="Crow's Nest Digital Media" className="admin-login-logo" />
+          <h1>Pulse</h1>
           <p>Sign in to manage your website</p>
         </div>
 

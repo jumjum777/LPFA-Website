@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import AdminSidebar from '@/components/admin/AdminSidebar';
@@ -64,7 +64,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="admin-wrapper">
-      <AdminSidebar user={user!} />
+      <Suspense><AdminSidebar user={user!} /></Suspense>
       <main className="admin-main">
         {children}
       </main>

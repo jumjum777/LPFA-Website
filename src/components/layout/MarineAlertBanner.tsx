@@ -21,8 +21,9 @@ function getSeverityClass(severity: string) {
 }
 
 const MOCK_ALERTS: Alert[] = [
-  { id: 'mock-1', event: 'Small Craft Advisory', headline: 'Small Craft Advisory in effect for Vermilion to Avon Point OH nearshore waters', severity: 'Moderate' },
-  { id: 'mock-2', event: 'Gale Warning', headline: 'Gale Warning in effect for Lorain and surrounding Lake Erie nearshore waters', severity: 'Severe' },
+  { id: 'mock-1', event: 'Severe Thunderstorm Warning', headline: 'Severe Thunderstorm Warning in effect for Lorain County until 8:00 PM EDT', severity: 'Severe' },
+  { id: 'mock-2', event: 'Small Craft Advisory', headline: 'Small Craft Advisory in effect for Vermilion to Avon Point OH nearshore waters', severity: 'Moderate' },
+  { id: 'mock-3', event: 'Gale Warning', headline: 'Gale Warning in effect for Lorain and surrounding Lake Erie nearshore waters', severity: 'Severe' },
 ];
 
 function MarineAlertBannerInner() {

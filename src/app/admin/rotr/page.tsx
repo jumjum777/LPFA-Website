@@ -1,0 +1,1063 @@
+'use client';
+
+import { Suspense, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+
+type Tab = 'overview' | 'events' | 'orders' | 'customers' | 'finances';
+
+interface TicketDef {
+  id: string;
+  name: string;
+  eventId: string;
+  free: boolean;
+  price: { amount: string; currency: string };
+  saleStatus: string;
+}
+
+interface ROTREvent {
+  id: string;
+  title: string;
+  slug: string;
+  status: string;
+  dateAndTimeSettings: {
+    startDate: string;
+    formatted: {
+      startDate: string;
+      startTime: string;
+    };
+  };
+  location: { name: string };
+  mainImage?: { url: string };
+  registration: {
+    type: string;
+    status: string;
+    tickets?: {
+      lowestPrice?: { formattedValue: string };
+      highestPrice?: { formattedValue: string };
+      soldOut: boolean;
+    };
+  };
+  eventPageUrl?: { base: string; path: string };
+  ticketDefinitions: TicketDef[];
+}
+
+interface Order {
+  orderNumber: string;
+  eventId: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  email: string;
+  status: string;
+  ticketsQuantity: number;
+  totalPrice?: { amount: string; currency: string };
+  created: string;
+  paymentDetails?: { transaction?: { method: string } };
+}
+
+interface TransactionData {
+  serviceFee: number;
+  ticketTotal: number;
+  totalCharged: number;
+  paymentMethod: string;
+  ticketItems: { name: string; quantity: number; price: number }[];
+  hasRefunds: boolean;
+}
+
+interface Summary {
+  totalEvents: number;
+  upcomingEvents: number;
+  totalOrders: number;
+  totalRevenue: number;
+  totalTickets: number;
+}
+
+interface Customer {
+  email: string;
+  name: string;
+  orderCount: number;
+  totalSpent: number;
+  ticketCount: number;
+  lastOrder: string;
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+}
+
+export default function AdminROTRPage() {
+  return (
+    <Suspense fallback={
+      <div className="admin-page">
+        <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
+          <i className="fas fa-spinner fa-spin" style={{ fontSize: '2rem', color: 'var(--blue-accent)' }}></i>
+        </div>
+      </div>
+    }>
+      <ROTRContent />
+    </Suspense>
+  );
+}
+
+function ROTRContent() {
+  const searchParams = useSearchParams();
+  const tab = (searchParams.get('tab') as Tab) || 'overview';
+  const [events, setEvents] = useState<ROTREvent[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [orderFilter, setOrderFilter] = useState('');
+  const [orderStatusFilter, setOrderStatusFilter] = useState('');
+  const [financePeriod, setFinancePeriod] = useState('all');
+  const [transactions, setTransactions] = useState<Record<string, TransactionData>>({});
+  const [txnLoading, setTxnLoading] = useState(false);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch('/api/admin/rotr');
+        const data = await res.json();
+        setEvents(data.events || []);
+        setSummary(data.summary || null);
+      } catch (err) {
+        console.error('Failed to load ROTR data:', err);
+      }
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  // Load orders when tab switches to orders, customers, or finances
+  useEffect(() => {
+    if ((tab === 'orders' || tab === 'customers' || tab === 'finances') && orders.length === 0 && !ordersLoading) {
+      setOrdersLoading(true);
+      fetch('/api/admin/rotr/orders')
+        .then(res => res.json())
+        .then(data => setOrders(data.orders || []))
+        .catch(err => console.error('Failed to load orders:', err))
+        .finally(() => setOrdersLoading(false));
+    }
+  }, [tab, orders.length, ordersLoading]);
+
+  // Load transaction data when finances tab opens
+  useEffect(() => {
+    if (tab === 'finances' && Object.keys(transactions).length === 0 && !txnLoading) {
+      setTxnLoading(true);
+      fetch('/api/admin/rotr/transactions')
+        .then(res => res.json())
+        .then(data => setTransactions(data.transactions || {}))
+        .catch(err => console.error('Failed to load transactions:', err))
+        .finally(() => setTxnLoading(false));
+    }
+  }, [tab, transactions, txnLoading]);
+
+  // Build event lookup for orders
+  const eventMap = new Map(events.map(e => [e.id, e.title]));
+
+  // Build customers from orders
+  const customers: Customer[] = (() => {
+    const map = new Map<string, Customer>();
+    orders.forEach(o => {
+      if (!o.email) return;
+      const key = o.email.toLowerCase();
+      const existing = map.get(key);
+      if (existing) {
+        existing.orderCount++;
+        existing.totalSpent += parseFloat(o.totalPrice?.amount || '0');
+        existing.ticketCount += o.ticketsQuantity;
+        if (o.created > existing.lastOrder) existing.lastOrder = o.created;
+      } else {
+        map.set(key, {
+          email: o.email,
+          name: o.fullName || `${o.firstName} ${o.lastName}`.trim(),
+          orderCount: 1,
+          totalSpent: parseFloat(o.totalPrice?.amount || '0'),
+          ticketCount: o.ticketsQuantity,
+          lastOrder: o.created,
+        });
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => b.totalSpent - a.totalSpent);
+  })();
+
+  // Filter orders
+  const filteredOrders = orders.filter(o => {
+    if (orderFilter && o.eventId !== orderFilter) return false;
+    if (orderStatusFilter && o.status !== orderStatusFilter) return false;
+    return true;
+  }).sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime());
+
+  const filteredRevenue = filteredOrders.reduce(
+    (sum, o) => sum + parseFloat(o.totalPrice?.amount || '0'),
+    0
+  );
+
+  // Sort events by date
+  const sortedEvents = [...events].sort((a, b) => {
+    const da = new Date(a.dateAndTimeSettings.startDate).getTime();
+    const db = new Date(b.dateAndTimeSettings.startDate).getTime();
+    return da - db;
+  });
+
+  const upcomingEvents = sortedEvents.filter(e => e.status === 'UPCOMING');
+  const pastEvents = sortedEvents.filter(e => e.status === 'ENDED');
+
+  if (loading) {
+    return (
+      <div className="admin-page">
+        <div className="admin-page-header">
+          <div>
+            <h1>Rockin&apos; on the River</h1>
+            <p>Loading data from Wix...</p>
+          </div>
+        </div>
+        <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
+          <i className="fas fa-spinner fa-spin" style={{ fontSize: '2rem', color: 'var(--blue-accent)' }}></i>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="admin-page">
+      <div className="admin-page-header">
+        <div>
+          <h1>Rockin&apos; on the River</h1>
+          <p>Concert series data from Wix Events</p>
+        </div>
+        <div className="admin-header-actions">
+          <a
+            href="https://www.rockinontheriver.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="admin-btn admin-btn-secondary"
+          >
+            <i className="fas fa-external-link-alt"></i> Wix Site
+          </a>
+        </div>
+      </div>
+
+      {/* === OVERVIEW TAB === */}
+      {tab === 'overview' && summary && (
+        <div>
+          <div className="rotr-stats-row">
+            <div className="rotr-stat-card">
+              <div className="rotr-stat-icon" style={{ background: 'rgba(27,139,235,0.1)', color: '#1B8BEB' }}>
+                <i className="fas fa-calendar-alt"></i>
+              </div>
+              <div className="rotr-stat-value">{summary.upcomingEvents}</div>
+              <div className="rotr-stat-label">Upcoming Shows</div>
+            </div>
+            <div className="rotr-stat-card">
+              <div className="rotr-stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10B981' }}>
+                <i className="fas fa-receipt"></i>
+              </div>
+              <div className="rotr-stat-value">{summary.totalOrders}</div>
+              <div className="rotr-stat-label">Total Orders</div>
+            </div>
+            <div className="rotr-stat-card">
+              <div className="rotr-stat-icon" style={{ background: 'rgba(217,119,6,0.1)', color: '#D97706' }}>
+                <i className="fas fa-dollar-sign"></i>
+              </div>
+              <div className="rotr-stat-value">{formatCurrency(summary.totalRevenue)}</div>
+              <div className="rotr-stat-label">Total Revenue</div>
+            </div>
+            <div className="rotr-stat-card">
+              <div className="rotr-stat-icon" style={{ background: 'rgba(124,58,237,0.1)', color: '#7C3AED' }}>
+                <i className="fas fa-ticket-alt"></i>
+              </div>
+              <div className="rotr-stat-value">{summary.totalTickets}</div>
+              <div className="rotr-stat-label">Tickets Sold</div>
+            </div>
+          </div>
+
+          {/* Upcoming Events Quick View */}
+          <div className="admin-card" style={{ marginTop: '1.5rem' }}>
+            <h3 style={{ marginBottom: '1rem' }}>Upcoming Shows</h3>
+            {upcomingEvents.length === 0 ? (
+              <p style={{ color: 'var(--gray-500)' }}>No upcoming shows scheduled.</p>
+            ) : (
+              <div className="rotr-upcoming-list">
+                {upcomingEvents.map(event => (
+                  <Link
+                    key={event.id}
+                    href={`/admin/rotr/${event.id}`}
+                    className="rotr-upcoming-item"
+                  >
+                    {event.mainImage && (
+                      <img
+                        src={event.mainImage.url}
+                        alt={event.title}
+                        className="rotr-upcoming-thumb"
+                      />
+                    )}
+                    <div className="rotr-upcoming-info">
+                      <span className="rotr-upcoming-title">{event.title}</span>
+                      <span className="rotr-upcoming-date">
+                        <i className="fas fa-calendar"></i> {event.dateAndTimeSettings.formatted.startDate}
+                        {event.dateAndTimeSettings.formatted.startTime && ` at ${event.dateAndTimeSettings.formatted.startTime}`}
+                      </span>
+                    </div>
+                    <div className="rotr-upcoming-meta">
+                      {event.registration.tickets?.soldOut ? (
+                        <span className="admin-status-badge" style={{ background: '#DC2626' }}>Sold Out</span>
+                      ) : event.registration.tickets?.lowestPrice ? (
+                        <span className="rotr-upcoming-price">{event.registration.tickets.lowestPrice.formattedValue}</span>
+                      ) : (
+                        <span className="rotr-upcoming-price">Free</span>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Revenue by Event */}
+          {pastEvents.length > 0 && (
+            <div className="admin-card" style={{ marginTop: '1.5rem' }}>
+              <h3 style={{ marginBottom: '1rem' }}>Past Shows</h3>
+              <div className="admin-table-wrap">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Event</th>
+                      <th>Date</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pastEvents.slice(0, 10).map(event => (
+                      <tr key={event.id}>
+                        <td>
+                          <Link href={`/admin/rotr/${event.id}`} style={{ color: 'var(--blue-accent)', fontWeight: 500 }}>
+                            {event.title}
+                          </Link>
+                        </td>
+                        <td>{event.dateAndTimeSettings.formatted.startDate}</td>
+                        <td>
+                          <span className="admin-status-badge" style={{ background: '#6B7280' }}>Ended</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* === EVENTS TAB === */}
+      {tab === 'events' && (
+        <div className="admin-table-wrap" style={{ marginTop: '1rem' }}>
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Event</th>
+                <th>Date</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th>Tickets</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedEvents.map(event => {
+                const wixUrl = event.eventPageUrl
+                  ? `${event.eventPageUrl.base}${event.eventPageUrl.path}`
+                  : null;
+                return (
+                  <tr key={event.id}>
+                    <td style={{ width: '50px', padding: '0.5rem' }}>
+                      {event.mainImage ? (
+                        <img
+                          src={event.mainImage.url}
+                          alt=""
+                          style={{ width: '44px', height: '44px', objectFit: 'cover', borderRadius: '6px' }}
+                        />
+                      ) : (
+                        <div style={{ width: '44px', height: '44px', background: 'var(--gray-100)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <i className="fas fa-music" style={{ color: 'var(--gray-400)' }}></i>
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      <Link href={`/admin/rotr/${event.id}`} style={{ color: 'var(--blue-accent)', fontWeight: 500 }}>
+                        {event.title}
+                      </Link>
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      {event.dateAndTimeSettings.formatted.startDate}
+                    </td>
+                    <td>
+                      {event.registration.tickets?.lowestPrice
+                        ? event.registration.tickets.lowestPrice.formattedValue
+                        : 'Free'}
+                    </td>
+                    <td>
+                      <span
+                        className="admin-status-badge"
+                        style={{
+                          background: event.status === 'UPCOMING' ? '#10B981'
+                            : event.status === 'ENDED' ? '#6B7280'
+                            : '#EF4444',
+                        }}
+                      >
+                        {event.status}
+                      </span>
+                    </td>
+                    <td>
+                      {event.registration.tickets?.soldOut ? (
+                        <span style={{ color: '#DC2626', fontWeight: 600, fontSize: '0.82rem' }}>Sold Out</span>
+                      ) : (
+                        <span style={{ color: '#10B981', fontSize: '0.82rem' }}>Available</span>
+                      )}
+                    </td>
+                    <td>
+                      {wixUrl && (
+                        <a href={wixUrl} target="_blank" rel="noopener noreferrer" className="admin-btn admin-btn-icon" title="View on Wix">
+                          <i className="fas fa-external-link-alt"></i>
+                        </a>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* === ORDERS TAB === */}
+      {tab === 'orders' && (
+        <div>
+          <div className="rotr-orders-toolbar">
+            <div className="rotr-orders-filters">
+              <select
+                value={orderFilter}
+                onChange={e => setOrderFilter(e.target.value)}
+                className="rotr-filter-select"
+              >
+                <option value="">All Events</option>
+                {events.filter(e => e.status === 'UPCOMING' || e.status === 'ENDED').map(e => (
+                  <option key={e.id} value={e.id}>{e.title}</option>
+                ))}
+              </select>
+              <select
+                value={orderStatusFilter}
+                onChange={e => setOrderStatusFilter(e.target.value)}
+                className="rotr-filter-select"
+              >
+                <option value="">All Statuses</option>
+                <option value="PAID">Paid</option>
+                <option value="FREE">Free</option>
+              </select>
+            </div>
+            <div className="rotr-orders-summary">
+              <span>{filteredOrders.length} orders</span>
+              <span className="rotr-orders-revenue">{formatCurrency(filteredRevenue)}</span>
+            </div>
+          </div>
+
+          {ordersLoading ? (
+            <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
+              <i className="fas fa-spinner fa-spin" style={{ fontSize: '1.5rem', color: 'var(--blue-accent)' }}></i>
+              <p style={{ marginTop: '0.75rem', color: 'var(--gray-500)' }}>Loading orders...</p>
+            </div>
+          ) : (
+            <div className="admin-table-wrap">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Event</th>
+                    <th>Qty</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray-500)' }}>
+                        No orders found.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredOrders.map(order => (
+                      <tr key={order.orderNumber}>
+                        <td style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{order.orderNumber}</td>
+                        <td style={{ fontWeight: 500 }}>{order.fullName || `${order.firstName} ${order.lastName}`.trim()}</td>
+                        <td>
+                          <a href={`mailto:${order.email}`} style={{ color: 'var(--blue-accent)' }}>
+                            {order.email}
+                          </a>
+                        </td>
+                        <td style={{ fontSize: '0.85rem' }}>
+                          {eventMap.get(order.eventId) || 'Unknown'}
+                        </td>
+                        <td>{order.ticketsQuantity}</td>
+                        <td style={{ fontWeight: 500 }}>
+                          {parseFloat(order.totalPrice?.amount || '0') > 0
+                            ? formatCurrency(parseFloat(order.totalPrice!.amount))
+                            : 'Free'}
+                        </td>
+                        <td>
+                          <span
+                            className="admin-status-badge"
+                            style={{
+                              background: order.status === 'PAID' ? '#10B981'
+                                : order.status === 'FREE' ? '#6B7280'
+                                : '#EF4444',
+                            }}
+                          >
+                            {order.status === 'NA_ORDER_STATUS' ? 'N/A' : order.status}
+                          </span>
+                        </td>
+                        <td style={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
+                          {formatDate(order.created)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* === CUSTOMERS TAB === */}
+      {tab === 'customers' && (
+        <div>
+          {ordersLoading ? (
+            <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
+              <i className="fas fa-spinner fa-spin" style={{ fontSize: '1.5rem', color: 'var(--blue-accent)' }}></i>
+              <p style={{ marginTop: '0.75rem', color: 'var(--gray-500)' }}>Loading customer data...</p>
+            </div>
+          ) : (
+            <>
+              <p style={{ margin: '1rem 0 0.5rem', color: 'var(--gray-500)', fontSize: '0.88rem' }}>
+                {customers.length} unique customers
+              </p>
+              <div className="admin-table-wrap">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Orders</th>
+                      <th>Tickets</th>
+                      <th>Total Spent</th>
+                      <th>Last Order</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {customers.map(c => (
+                      <tr key={c.email}>
+                        <td style={{ fontWeight: 500 }}>{c.name}</td>
+                        <td>
+                          <a href={`mailto:${c.email}`} style={{ color: 'var(--blue-accent)' }}>
+                            {c.email}
+                          </a>
+                        </td>
+                        <td>{c.orderCount}</td>
+                        <td>{c.ticketCount}</td>
+                        <td style={{ fontWeight: 500 }}>
+                          {c.totalSpent > 0 ? formatCurrency(c.totalSpent) : 'Free'}
+                        </td>
+                        <td style={{ fontSize: '0.85rem' }}>{formatDate(c.lastOrder)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* === FINANCES TAB === */}
+      {tab === 'finances' && (
+        <div>
+          {ordersLoading || txnLoading ? (
+            <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
+              <i className="fas fa-spinner fa-spin" style={{ fontSize: '1.5rem', color: 'var(--blue-accent)' }}></i>
+              <p style={{ marginTop: '0.75rem', color: 'var(--gray-500)' }}>Loading financial data...</p>
+            </div>
+          ) : (() => {
+            // Get available years from orders
+            const orderYears = [...new Set(orders.map(o => new Date(o.created).getFullYear()))].sort((a, b) => b - a);
+            const currentYear = new Date().getFullYear();
+            const hasTxnData = Object.keys(transactions).length > 0;
+
+            // Filter orders by period
+            const periodOrders = orders.filter(o => {
+              if (financePeriod === 'all') return true;
+              const year = new Date(o.created).getFullYear();
+              return year === parseInt(financePeriod);
+            });
+
+            // Processing fee: 2.9% + $0.30 (verified exact against Wix payout statements)
+            const calcProcessingFee = (ticketTotal: number) => ticketTotal > 0 ? ticketTotal * 0.029 + 0.30 : 0;
+
+            // Get actual service fee from transaction data, or calculate
+            const getServiceFee = (orderNumber: string, ticketTotal: number) => {
+              const txn = transactions[orderNumber];
+              if (txn) return txn.serviceFee;
+              return ticketTotal > 0 ? Math.ceil(ticketTotal * 0.025 * 100) / 100 : 0;
+            };
+
+            // Get payment method — prefer transaction data (more specific)
+            const getMethod = (o: Order) => {
+              const txn = transactions[o.orderNumber];
+              if (txn) return txn.paymentMethod;
+              return o.paymentDetails?.transaction?.method || (o.status === 'FREE' ? 'Free' : 'Unknown');
+            };
+
+            // Format payment method name
+            const fmtMethod = (method: string) => {
+              const names: Record<string, string> = {
+                creditCard: 'Credit Card',
+                payPal: 'PayPal',
+                applePay: 'Apple Pay',
+                googlePay: 'Google Pay',
+                inPerson: 'In Person',
+                cash: 'Cash',
+                Free: 'Free',
+              };
+              return names[method] || method;
+            };
+
+            // Summary stats
+            const paidOrders = periodOrders.filter(o => o.status === 'PAID');
+            const freeOrders = periodOrders.filter(o => o.status === 'FREE');
+            const totalRevenue = periodOrders.reduce((sum, o) => sum + parseFloat(o.totalPrice?.amount || '0'), 0);
+            const totalTickets = periodOrders.reduce((sum, o) => sum + o.ticketsQuantity, 0);
+            const avgOrderValue = paidOrders.length > 0
+              ? paidOrders.reduce((sum, o) => sum + parseFloat(o.totalPrice?.amount || '0'), 0) / paidOrders.length
+              : 0;
+
+            // Fee totals (only on paid orders)
+            const totalProcessingFees = paidOrders.reduce((sum, o) => {
+              const amt = parseFloat(o.totalPrice?.amount || '0');
+              return sum + calcProcessingFee(amt);
+            }, 0);
+            const totalServiceFees = paidOrders.reduce((sum, o) => {
+              const amt = parseFloat(o.totalPrice?.amount || '0');
+              return sum + getServiceFee(o.orderNumber, amt);
+            }, 0);
+            const totalNetPayout = totalRevenue - totalProcessingFees;
+
+            // Revenue by event
+            const eventRevMap = new Map<string, { name: string; date: string; orders: number; paidOrders: number; tickets: number; revenue: number }>();
+            periodOrders.forEach(o => {
+              const existing = eventRevMap.get(o.eventId);
+              const amount = parseFloat(o.totalPrice?.amount || '0');
+              const isPaid = o.status === 'PAID';
+              if (existing) {
+                existing.orders++;
+                if (isPaid) existing.paidOrders++;
+                existing.tickets += o.ticketsQuantity;
+                existing.revenue += amount;
+              } else {
+                const ev = events.find(e => e.id === o.eventId);
+                eventRevMap.set(o.eventId, {
+                  name: ev?.title || 'Unknown Event',
+                  date: ev?.dateAndTimeSettings?.formatted?.startDate || '',
+                  orders: 1,
+                  paidOrders: isPaid ? 1 : 0,
+                  tickets: o.ticketsQuantity,
+                  revenue: amount,
+                });
+              }
+            });
+            const eventRevenue = Array.from(eventRevMap.entries()).map(([eventId, data]) => {
+              const evOrders = periodOrders.filter(o => o.eventId === eventId && o.status === 'PAID');
+              const fees = evOrders.reduce((sum, o) => sum + calcProcessingFee(parseFloat(o.totalPrice?.amount || '0')), 0);
+              return { ...data, fees, net: data.revenue - fees };
+            }).sort((a, b) => b.revenue - a.revenue);
+
+            // Monthly breakdown
+            const monthMap = new Map<string, { orders: number; paidOrders: number; tickets: number; revenue: number }>();
+            periodOrders.forEach(o => {
+              const d = new Date(o.created);
+              const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+              const existing = monthMap.get(key);
+              const amount = parseFloat(o.totalPrice?.amount || '0');
+              const isPaid = o.status === 'PAID';
+              if (existing) {
+                existing.orders++;
+                if (isPaid) existing.paidOrders++;
+                existing.tickets += o.ticketsQuantity;
+                existing.revenue += amount;
+              } else {
+                monthMap.set(key, { orders: 1, paidOrders: isPaid ? 1 : 0, tickets: o.ticketsQuantity, revenue: amount });
+              }
+            });
+            const monthlyData = Array.from(monthMap.entries())
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([key, data]) => {
+                const [y, m] = key.split('-');
+                const label = new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                const monthOrders = periodOrders.filter(o => {
+                  const od = new Date(o.created);
+                  return `${od.getFullYear()}-${String(od.getMonth() + 1).padStart(2, '0')}` === key;
+                });
+                const fees = monthOrders.reduce((sum, o) => {
+                  const amt = parseFloat(o.totalPrice?.amount || '0');
+                  return sum + (o.status === 'PAID' ? calcProcessingFee(amt) : 0);
+                }, 0);
+                const svcFees = monthOrders.reduce((sum, o) => {
+                  const amt = parseFloat(o.totalPrice?.amount || '0');
+                  return sum + (o.status === 'PAID' ? getServiceFee(o.orderNumber, amt) : 0);
+                }, 0);
+                return { label, ...data, fees, svcFees, net: data.revenue - fees };
+              });
+
+            // Payment method breakdown (use transaction data for specificity)
+            const methodMap = new Map<string, { count: number; revenue: number }>();
+            periodOrders.forEach(o => {
+              const method = getMethod(o);
+              const existing = methodMap.get(method);
+              const amount = parseFloat(o.totalPrice?.amount || '0');
+              if (existing) {
+                existing.count++;
+                existing.revenue += amount;
+              } else {
+                methodMap.set(method, { count: 1, revenue: amount });
+              }
+            });
+            const paymentMethods = Array.from(methodMap.entries())
+              .sort(([, a], [, b]) => b.revenue - a.revenue)
+              .map(([method, data]) => ({ method, ...data }));
+
+            // CSV export
+            const downloadCSV = () => {
+              const csvHeaders = ['Order #', 'Date', 'Event', 'Ticket Details', 'Customer', 'Email', 'Tickets', 'Gross Amount', 'Processing Fee (2.9%+$0.30)', 'Wix Service Fee' + (hasTxnData ? '' : ' (est)'), 'Net Payout', 'Status', 'Payment Method'];
+              const rows = periodOrders
+                .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
+                .map(o => {
+                  const ev = events.find(e => e.id === o.eventId);
+                  const method = getMethod(o);
+                  const amt = parseFloat(o.totalPrice?.amount || '0');
+                  const procFee = o.status === 'PAID' ? calcProcessingFee(amt) : 0;
+                  const svcFee = o.status === 'PAID' ? getServiceFee(o.orderNumber, amt) : 0;
+                  const net = amt - procFee;
+                  const txn = transactions[o.orderNumber];
+                  const ticketDetails = txn?.ticketItems?.map(i => `${i.name} x${i.quantity}`).join('; ') || '';
+                  return [
+                    o.orderNumber,
+                    new Date(o.created).toLocaleDateString('en-US'),
+                    ev?.title || 'Unknown',
+                    ticketDetails,
+                    o.fullName || `${o.firstName} ${o.lastName}`.trim(),
+                    o.email,
+                    String(o.ticketsQuantity),
+                    amt.toFixed(2),
+                    procFee.toFixed(2),
+                    svcFee.toFixed(2),
+                    net.toFixed(2),
+                    o.status === 'NA_ORDER_STATUS' ? 'N/A' : o.status,
+                    fmtMethod(method),
+                  ];
+                });
+
+              const csvContent = [csvHeaders, ...rows]
+                .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+                .join('\n');
+
+              const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              const periodLabel = financePeriod === 'all' ? 'All-Time' : financePeriod;
+              link.download = `ROTR-Financial-Report-${periodLabel}.csv`;
+              link.click();
+              URL.revokeObjectURL(url);
+            };
+
+            return (
+              <>
+                {/* Period Filter + Actions */}
+                <div className="rotr-finance-toolbar">
+                  <select
+                    value={financePeriod}
+                    onChange={e => setFinancePeriod(e.target.value)}
+                    className="rotr-filter-select"
+                  >
+                    <option value="all">All Time</option>
+                    {orderYears.map(y => (
+                      <option key={y} value={String(y)}>
+                        {y}{y === currentYear ? ' (Current)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="rotr-finance-actions">
+                    <button onClick={downloadCSV} className="admin-btn admin-btn-secondary">
+                      <i className="fas fa-download"></i> Download CSV
+                    </button>
+                    <button onClick={() => window.print()} className="admin-btn admin-btn-secondary">
+                      <i className="fas fa-print"></i> Print Report
+                    </button>
+                  </div>
+                </div>
+
+                {/* Print-only header */}
+                <div className="rotr-print-header">
+                  <h2>Rockin&apos; on the River — Financial Report</h2>
+                  <p>{financePeriod === 'all' ? 'All Time' : financePeriod} &bull; Generated {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                </div>
+
+                {/* Summary Cards */}
+                <div className="rotr-stats-row">
+                  <div className="rotr-stat-card">
+                    <div className="rotr-stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10B981' }}>
+                      <i className="fas fa-dollar-sign"></i>
+                    </div>
+                    <div className="rotr-stat-value">{formatCurrency(totalRevenue)}</div>
+                    <div className="rotr-stat-label">Gross Revenue</div>
+                  </div>
+                  <div className="rotr-stat-card">
+                    <div className="rotr-stat-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#EF4444' }}>
+                      <i className="fas fa-minus-circle"></i>
+                    </div>
+                    <div className="rotr-stat-value">-{formatCurrency(totalProcessingFees)}</div>
+                    <div className="rotr-stat-label">Processing Fees</div>
+                  </div>
+                  <div className="rotr-stat-card">
+                    <div className="rotr-stat-icon" style={{ background: 'rgba(27,139,235,0.1)', color: '#1B8BEB' }}>
+                      <i className="fas fa-hand-holding-usd"></i>
+                    </div>
+                    <div className="rotr-stat-value">{formatCurrency(totalNetPayout)}</div>
+                    <div className="rotr-stat-label">Net Payout</div>
+                  </div>
+                  <div className="rotr-stat-card">
+                    <div className="rotr-stat-icon" style={{ background: 'rgba(124,58,237,0.1)', color: '#7C3AED' }}>
+                      <i className="fas fa-hand-holding-heart"></i>
+                    </div>
+                    <div className="rotr-stat-value">{formatCurrency(totalServiceFees)}</div>
+                    <div className="rotr-stat-label">Wix Service Fees{hasTxnData ? '' : ' (est)'}</div>
+                  </div>
+                </div>
+
+                {/* Fee Breakdown Note */}
+                <div className="rotr-finance-note">
+                  <i className="fas fa-info-circle"></i>
+                  <span>
+                    Processing fees calculated at Wix rate: <strong>2.9% + $0.30</strong> per transaction (verified against payout statements).
+                    {hasTxnData
+                      ? <> Wix service fees are <strong>actual amounts</strong> from payment records.</>
+                      : <> Wix service fee estimated at <strong>2.5%</strong> (charged to buyer).</>
+                    }
+                    {' '}{paidOrders.length} paid orders, {freeOrders.length} free orders.
+                  </span>
+                </div>
+
+                {/* Monthly Revenue Breakdown */}
+                {monthlyData.length > 0 && (
+                  <div className="rotr-finance-section">
+                    <h3><i className="fas fa-calendar-alt"></i> Monthly Breakdown</h3>
+                    <div className="admin-table-wrap">
+                      <table className="admin-table">
+                        <thead>
+                          <tr>
+                            <th>Month</th>
+                            <th style={{ textAlign: 'right' }}>Orders</th>
+                            <th style={{ textAlign: 'right' }}>Tickets</th>
+                            <th style={{ textAlign: 'right' }}>Gross</th>
+                            <th style={{ textAlign: 'right' }}>Proc. Fees</th>
+                            <th style={{ textAlign: 'right' }}>Svc Fees{hasTxnData ? '' : '*'}</th>
+                            <th style={{ textAlign: 'right' }}>Net Payout</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {monthlyData.map(m => (
+                            <tr key={m.label}>
+                              <td style={{ fontWeight: 500 }}>{m.label}</td>
+                              <td style={{ textAlign: 'right' }}>{m.orders}</td>
+                              <td style={{ textAlign: 'right' }}>{m.tickets}</td>
+                              <td style={{ textAlign: 'right' }}>{formatCurrency(m.revenue)}</td>
+                              <td style={{ textAlign: 'right', color: '#EF4444', fontSize: '0.85rem' }}>-{formatCurrency(m.fees)}</td>
+                              <td style={{ textAlign: 'right', color: '#7C3AED', fontSize: '0.85rem' }}>{formatCurrency(m.svcFees)}</td>
+                              <td style={{ textAlign: 'right', fontWeight: 600 }}>{formatCurrency(m.net)}</td>
+                            </tr>
+                          ))}
+                          <tr className="rotr-finance-total-row">
+                            <td>Total</td>
+                            <td style={{ textAlign: 'right' }}>{periodOrders.length}</td>
+                            <td style={{ textAlign: 'right' }}>{totalTickets}</td>
+                            <td style={{ textAlign: 'right' }}>{formatCurrency(totalRevenue)}</td>
+                            <td style={{ textAlign: 'right', color: '#EF4444' }}>-{formatCurrency(totalProcessingFees)}</td>
+                            <td style={{ textAlign: 'right', color: '#7C3AED' }}>{formatCurrency(totalServiceFees)}</td>
+                            <td style={{ textAlign: 'right' }}>{formatCurrency(totalNetPayout)}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Revenue by Event */}
+                {eventRevenue.length > 0 && (
+                  <div className="rotr-finance-section">
+                    <h3><i className="fas fa-music"></i> Revenue by Event</h3>
+                    <div className="admin-table-wrap">
+                      <table className="admin-table">
+                        <thead>
+                          <tr>
+                            <th>Event</th>
+                            <th>Date</th>
+                            <th style={{ textAlign: 'right' }}>Orders</th>
+                            <th style={{ textAlign: 'right' }}>Gross</th>
+                            <th style={{ textAlign: 'right' }}>Proc. Fees</th>
+                            <th style={{ textAlign: 'right' }}>Net Payout</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {eventRevenue.map(ev => (
+                            <tr key={ev.name}>
+                              <td style={{ fontWeight: 500 }}>{ev.name}</td>
+                              <td style={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>{ev.date}</td>
+                              <td style={{ textAlign: 'right' }}>{ev.orders}</td>
+                              <td style={{ textAlign: 'right' }}>{formatCurrency(ev.revenue)}</td>
+                              <td style={{ textAlign: 'right', color: '#EF4444', fontSize: '0.85rem' }}>-{formatCurrency(ev.fees)}</td>
+                              <td style={{ textAlign: 'right', fontWeight: 600 }}>{formatCurrency(ev.net)}</td>
+                            </tr>
+                          ))}
+                          <tr className="rotr-finance-total-row">
+                            <td colSpan={2}>Total</td>
+                            <td style={{ textAlign: 'right' }}>{periodOrders.length}</td>
+                            <td style={{ textAlign: 'right' }}>{formatCurrency(totalRevenue)}</td>
+                            <td style={{ textAlign: 'right', color: '#EF4444' }}>-{formatCurrency(totalProcessingFees)}</td>
+                            <td style={{ textAlign: 'right' }}>{formatCurrency(totalNetPayout)}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Payment Method Breakdown */}
+                {paymentMethods.length > 0 && (
+                  <div className="rotr-finance-section">
+                    <h3><i className="fas fa-credit-card"></i> Payment Methods</h3>
+                    <div className="admin-table-wrap">
+                      <table className="admin-table">
+                        <thead>
+                          <tr>
+                            <th>Method</th>
+                            <th style={{ textAlign: 'right' }}>Orders</th>
+                            <th style={{ textAlign: 'right' }}>Revenue</th>
+                            <th style={{ textAlign: 'right' }}>% of Revenue</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {paymentMethods.map(pm => (
+                            <tr key={pm.method}>
+                              <td style={{ fontWeight: 500 }}>
+                                {fmtMethod(pm.method)}
+                              </td>
+                              <td style={{ textAlign: 'right' }}>{pm.count}</td>
+                              <td style={{ textAlign: 'right', fontWeight: 600 }}>{formatCurrency(pm.revenue)}</td>
+                              <td style={{ textAlign: 'right', fontSize: '0.85rem' }}>
+                                {totalRevenue > 0 ? `${((pm.revenue / totalRevenue) * 100).toFixed(1)}%` : '0%'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* All Transactions — the table the accountant needs */}
+                <div className="rotr-finance-section">
+                  <h3><i className="fas fa-list"></i> All Transactions</h3>
+                  <div className="admin-table-wrap">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Order #</th>
+                          <th>Event / Product</th>
+                          <th>Customer</th>
+                          <th>Method</th>
+                          <th style={{ textAlign: 'right' }}>Gross</th>
+                          <th style={{ textAlign: 'right' }}>Svc Fee{hasTxnData ? '' : '*'}</th>
+                          <th style={{ textAlign: 'right' }}>Proc. Fee</th>
+                          <th style={{ textAlign: 'right' }}>Net</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {periodOrders
+                          .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
+                          .map(o => {
+                            const ev = events.find(e => e.id === o.eventId);
+                            const method = getMethod(o);
+                            const amt = parseFloat(o.totalPrice?.amount || '0');
+                            const procFee = o.status === 'PAID' ? calcProcessingFee(amt) : 0;
+                            const svcFee = o.status === 'PAID' ? getServiceFee(o.orderNumber, amt) : 0;
+                            const net = amt - procFee;
+                            const txn = transactions[o.orderNumber];
+                            const ticketDetail = txn?.ticketItems?.map(i => `${i.name} x${i.quantity}`).join(', ');
+                            return (
+                              <tr key={o.orderNumber}>
+                                <td style={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>{formatDate(o.created)}</td>
+                                <td style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{o.orderNumber}</td>
+                                <td style={{ fontWeight: 500 }}>
+                                  {ticketDetail || ev?.title || 'Unknown'}
+                                </td>
+                                <td>{o.fullName || `${o.firstName} ${o.lastName}`.trim()}</td>
+                                <td style={{ fontSize: '0.85rem' }}>
+                                  {fmtMethod(method)}
+                                </td>
+                                <td style={{ textAlign: 'right' }}>
+                                  {amt > 0 ? formatCurrency(amt) : 'Free'}
+                                </td>
+                                <td style={{ textAlign: 'right', color: svcFee > 0 ? '#7C3AED' : undefined, fontSize: '0.85rem' }}>
+                                  {svcFee > 0 ? formatCurrency(svcFee) : '—'}
+                                </td>
+                                <td style={{ textAlign: 'right', color: procFee > 0 ? '#EF4444' : undefined, fontSize: '0.85rem' }}>
+                                  {procFee > 0 ? `-${formatCurrency(procFee)}` : '—'}
+                                </td>
+                                <td style={{ textAlign: 'right', fontWeight: 600 }}>
+                                  {amt > 0 ? formatCurrency(net) : 'Free'}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        <tr className="rotr-finance-total-row">
+                          <td colSpan={5}>Total ({periodOrders.length} transactions)</td>
+                          <td style={{ textAlign: 'right' }}>{formatCurrency(totalRevenue)}</td>
+                          <td style={{ textAlign: 'right', color: '#7C3AED' }}>{formatCurrency(totalServiceFees)}</td>
+                          <td style={{ textAlign: 'right', color: '#EF4444' }}>-{formatCurrency(totalProcessingFees)}</td>
+                          <td style={{ textAlign: 'right' }}>{formatCurrency(totalNetPayout)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      )}
+    </div>
+  );
+}
