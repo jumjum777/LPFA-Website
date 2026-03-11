@@ -46,17 +46,23 @@ function MarineAlertBannerInner() {
       fetch('/api/beach-quality').then(res => res.json()).catch(() => ({ beaches: [] })),
     ]).then(([marineData, beachData]) => {
       const allAlerts: Alert[] = [...(marineData.alerts || [])];
-      // Add beach water quality advisories
-      const beaches = beachData.beaches || [];
-      const advisoryBeaches = beaches.filter((b: { status: string }) => b.status === 'advisory');
-      if (advisoryBeaches.length > 0) {
-        const beachNames = advisoryBeaches.map((b: { name: string }) => b.name).join(', ');
-        allAlerts.push({
-          id: 'beach-advisory',
-          event: 'Beach Water Quality Advisory',
-          headline: `Elevated E. coli levels detected at ${beachNames}. Avoid swimming at affected beaches.`,
-          severity: 'Moderate',
-        });
+      // Add beach water quality advisories (only during swim season with recent data)
+      if (!beachData.isOffSeason) {
+        const threeDaysAgo = new Date();
+        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+        const beaches = beachData.beaches || [];
+        const advisoryBeaches = beaches.filter((b: { status: string; latestReading?: { date: string } }) =>
+          b.status === 'advisory' && b.latestReading?.date && new Date(b.latestReading.date) >= threeDaysAgo
+        );
+        if (advisoryBeaches.length > 0) {
+          const beachNames = advisoryBeaches.map((b: { name: string }) => b.name).join(', ');
+          allAlerts.push({
+            id: 'beach-advisory',
+            event: 'Beach Water Quality Advisory',
+            headline: `Elevated E. coli levels detected at ${beachNames}. Avoid swimming at affected beaches.`,
+            severity: 'Moderate',
+          });
+        }
       }
       setAlerts(allAlerts);
       setLoaded(true);
