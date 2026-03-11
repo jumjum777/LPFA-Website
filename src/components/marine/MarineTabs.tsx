@@ -13,7 +13,22 @@ interface ForecastPeriod { number: number; name: string; temperature: number; te
 interface BuoyData { windSpeed: number | null; windGust: number | null; windDirection: number | null; waveHeight: number | null; wavePeriod: number | null; waterTemp: number | null; airTemp: number | null; pressure: number | null; isOffline: boolean; }
 interface VesselRecord { mmsi: string; vessel_name: string | null; destination: string | null; vessel_type: number | null; latitude: number | null; longitude: number | null; speed: number | null; heading: number | null; eta: string | null; status: string; first_detected_at?: string; last_seen_at?: string; is_active: boolean; }
 
-type TabId = 'alerts' | 'vessels' | 'forecast' | 'conditions' | 'hourly' | '7day' | 'resources';
+type TabId = 'alerts' | 'vessels' | 'forecast' | 'conditions' | 'hourly' | '7day' | 'resources' | 'beach';
+
+interface BeachReading { date: string; value: number | null; }
+interface BeachData {
+  id: string; name: string;
+  latestReading: BeachReading | null;
+  status: 'safe' | 'advisory' | 'no-data';
+  readings: BeachReading[];
+  seasonStats: { totalSamples: number; advisoryCount: number; safePct: number; };
+}
+interface BeachQualityResponse {
+  beaches: BeachData[];
+  seasonYear: number;
+  isOffSeason: boolean;
+  fetchedAt: string;
+}
 
 const VESSEL_TYPE_LABELS: Record<number, string> = {
   70: 'Cargo', 71: 'Cargo', 72: 'Cargo', 73: 'Cargo', 74: 'Cargo', 79: 'Cargo',
@@ -73,15 +88,24 @@ export default function MarineTabs({
   const hasAlerts = alerts.length > 0;
   const [vessels, setVessels] = useState<VesselRecord[]>([]);
   const [vesselsLoaded, setVesselsLoaded] = useState(false);
+  const [beachData, setBeachData] = useState<BeachQualityResponse | null>(null);
+  const [beachLoaded, setBeachLoaded] = useState(false);
 
   useEffect(() => {
     fetch('/api/vessels')
       .then(res => res.json())
       .then(data => { setVessels(data.vessels || []); setVesselsLoaded(true); })
       .catch(() => setVesselsLoaded(true));
+    fetch('/api/beach-quality')
+      .then(res => res.json())
+      .then((data: BeachQualityResponse) => { setBeachData(data); setBeachLoaded(true); })
+      .catch(() => setBeachLoaded(true));
   }, []);
 
-  const defaultTab: TabId = hasAlerts ? 'alerts' : 'vessels';
+  // Check URL hash for direct tab navigation (e.g., /marine#beach)
+  const hashTab = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : '';
+  const validHashTab = ['alerts', 'vessels', 'forecast', 'conditions', 'hourly', '7day', 'resources', 'beach'].includes(hashTab) ? hashTab as TabId : null;
+  const defaultTab: TabId = validHashTab || (hasAlerts ? 'alerts' : 'vessels');
   const [active, setActive] = useState<TabId>(defaultTab);
 
   const tabs: { id: TabId; label: string; icon: string }[] = [
@@ -92,6 +116,7 @@ export default function MarineTabs({
     { id: 'hourly', label: 'Hourly Weather', icon: 'fa-clock' },
     { id: '7day', label: '7-Day Weather', icon: 'fa-calendar-week' },
     { id: 'resources', label: 'Boater Resources', icon: 'fa-life-ring' },
+    { id: 'beach', label: 'Beach Water Quality', icon: 'fa-umbrella-beach' },
   ];
 
   return (
@@ -363,6 +388,159 @@ export default function MarineTabs({
               <div style={{ textAlign: 'center', fontSize: '0.82rem', color: 'var(--gray-400)', maxWidth: '600px', margin: '2rem auto 0' }}>
                 <p>Data provided by the <a href="https://www.weather.gov" target="_blank" rel="noopener" style={{ color: 'var(--blue-accent)' }}>National Weather Service</a> and <a href="https://www.ndbc.noaa.gov" target="_blank" rel="noopener" style={{ color: 'var(--blue-accent)' }}>NOAA National Data Buoy Center</a>. Forecasts update approximately every 30 minutes. Always check official sources before heading out on the water.</p>
               </div>
+            </div>
+          )}
+
+          {/* BEACH WATER QUALITY */}
+          {active === 'beach' && (
+            <div>
+              <div className="section-header center">
+                <div className="section-label">Water Safety</div>
+                <h2 className="section-title"><i className="fas fa-umbrella-beach" style={{ color: 'var(--gold)', marginRight: '0.5rem' }}></i> Beach Water Quality</h2>
+                <p className="section-desc">E. coli monitoring data for Lorain County beaches. Advisories are issued when bacteria levels exceed 235 cfu/100mL, the Ohio single-sample maximum for recreational waters.</p>
+              </div>
+
+              {!beachLoaded ? (
+                <p style={{ textAlign: 'center', color: 'var(--gray-400)' }}>Loading beach water quality data...</p>
+              ) : !beachData || beachData.beaches.length === 0 ? (
+                <div className="beach-empty-notice">
+                  <i className="fas fa-water"></i>
+                  <p>No beach water quality data available at this time.</p>
+                </div>
+              ) : (
+                <>
+                  {beachData.isOffSeason && (
+                    <div className="beach-offseason-banner">
+                      <i className="fas fa-snowflake"></i>
+                      <div>
+                        <strong>Off-Season</strong>
+                        <p>Beach monitoring runs Memorial Day through Labor Day. Showing {beachData.seasonYear} season data. Monitoring resumes in May {beachData.seasonYear + 1}.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Status Cards */}
+                  <div className="beach-status-grid">
+                    {beachData.beaches.map(beach => (
+                      <div key={beach.id} className={`beach-status-card ${beach.status}`}>
+                        <div className="beach-status-indicator">
+                          <i className={`fas ${beach.status === 'safe' ? 'fa-check-circle' : beach.status === 'advisory' ? 'fa-exclamation-triangle' : 'fa-minus-circle'}`}></i>
+                          <span className="beach-status-label">
+                            {beach.status === 'safe' ? 'Safe' : beach.status === 'advisory' ? 'Advisory' : 'No Data'}
+                          </span>
+                        </div>
+                        <h3 className="beach-card-name">{beach.name}</h3>
+                        {beach.latestReading ? (
+                          <>
+                            <div className="beach-reading-value">
+                              {beach.latestReading.value !== null ? beach.latestReading.value.toFixed(0) : '--'}
+                              <span className="beach-reading-unit"> cfu/100mL</span>
+                            </div>
+                            <div className="beach-reading-date">
+                              Sampled {new Date(beach.latestReading.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="beach-reading-date">No samples recorded</div>
+                        )}
+                        <div className="beach-season-stat">
+                          <span>{beach.seasonStats.safePct}% safe</span>
+                          <span>{beach.seasonStats.totalSamples} samples</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Threshold Info */}
+                  <div className="beach-threshold-note">
+                    <i className="fas fa-info-circle"></i>
+                    <span>Advisory threshold: <strong>235 cfu/100mL</strong> E. coli (Ohio single-sample maximum). Readings above this level indicate elevated bacteria that may pose a health risk for swimmers.</span>
+                  </div>
+
+                  {/* Season Summary */}
+                  <div className="beach-season-summary">
+                    <h3 className="beach-summary-title">{beachData.seasonYear} Season Summary</h3>
+                    <div className="beach-summary-grid">
+                      {beachData.beaches.map(beach => {
+                        const validReadings = beach.readings.filter(r => r.value !== null);
+                        const maxReading = validReadings.length > 0 ? Math.max(...validReadings.map(r => r.value!)) : 0;
+                        const avgReading = validReadings.length > 0 ? validReadings.reduce((s, r) => s + r.value!, 0) / validReadings.length : 0;
+                        return (
+                          <div key={beach.id} className="beach-summary-row">
+                            <div className="beach-summary-name">{beach.name}</div>
+                            <div className="beach-summary-stats">
+                              <div className="beach-stat">
+                                <span className="beach-stat-value">{beach.seasonStats.totalSamples}</span>
+                                <span className="beach-stat-label">Samples</span>
+                              </div>
+                              <div className="beach-stat">
+                                <span className="beach-stat-value">{beach.seasonStats.advisoryCount}</span>
+                                <span className="beach-stat-label">Advisories</span>
+                              </div>
+                              <div className="beach-stat">
+                                <span className={`beach-stat-value ${beach.seasonStats.safePct >= 80 ? 'good' : 'warn'}`}>{beach.seasonStats.safePct}%</span>
+                                <span className="beach-stat-label">Safe</span>
+                              </div>
+                              <div className="beach-stat">
+                                <span className="beach-stat-value">{avgReading.toFixed(0)}</span>
+                                <span className="beach-stat-label">Avg</span>
+                              </div>
+                              <div className="beach-stat">
+                                <span className={`beach-stat-value ${maxReading >= 235 ? 'warn' : 'good'}`}>{maxReading.toFixed(0)}</span>
+                                <span className="beach-stat-label">Peak</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Recent Readings Table */}
+                  <div className="beach-history-section">
+                    <h3 className="beach-summary-title">Recent Readings</h3>
+                    <div className="beach-history-table-wrap">
+                      <table className="beach-history-table">
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            {beachData.beaches.map(b => (
+                              <th key={b.id}>{b.name.replace(' Beach', '').replace(' Park', '')}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(() => {
+                            // Get unique dates across all beaches, sorted descending, last 20
+                            const allDates = new Set<string>();
+                            beachData.beaches.forEach(b => b.readings.forEach(r => allDates.add(r.date)));
+                            const sortedDates = Array.from(allDates).sort((a, b) => b.localeCompare(a)).slice(0, 20);
+                            return sortedDates.map(date => (
+                              <tr key={date}>
+                                <td>{new Date(date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
+                                {beachData.beaches.map(b => {
+                                  const reading = b.readings.find(r => r.date === date);
+                                  const val = reading?.value;
+                                  return (
+                                    <td key={b.id} className={val !== null && val !== undefined && val >= 235 ? 'beach-reading-high' : ''}>
+                                      {val !== null && val !== undefined ? val.toFixed(0) : '--'}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ));
+                          })()}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Attribution */}
+                  <div style={{ textAlign: 'center', fontSize: '0.82rem', color: 'var(--gray-400)', maxWidth: '600px', margin: '2rem auto 0' }}>
+                    <p>Data from the <a href="https://odh.ohio.gov/know-our-programs/bathing-beach-monitoring" target="_blank" rel="noopener" style={{ color: 'var(--blue-accent)' }}>Ohio Department of Health</a> via the <a href="https://www.waterqualitydata.us" target="_blank" rel="noopener" style={{ color: 'var(--blue-accent)' }}>Water Quality Portal</a>. For official advisories, visit <a href="https://publicapps.odh.ohio.gov/beachguardpublic/" target="_blank" rel="noopener" style={{ color: 'var(--blue-accent)' }}>Ohio BeachGuard</a>.</p>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>

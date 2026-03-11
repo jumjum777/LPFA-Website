@@ -2,6 +2,7 @@ import Link from 'next/link';
 import ScrollAnimator from '@/components/ui/ScrollAnimator';
 import MarineTabs from '@/components/marine/MarineTabs';
 import { fetchMarineData } from '@/lib/marine';
+import { fetchBeachData } from '@/lib/beach';
 
 export const metadata = { title: 'Marine Forecast' };
 
@@ -39,9 +40,22 @@ const MOCK_ALERTS = [
 
 export default async function MarinePage({ searchParams }: { searchParams: Promise<{ preview?: string }> }) {
   const params = await searchParams;
-  const data = await fetchMarineData();
+  const [data, beachData] = await Promise.all([fetchMarineData(), fetchBeachData()]);
   const { forecast, hourly, marineText, marineTextPeriods, buoy, fetchedAt } = data;
-  const alerts = params.preview === 'alerts' ? MOCK_ALERTS : data.alerts;
+
+  // Merge beach water quality advisories into alerts
+  const baseAlerts = params.preview === 'alerts' ? MOCK_ALERTS : data.alerts;
+  const advisoryBeaches = beachData.beaches.filter(b => b.status === 'advisory');
+  const beachAlerts = advisoryBeaches.map(b => ({
+    id: `beach-${b.id}`,
+    event: 'Beach Water Quality Advisory',
+    headline: `Elevated E. coli levels at ${b.name} (${b.latestReading?.value?.toFixed(0)} cfu/100mL). Avoid swimming at this beach.`,
+    description: `BEACH WATER QUALITY ADVISORY\n\n* WHAT...E. coli bacteria levels of ${b.latestReading?.value?.toFixed(0)} cfu/100mL were detected, exceeding the Ohio single-sample maximum of 235 cfu/100mL.\n\n* WHERE...${b.name}, Lorain County.\n\n* WHEN...Based on most recent sample collected ${b.latestReading?.date}.\n\n* IMPACTS...Elevated bacteria levels may pose health risks for swimmers. Avoid full-body contact with the water at this beach until levels return to safe range.\n\n* SOURCE...Ohio Department of Health via Water Quality Portal.`,
+    severity: 'Moderate',
+    onset: b.latestReading?.date ? new Date(b.latestReading.date + 'T12:00:00').toISOString() : '',
+    expires: '',
+  }));
+  const alerts = [...baseAlerts, ...beachAlerts];
   const lastUpdated = new Date(fetchedAt).toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/New_York' });
 
   return (
