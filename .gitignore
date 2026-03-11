@@ -26,3 +26,10 @@ migrate-pdfs.mjs
 pdf-url-mapping.json
 LPFA-Platform-Overview.html
 tsconfig.tsbuildinfo
+
+# Google service account keys
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!next-env.d.ts
