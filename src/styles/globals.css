@@ -4457,6 +4457,300 @@ p { line-height: 1.7; color: var(--gray-600); }
   .facility-img-block { height: 260px; }
 }
 
+/* ---------------------------------------------------------
+   BEACH WATER QUALITY
+   --------------------------------------------------------- */
+.beach-offseason-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: rgba(59,130,246,0.08);
+  border: 1px solid rgba(59,130,246,0.2);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.beach-offseason-banner > i {
+  font-size: 1.25rem;
+  color: var(--blue-accent);
+  margin-top: 0.1rem;
+}
+.beach-offseason-banner strong {
+  display: block;
+  margin-bottom: 0.15rem;
+  color: var(--navy);
+}
+.beach-offseason-banner p {
+  font-size: 0.85rem;
+  color: var(--gray-500);
+  margin: 0;
+}
+
+.beach-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.beach-status-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid var(--gray-200);
+  text-align: center;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.beach-status-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.beach-status-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+.beach-status-card.safe .beach-status-indicator { color: #10B981; }
+.beach-status-card.advisory .beach-status-indicator { color: #EF4444; }
+.beach-status-card.no-data .beach-status-indicator { color: var(--gray-400); }
+.beach-status-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.beach-card-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--navy);
+  margin: 0 0 0.5rem;
+}
+.beach-reading-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1.1;
+}
+.beach-status-card.advisory .beach-reading-value { color: #EF4444; }
+.beach-reading-unit {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--gray-400);
+}
+.beach-reading-date {
+  font-size: 0.78rem;
+  color: var(--gray-400);
+  margin-top: 0.25rem;
+}
+.beach-season-stat {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: var(--gray-400);
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--gray-200);
+}
+
+.beach-threshold-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: rgba(245,158,11,0.06);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  font-size: 0.82rem;
+  color: var(--gray-500);
+  margin-bottom: 2rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.beach-threshold-note > i {
+  color: var(--gold);
+  margin-top: 0.1rem;
+}
+
+.beach-season-summary {
+  max-width: 900px;
+  margin: 0 auto 2rem;
+}
+.beach-summary-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--navy);
+  margin: 0 0 1rem;
+  text-align: center;
+}
+.beach-summary-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.beach-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+.beach-summary-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--navy);
+  min-width: 140px;
+}
+.beach-summary-stats {
+  display: flex;
+  gap: 1.5rem;
+}
+.beach-stat {
+  text-align: center;
+}
+.beach-stat-value {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+.beach-stat-value.good { color: #10B981; }
+.beach-stat-value.warn { color: #EF4444; }
+.beach-stat-label {
+  font-size: 0.7rem;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.beach-history-section {
+  max-width: 900px;
+  margin: 0 auto 2rem;
+}
+.beach-history-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.beach-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.beach-history-table th {
+  background: var(--navy);
+  color: white;
+  padding: 0.6rem 0.75rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+.beach-history-table th:first-child {
+  text-align: left;
+  border-radius: 8px 0 0 0;
+}
+.beach-history-table th:last-child {
+  border-radius: 0 8px 0 0;
+}
+.beach-history-table td {
+  padding: 0.5rem 0.75rem;
+  text-align: center;
+  border-bottom: 1px solid var(--gray-200);
+  color: var(--gray-600);
+}
+.beach-history-table td:first-child {
+  text-align: left;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.beach-history-table td.beach-reading-high {
+  color: #EF4444;
+  font-weight: 700;
+}
+.beach-history-table tbody tr:hover {
+  background: rgba(27,139,235,0.04);
+}
+
+.beach-empty-notice {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--gray-400);
+}
+.beach-empty-notice i {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+/* Beach dark mode */
+[data-theme="dark"] .beach-offseason-banner {
+  background: rgba(59,130,246,0.12);
+  border-color: rgba(59,130,246,0.25);
+}
+[data-theme="dark"] .beach-offseason-banner strong { color: #e2e8f0; }
+[data-theme="dark"] .beach-offseason-banner p { color: #94a3b8; }
+[data-theme="dark"] .beach-status-card {
+  background: #1e293b;
+  border-color: rgba(255,255,255,0.08);
+}
+[data-theme="dark"] .beach-card-name { color: #e2e8f0; }
+[data-theme="dark"] .beach-reading-value { color: #f1f5f9; }
+[data-theme="dark"] .beach-status-card.advisory .beach-reading-value { color: #f87171; }
+[data-theme="dark"] .beach-reading-unit,
+[data-theme="dark"] .beach-reading-date,
+[data-theme="dark"] .beach-season-stat { color: #64748b; }
+[data-theme="dark"] .beach-season-stat { border-top-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .beach-threshold-note {
+  background: rgba(245,158,11,0.08);
+  border-color: rgba(245,158,11,0.2);
+  color: #94a3b8;
+}
+[data-theme="dark"] .beach-summary-row {
+  background: #1e293b;
+  border-color: rgba(255,255,255,0.08);
+}
+[data-theme="dark"] .beach-summary-name { color: #e2e8f0; }
+[data-theme="dark"] .beach-stat-value { color: #f1f5f9; }
+[data-theme="dark"] .beach-stat-label { color: #64748b; }
+[data-theme="dark"] .beach-history-table th {
+  background: #0f1a2e;
+}
+[data-theme="dark"] .beach-history-table td {
+  border-bottom-color: rgba(255,255,255,0.06);
+  color: #cbd5e1;
+}
+[data-theme="dark"] .beach-history-table td.beach-reading-high { color: #f87171; }
+[data-theme="dark"] .beach-history-table tbody tr:hover { background: rgba(27,139,235,0.08); }
+
+/* Beach responsive */
+@media (max-width: 768px) {
+  .beach-status-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .beach-summary-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .beach-summary-stats {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .beach-reading-value { font-size: 1.4rem; }
+}
+@media (max-width: 480px) {
+  .beach-status-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* =========================================================
    ADMIN PORTAL STYLES
    ========================================================= */

@@ -41,13 +41,26 @@ function MarineAlertBannerInner() {
       setLoaded(true);
       return;
     }
-    fetch('/api/marine')
-      .then(res => res.json())
-      .then(data => {
-        setAlerts(data.alerts || []);
-        setLoaded(true);
-      })
-      .catch(() => setLoaded(true));
+    Promise.all([
+      fetch('/api/marine').then(res => res.json()).catch(() => ({ alerts: [] })),
+      fetch('/api/beach-quality').then(res => res.json()).catch(() => ({ beaches: [] })),
+    ]).then(([marineData, beachData]) => {
+      const allAlerts: Alert[] = [...(marineData.alerts || [])];
+      // Add beach water quality advisories
+      const beaches = beachData.beaches || [];
+      const advisoryBeaches = beaches.filter((b: { status: string }) => b.status === 'advisory');
+      if (advisoryBeaches.length > 0) {
+        const beachNames = advisoryBeaches.map((b: { name: string }) => b.name).join(', ');
+        allAlerts.push({
+          id: 'beach-advisory',
+          event: 'Beach Water Quality Advisory',
+          headline: `Elevated E. coli levels detected at ${beachNames}. Avoid swimming at affected beaches.`,
+          severity: 'Moderate',
+        });
+      }
+      setAlerts(allAlerts);
+      setLoaded(true);
+    });
   }, [isPreview]);
 
   const active = alerts.filter(a => !dismissed.has(a.id));
@@ -99,7 +112,7 @@ function MarineAlertBannerInner() {
           {active.length > 1 && (
             <span className="marine-alert-counter">{currentIndex + 1}/{active.length}</span>
           )}
-          <Link href="/marine" className="marine-alert-link">
+          <Link href={current.id === 'beach-advisory' ? '/marine#beach' : '/marine'} className="marine-alert-link">
             View Details <i className="fas fa-arrow-right"></i>
           </Link>
           <button
