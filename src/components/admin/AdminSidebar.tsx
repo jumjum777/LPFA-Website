@@ -30,6 +30,7 @@ const rotrItems = [
   { href: '/admin/rotr?tab=orders', label: 'Orders', icon: 'fas fa-receipt' },
   { href: '/admin/rotr?tab=customers', label: 'Customers', icon: 'fas fa-users' },
   { href: '/admin/rotr?tab=finances', label: 'Finances', icon: 'fas fa-file-invoice-dollar' },
+  { href: '/admin/rotr?tab=analytics', label: 'Analytics', icon: 'fas fa-chart-bar' },
 ];
 
 const superAdminItems = [

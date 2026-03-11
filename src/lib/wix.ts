@@ -245,6 +245,54 @@ export async function getWixPaymentTransactions(): Promise<WixPaymentTransaction
   });
 }
 
+// ─── Analytics ─────────────────────────────────────────────
+
+export type AnalyticsMeasurement = 'TOTAL_SESSIONS' | 'TOTAL_UNIQUE_VISITORS' | 'TOTAL_SALES' | 'TOTAL_ORDERS' | 'CLICKS_TO_CONTACT' | 'TOTAL_FORMS_SUBMITTED';
+
+export interface AnalyticsDataPoint {
+  date: string;
+  value: number;
+}
+
+export interface AnalyticsMetric {
+  type: AnalyticsMeasurement;
+  values: AnalyticsDataPoint[];
+  total: number;
+}
+
+/** Fetch site analytics from Wix (max 62 days lookback) */
+export async function getWixAnalytics(
+  startDate: string,
+  endDate: string,
+  types: AnalyticsMeasurement[] = ['TOTAL_SESSIONS', 'TOTAL_UNIQUE_VISITORS', 'TOTAL_SALES', 'TOTAL_ORDERS', 'CLICKS_TO_CONTACT', 'TOTAL_FORMS_SUBMITTED']
+): Promise<AnalyticsMetric[]> {
+  const params = new URLSearchParams();
+  params.append('dateRange.startDate', startDate);
+  params.append('dateRange.endDate', endDate);
+  for (const t of types) {
+    params.append('measurementTypes', t);
+  }
+
+  const res = await fetch(
+    `https://www.wixapis.com/analytics/v2/site-analytics/data?${params}`,
+    {
+      headers: {
+        'Authorization': WIX_API_KEY,
+        'wix-site-id': WIX_SITE_ID,
+        'Accept': 'application/json',
+      },
+    }
+  );
+
+  if (!res.ok) {
+    console.error('Wix Analytics API error:', res.status, await res.text());
+    return [];
+  }
+
+  const data = await res.json();
+  return data.data || [];
+}
+
 /** Fetch ticket definitions, optionally filtered by event */
 export async function getWixTicketDefinitions(eventId?: string): Promise<WixTicketDefinition[]> {
   const allDefs: WixTicketDefinition[] = [];

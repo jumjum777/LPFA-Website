@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
-type Tab = 'overview' | 'events' | 'orders' | 'customers' | 'finances';
+type Tab = 'overview' | 'events' | 'orders' | 'customers' | 'finances' | 'analytics';
 
 interface TicketDef {
   id: string;
@@ -65,6 +65,12 @@ interface TransactionData {
   hasRefunds: boolean;
 }
 
+interface AnalyticsMetric {
+  type: string;
+  values: { date: string; value: number }[];
+  total: number;
+}
+
 interface Summary {
   totalEvents: number;
   upcomingEvents: number;
@@ -121,6 +127,9 @@ function ROTRContent() {
   const [financePeriod, setFinancePeriod] = useState('all');
   const [transactions, setTransactions] = useState<Record<string, TransactionData>>({});
   const [txnLoading, setTxnLoading] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState<{ metrics: AnalyticsMetric[]; previousMetrics: AnalyticsMetric[] | null; period: { start: string; end: string; days: number } } | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsDays, setAnalyticsDays] = useState(30);
 
   useEffect(() => {
     async function load() {
@@ -160,6 +169,18 @@ function ROTRContent() {
         .finally(() => setTxnLoading(false));
     }
   }, [tab, transactions, txnLoading]);
+
+  // Load analytics when analytics tab opens (or days changes)
+  useEffect(() => {
+    if (tab === 'analytics') {
+      setAnalyticsLoading(true);
+      fetch(`/api/admin/rotr/analytics?days=${analyticsDays}`)
+        .then(res => res.json())
+        .then(data => setAnalyticsData(data))
+        .catch(err => console.error('Failed to load analytics:', err))
+        .finally(() => setAnalyticsLoading(false));
+    }
+  }, [tab, analyticsDays]);
 
   // Build event lookup for orders
   const eventMap = new Map(events.map(e => [e.id, e.title]));
@@ -1056,6 +1077,242 @@ function ROTRContent() {
               </>
             );
           })()}
+        </div>
+      )}
+      {/* === ANALYTICS TAB === */}
+      {tab === 'analytics' && (
+        <div>
+          {/* Period Selector */}
+          <div className="rotr-analytics-toolbar">
+            <div className="rotr-analytics-periods">
+              {[7, 14, 30, 60].map(d => (
+                <button
+                  key={d}
+                  className={`rotr-analytics-period-btn ${analyticsDays === d ? 'active' : ''}`}
+                  onClick={() => setAnalyticsDays(d)}
+                >
+                  {d}d
+                </button>
+              ))}
+            </div>
+            <span className="rotr-analytics-range">
+              {analyticsData?.period
+                ? `${new Date(analyticsData.period.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — ${new Date(analyticsData.period.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                : ''}
+            </span>
+          </div>
+
+          {analyticsLoading ? (
+            <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
+              <i className="fas fa-spinner fa-spin" style={{ fontSize: '1.5rem', color: 'var(--blue-accent)' }}></i>
+              <p style={{ marginTop: '0.75rem', color: 'var(--gray-500)' }}>Loading analytics...</p>
+            </div>
+          ) : analyticsData ? (() => {
+            const { metrics, previousMetrics } = analyticsData;
+            const getMetric = (type: string) => metrics.find(m => m.type === type);
+            const getPrevMetric = (type: string) => previousMetrics?.find(m => m.type === type);
+
+            const calcChange = (current: number, previous: number | undefined) => {
+              if (!previous || previous === 0) return null;
+              return ((current - previous) / previous) * 100;
+            };
+
+            const sessions = getMetric('TOTAL_SESSIONS');
+            const visitors = getMetric('TOTAL_UNIQUE_VISITORS');
+            const sales = getMetric('TOTAL_SALES');
+            const ordersMetric = getMetric('TOTAL_ORDERS');
+            const contacts = getMetric('CLICKS_TO_CONTACT');
+            const forms = getMetric('TOTAL_FORMS_SUBMITTED');
+
+            const prevSessions = getPrevMetric('TOTAL_SESSIONS');
+            const prevVisitors = getPrevMetric('TOTAL_UNIQUE_VISITORS');
+            const prevSales = getPrevMetric('TOTAL_SALES');
+            const prevOrders = getPrevMetric('TOTAL_ORDERS');
+
+            const cards = [
+              {
+                label: 'Sessions',
+                value: sessions?.total?.toLocaleString() || '0',
+                change: calcChange(sessions?.total || 0, prevSessions?.total),
+                icon: 'fas fa-eye',
+                color: '#1B8BEB',
+              },
+              {
+                label: 'Unique Visitors',
+                value: visitors?.total?.toLocaleString() || '0',
+                change: calcChange(visitors?.total || 0, prevVisitors?.total),
+                icon: 'fas fa-users',
+                color: '#10B981',
+              },
+              {
+                label: 'Sales',
+                value: formatCurrency(sales?.total || 0),
+                change: calcChange(sales?.total || 0, prevSales?.total),
+                icon: 'fas fa-dollar-sign',
+                color: '#D97706',
+              },
+              {
+                label: 'Orders',
+                value: ordersMetric?.total?.toLocaleString() || '0',
+                change: calcChange(ordersMetric?.total || 0, prevOrders?.total),
+                icon: 'fas fa-receipt',
+                color: '#7C3AED',
+              },
+            ];
+
+            // Chart: daily sessions + visitors
+            const sessionValues = sessions?.values || [];
+            const visitorValues = visitors?.values || [];
+            const maxVal = Math.max(...sessionValues.map(v => v.value), 1);
+
+            // Engagement cards
+            const engagementCards = [
+              { label: 'Clicks to Contact', value: contacts?.total || 0, icon: 'fas fa-phone' },
+              { label: 'Forms Submitted', value: forms?.total || 0, icon: 'fas fa-envelope' },
+              {
+                label: 'Sessions/Visitor',
+                value: visitors?.total ? (sessions?.total || 0 / visitors.total).toFixed(1) : '0',
+                icon: 'fas fa-redo',
+              },
+            ];
+
+            return (
+              <>
+                {/* Summary Cards */}
+                <div className="rotr-stats-row">
+                  {cards.map(card => (
+                    <div key={card.label} className="rotr-stat-card">
+                      <div className="rotr-stat-icon" style={{ background: `${card.color}15`, color: card.color }}>
+                        <i className={card.icon}></i>
+                      </div>
+                      <div className="rotr-stat-value">{card.value}</div>
+                      <div className="rotr-stat-label">{card.label}</div>
+                      {card.change !== null && (
+                        <div className={`rotr-analytics-change ${card.change >= 0 ? 'positive' : 'negative'}`}>
+                          <i className={`fas fa-arrow-${card.change >= 0 ? 'up' : 'down'}`}></i>
+                          {Math.abs(card.change).toFixed(1)}%
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {previousMetrics && (
+                  <p className="rotr-analytics-compare-note">
+                    <i className="fas fa-info-circle"></i> Compared to previous {analyticsDays} days
+                  </p>
+                )}
+
+                {/* Daily Traffic Chart */}
+                <div className="admin-card rotr-analytics-chart-card">
+                  <h3><i className="fas fa-chart-area"></i> Daily Traffic</h3>
+                  <div className="rotr-analytics-chart">
+                    <div className="rotr-analytics-chart-bars">
+                      {sessionValues.map((s, i) => {
+                        const v = visitorValues[i];
+                        const dayLabel = new Date(s.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                        const sessionHeight = (s.value / maxVal) * 100;
+                        const visitorHeight = v ? (v.value / maxVal) * 100 : 0;
+                        return (
+                          <div key={s.date} className="rotr-analytics-bar-group" title={`${dayLabel}\nSessions: ${s.value}\nVisitors: ${v?.value || 0}`}>
+                            <div className="rotr-analytics-bar-container">
+                              <div
+                                className="rotr-analytics-bar sessions"
+                                style={{ height: `${sessionHeight}%` }}
+                              ></div>
+                              <div
+                                className="rotr-analytics-bar visitors"
+                                style={{ height: `${visitorHeight}%` }}
+                              ></div>
+                            </div>
+                            {(sessionValues.length <= 14 || i % Math.ceil(sessionValues.length / 14) === 0) && (
+                              <span className="rotr-analytics-bar-label">
+                                {new Date(s.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="rotr-analytics-chart-legend">
+                      <span><span className="rotr-legend-dot sessions"></span> Sessions</span>
+                      <span><span className="rotr-legend-dot visitors"></span> Visitors</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Engagement Cards */}
+                <div className="rotr-analytics-engagement">
+                  {engagementCards.map(card => (
+                    <div key={card.label} className="rotr-analytics-engagement-card">
+                      <i className={card.icon}></i>
+                      <div className="rotr-analytics-engagement-value">{card.value}</div>
+                      <div className="rotr-analytics-engagement-label">{card.label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Daily Breakdown Table */}
+                <div className="admin-card" style={{ marginTop: '1.5rem' }}>
+                  <h3 style={{ marginBottom: '1rem' }}><i className="fas fa-table"></i> Daily Breakdown</h3>
+                  <div className="admin-table-wrap">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th style={{ textAlign: 'right' }}>Sessions</th>
+                          <th style={{ textAlign: 'right' }}>Visitors</th>
+                          <th style={{ textAlign: 'right' }}>Sales</th>
+                          <th style={{ textAlign: 'right' }}>Orders</th>
+                          <th style={{ textAlign: 'right' }}>Contacts</th>
+                          <th style={{ textAlign: 'right' }}>Forms</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[...sessionValues].reverse().map((s, i) => {
+                          const idx = sessionValues.length - 1 - i;
+                          const dayLabel = new Date(s.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                          return (
+                            <tr key={s.date}>
+                              <td style={{ fontWeight: 500 }}>{dayLabel}</td>
+                              <td style={{ textAlign: 'right' }}>{s.value}</td>
+                              <td style={{ textAlign: 'right' }}>{visitorValues[idx]?.value || 0}</td>
+                              <td style={{ textAlign: 'right' }}>
+                                {(sales?.values[idx]?.value || 0) > 0
+                                  ? formatCurrency(sales!.values[idx].value)
+                                  : '—'}
+                              </td>
+                              <td style={{ textAlign: 'right' }}>{ordersMetric?.values[idx]?.value || 0}</td>
+                              <td style={{ textAlign: 'right' }}>{contacts?.values[idx]?.value || 0}</td>
+                              <td style={{ textAlign: 'right' }}>{forms?.values[idx]?.value || 0}</td>
+                            </tr>
+                          );
+                        })}
+                        <tr className="rotr-finance-total-row">
+                          <td>Total</td>
+                          <td style={{ textAlign: 'right' }}>{sessions?.total?.toLocaleString()}</td>
+                          <td style={{ textAlign: 'right' }}>{visitors?.total?.toLocaleString()}</td>
+                          <td style={{ textAlign: 'right' }}>{formatCurrency(sales?.total || 0)}</td>
+                          <td style={{ textAlign: 'right' }}>{ordersMetric?.total?.toLocaleString()}</td>
+                          <td style={{ textAlign: 'right' }}>{contacts?.total}</td>
+                          <td style={{ textAlign: 'right' }}>{forms?.total}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="rotr-analytics-note">
+                  <i className="fas fa-info-circle"></i>
+                  Data from Wix Analytics. Limited to 62 days lookback. Visitors who decline cookies are not tracked.
+                </div>
+              </>
+            );
+          })() : (
+            <div className="admin-card" style={{ padding: '2rem', textAlign: 'center', color: 'var(--gray-500)' }}>
+              No analytics data available.
+            </div>
+          )}
         </div>
       )}
     </div>
