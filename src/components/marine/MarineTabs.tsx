@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import MarineZoneAccordion from './MarineZoneAccordion';
 import HourlyForecastTable from './HourlyForecastTable';
@@ -11,8 +11,47 @@ interface MarineTextPeriod { title: string; body: string; }
 interface HourlyPeriod { startTime: string; temperature: number; windSpeed: string; windDirection: string; shortForecast: string; precipChance: number | null; }
 interface ForecastPeriod { number: number; name: string; temperature: number; temperatureUnit: string; windSpeed: string; windDirection: string; shortForecast: string; isDaytime: boolean; }
 interface BuoyData { windSpeed: number | null; windGust: number | null; windDirection: number | null; waveHeight: number | null; wavePeriod: number | null; waterTemp: number | null; airTemp: number | null; pressure: number | null; isOffline: boolean; }
+interface VesselRecord { mmsi: string; vessel_name: string | null; destination: string | null; vessel_type: number | null; latitude: number | null; longitude: number | null; speed: number | null; heading: number | null; eta: string | null; status: string; first_detected_at?: string; last_seen_at?: string; is_active: boolean; }
 
-type TabId = 'alerts' | 'forecast' | 'conditions' | 'hourly' | '7day' | 'resources';
+type TabId = 'alerts' | 'vessels' | 'forecast' | 'conditions' | 'hourly' | '7day' | 'resources';
+
+const VESSEL_TYPE_LABELS: Record<number, string> = {
+  70: 'Cargo', 71: 'Cargo', 72: 'Cargo', 73: 'Cargo', 74: 'Cargo', 79: 'Cargo',
+  80: 'Tanker', 81: 'Tanker', 82: 'Tanker', 83: 'Tanker', 84: 'Tanker', 89: 'Tanker',
+  60: 'Passenger', 69: 'Passenger', 30: 'Fishing', 31: 'Towing', 32: 'Towing (Large)',
+  33: 'Dredger', 34: 'Diving Ops', 35: 'Military Ops', 36: 'Sailing', 37: 'Pleasure Craft', 52: 'Tug',
+};
+
+function getVesselTypeLabel(type: number | null): string {
+  if (!type) return 'Vessel';
+  return VESSEL_TYPE_LABELS[type] || 'Vessel';
+}
+
+function formatVesselEta(eta: string | null): string {
+  if (!eta) return 'N/A';
+  const date = new Date(eta);
+  if (isNaN(date.getTime())) return 'N/A';
+  return date.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/New_York' });
+}
+
+function formatLastSeen(ts: string | undefined): string {
+  if (!ts) return '';
+  const diffMin = Math.round((Date.now() - new Date(ts).getTime()) / 60000);
+  if (diffMin < 1) return 'Just now';
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.round(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  return `${Math.round(diffHr / 24)}d ago`;
+}
+
+function getStatusLabel(status: string): string {
+  switch (status) {
+    case 'en_route': return 'En Route';
+    case 'in_port': return 'In Port';
+    case 'departed': return 'Departed';
+    default: return status;
+  }
+}
 
 function windDirLabel(deg: number | null) {
   if (deg === null) return '--';
@@ -32,10 +71,22 @@ export default function MarineTabs({
   forecast: ForecastPeriod[];
 }) {
   const hasAlerts = alerts.length > 0;
-  const [active, setActive] = useState<TabId>(hasAlerts ? 'alerts' : 'forecast');
+  const [vessels, setVessels] = useState<VesselRecord[]>([]);
+  const [vesselsLoaded, setVesselsLoaded] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/vessels')
+      .then(res => res.json())
+      .then(data => { setVessels(data.vessels || []); setVesselsLoaded(true); })
+      .catch(() => setVesselsLoaded(true));
+  }, []);
+
+  const defaultTab: TabId = hasAlerts ? 'alerts' : 'vessels';
+  const [active, setActive] = useState<TabId>(defaultTab);
 
   const tabs: { id: TabId; label: string; icon: string }[] = [
     ...(hasAlerts ? [{ id: 'alerts' as TabId, label: 'Alerts', icon: 'fa-exclamation-triangle' }] : []),
+    { id: 'vessels', label: 'Vessel Traffic', icon: 'fa-ship' },
     { id: 'forecast', label: 'Marine Forecast', icon: 'fa-anchor' },
     { id: 'conditions', label: 'Offshore Conditions', icon: 'fa-water' },
     { id: 'hourly', label: 'Hourly Weather', icon: 'fa-clock' },
@@ -84,6 +135,67 @@ export default function MarineTabs({
                 <h2 className="section-title"><i className="fas fa-exclamation-triangle" style={{ color: 'var(--gold)', marginRight: '0.5rem' }}></i> Weather Alerts</h2>
               </div>
               <AlertsCollapsible alerts={alerts} />
+            </div>
+          )}
+
+          {/* VESSEL TRAFFIC */}
+          {active === 'vessels' && (
+            <div>
+              <div className="section-header center">
+                <div className="section-label">Port Lorain</div>
+                <h2 className="section-title"><i className="fas fa-ship" style={{ color: 'var(--gold)', marginRight: '0.5rem' }}></i> Vessel Traffic</h2>
+                <p className="section-desc">Active commercial vessel traffic heading to or at Port Lorain, tracked via AIS (Automatic Identification System).</p>
+              </div>
+              {!vesselsLoaded ? (
+                <p style={{ textAlign: 'center', color: 'var(--gray-400)' }}>Loading vessel data...</p>
+              ) : vessels.length === 0 ? (
+                <div className="vessel-traffic-empty">
+                  <i className="fas fa-water"></i>
+                  <p>No vessel traffic currently reported for Port Lorain.</p>
+                  <p style={{ fontSize: '0.82rem', marginTop: '0.25rem' }}>Check back later — this page updates automatically when vessels set their AIS destination to Lorain.</p>
+                </div>
+              ) : (
+                <div className="vessel-traffic-grid">
+                  {vessels.map(vessel => (
+                    <div key={vessel.mmsi} className="vessel-card">
+                      <div className="vessel-card-header">
+                        <div className="vessel-card-icon">
+                          <i className="fas fa-ship"></i>
+                        </div>
+                        <div>
+                          <h3 className="vessel-card-name">{vessel.vessel_name || 'Unknown'}</h3>
+                          <span className="vessel-card-type">{getVesselTypeLabel(vessel.vessel_type)}</span>
+                        </div>
+                        <span className={`vessel-card-status vessel-status-${vessel.status}`}>
+                          {getStatusLabel(vessel.status)}
+                        </span>
+                      </div>
+                      <div className="vessel-card-details">
+                        <div className="vessel-detail">
+                          <span className="vessel-detail-label">ETA</span>
+                          <span className="vessel-detail-value">{formatVesselEta(vessel.eta)}</span>
+                        </div>
+                        {vessel.speed != null && vessel.speed > 0 && (
+                          <div className="vessel-detail">
+                            <span className="vessel-detail-label">Speed</span>
+                            <span className="vessel-detail-value">{vessel.speed.toFixed(1)} kn</span>
+                          </div>
+                        )}
+                        {vessel.heading != null && vessel.heading > 0 && (
+                          <div className="vessel-detail">
+                            <span className="vessel-detail-label">Heading</span>
+                            <span className="vessel-detail-value">{vessel.heading}&deg;</span>
+                          </div>
+                        )}
+                        <div className="vessel-detail">
+                          <span className="vessel-detail-label">Last Updated</span>
+                          <span className="vessel-detail-value">{formatLastSeen(vessel.last_seen_at)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

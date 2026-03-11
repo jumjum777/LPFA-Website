@@ -50,7 +50,8 @@
   --header-top-h: 38px;
   --nav-h: 72px;
   --alert-banner-h: 0px;
-  --header-total: calc(var(--header-top-h) + var(--nav-h) + var(--alert-banner-h));
+  --vessel-banner-h: 0px;
+  --header-total: calc(var(--header-top-h) + var(--nav-h) + var(--alert-banner-h) + var(--vessel-banner-h));
 }
 
 /* ---------------------------------------------------------
@@ -4730,6 +4731,121 @@ body:has(.admin-login-wrapper) > footer {
   border-color: #1B8BEB;
 }
 
+/* ===== Admin Dark Mode ===== */
+[data-theme="dark"] .admin-wrapper { background: #0f172a; }
+[data-theme="dark"] .admin-main { background: #0f172a; }
+[data-theme="dark"] .admin-sidebar { background: #0a1628; }
+
+[data-theme="dark"] .admin-page-header h1 { color: #f1f5f9; }
+[data-theme="dark"] .admin-page-header p { color: #94a3b8; }
+
+[data-theme="dark"] .admin-card { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .admin-card h3 { color: #f1f5f9; }
+
+[data-theme="dark"] .admin-stat-card { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .admin-stat-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+[data-theme="dark"] .admin-stat-count { color: #f1f5f9; }
+[data-theme="dark"] .admin-stat-label { color: #94a3b8; }
+
+[data-theme="dark"] .admin-table-wrap { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .admin-table th { background: #0f172a; color: #94a3b8; border-color: #334155; }
+[data-theme="dark"] .admin-table td { color: #cbd5e1; border-color: #1e293b; }
+
+[data-theme="dark"] .admin-btn-secondary { background: #1e293b; color: #cbd5e1; border-color: #334155; }
+[data-theme="dark"] .admin-btn-secondary:hover { background: #334155; }
+[data-theme="dark"] .admin-btn-icon { color: #94a3b8; }
+[data-theme="dark"] .admin-btn-icon:hover { background: #334155; color: #1B8BEB; }
+[data-theme="dark"] .admin-btn-icon.danger:hover { background: #3b1c1c; color: #ef4444; }
+
+[data-theme="dark"] .admin-badge { background: #334155; color: #94a3b8; }
+[data-theme="dark"] .admin-status-badge.published { background: #064e3b; color: #6ee7b7; }
+[data-theme="dark"] .admin-status-badge.draft { background: #451a03; color: #fcd34d; }
+[data-theme="dark"] .admin-status-badge.scheduled { background: #1e3a5f; color: #93c5fd; }
+
+[data-theme="dark"] .admin-form-group label { color: #cbd5e1; }
+[data-theme="dark"] .admin-form-group input,
+[data-theme="dark"] .admin-form-group select,
+[data-theme="dark"] .admin-form-group textarea {
+  background: #0f172a;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+[data-theme="dark"] .admin-form-group input::placeholder,
+[data-theme="dark"] .admin-form-group textarea::placeholder { color: #475569; }
+[data-theme="dark"] .admin-schedule-row { background: #0f172a; border-color: #334155; }
+
+[data-theme="dark"] .admin-empty { color: #64748b; }
+[data-theme="dark"] .admin-alert-error { background: #3b1c1c; color: #fca5a5; border-color: #7f1d1d; }
+
+[data-theme="dark"] .admin-login-card { background: #1e293b; }
+[data-theme="dark"] .admin-login-header h1 { color: #f1f5f9; }
+[data-theme="dark"] .admin-login-header p { color: #94a3b8; }
+[data-theme="dark"] .admin-login-footer a { color: #94a3b8; }
+
+[data-theme="dark"] .admin-tabs { border-color: #334155; }
+[data-theme="dark"] .admin-tab { color: #94a3b8; }
+[data-theme="dark"] .admin-tab:hover { color: #e2e8f0; }
+[data-theme="dark"] .admin-tab.active { color: #1B8BEB; border-bottom-color: #1B8BEB; }
+
+/* Rich text editor dark mode */
+[data-theme="dark"] .rich-editor { border-color: #334155; }
+[data-theme="dark"] .rich-editor-toolbar { background: #0f172a; border-color: #334155; }
+[data-theme="dark"] .rich-editor-toolbar button { color: #94a3b8; }
+[data-theme="dark"] .rich-editor-toolbar button:hover { background: #334155; }
+[data-theme="dark"] .rich-editor-toolbar button.active { background: #1B8BEB; color: #fff; }
+[data-theme="dark"] .toolbar-divider { background: #334155; }
+[data-theme="dark"] .rich-editor-content { background: #1e293b; }
+[data-theme="dark"] .rich-editor-content .ProseMirror,
+[data-theme="dark"] .rich-editor-content .ProseMirror p,
+[data-theme="dark"] .rich-editor-content .ProseMirror li,
+[data-theme="dark"] .rich-editor-content .ProseMirror h2,
+[data-theme="dark"] .rich-editor-content .ProseMirror h3 { color: #e2e8f0; }
+[data-theme="dark"] .rich-editor-content .ProseMirror blockquote { border-color: #334155; color: #94a3b8; }
+[data-theme="dark"] .rich-editor-content .ProseMirror th,
+[data-theme="dark"] .rich-editor-content .ProseMirror td { border-color: #334155; color: #e2e8f0; }
+[data-theme="dark"] .rich-editor-content .ProseMirror th { background: #0f172a; }
+[data-theme="dark"] .rich-editor-content .ProseMirror .selectedCell { background: #1e3a5f; }
+[data-theme="dark"] .rich-editor-color-picker { background: #1e293b; border-color: #334155; }
+
+/* Article preview dark mode */
+[data-theme="dark"] .article-preview-date { color: #94a3b8; }
+[data-theme="dark"] .article-preview-title { color: #f1f5f9 !important; }
+
+/* Admin theme toggle button (nav item style) */
+button.admin-theme-btn {
+  width: 100%;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+button.admin-theme-btn:hover { color: #D97706; }
+
+/* Photo grid dark mode */
+[data-theme="dark"] .photo-card { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .photo-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+[data-theme="dark"] .photo-card-title { color: #f1f5f9; }
+[data-theme="dark"] .photo-card-meta { color: #64748b; }
+[data-theme="dark"] .photo-modal { background: #1e293b; }
+[data-theme="dark"] .photo-modal-title { color: #f1f5f9; }
+[data-theme="dark"] .photo-modal-detail-row { color: #cbd5e1; border-color: #334155; }
+[data-theme="dark"] .photo-modal-tag { background: #334155; color: #94a3b8; }
+[data-theme="dark"] .photo-picker { background: #1e293b; }
+[data-theme="dark"] .photo-picker-header { border-color: #334155; }
+[data-theme="dark"] .photo-picker-item { background: #0f172a; border-color: #334155; }
+[data-theme="dark"] .photo-picker-item:hover { border-color: #1B8BEB; }
+
+[data-theme="dark"] .photo-staging-topbar { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .photo-staged-card { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .photo-staged-title-input { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+[data-theme="dark"] .photo-staged-meta { color: #64748b; }
+[data-theme="dark"] .photo-cat-select { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+[data-theme="dark"] .photo-cat-checks-card { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .photo-add-cat input { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+
 .admin-month-tab {
   padding: 0.25rem 0.7rem;
   font-size: 0.78rem;
@@ -5453,6 +5569,217 @@ body:has(.admin-login-wrapper) > footer {
 .marine-alert-close:hover {
   opacity: 1;
   background: rgba(255,255,255,0.15);
+}
+
+/* ---- Vessel Banner ---- */
+.vessel-banner {
+  padding: 0.55rem 0;
+  font-size: 0.82rem;
+  color: #fff;
+  background: #475569;
+  position: relative;
+  z-index: 999;
+}
+.vessel-banner-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.vessel-banner-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  color: #D97706;
+}
+.vessel-banner-text {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  transition: opacity 0.3s;
+}
+.vessel-banner-text.vessel-banner-fade { opacity: 0; }
+.vessel-banner-text strong { white-space: nowrap; }
+.vessel-banner-detail {
+  opacity: 0.85;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vessel-banner-counter {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  opacity: 0.7;
+  white-space: nowrap;
+  padding: 0.15rem 0.5rem;
+  border-radius: 100px;
+  background: rgba(255,255,255,0.15);
+}
+.vessel-banner-close {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  opacity: 0.7;
+  transition: opacity 0.2s, background 0.2s;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+.vessel-banner-close:hover {
+  opacity: 1;
+  background: rgba(255,255,255,0.15);
+}
+
+[data-theme="dark"] .vessel-banner { background: #334155; }
+
+/* ---- Vessel Traffic Section (Marine Page) ---- */
+.vessel-traffic-section { margin-bottom: 1.5rem; }
+.vessel-traffic-header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.vessel-traffic-header h2 {
+  font-size: 1.35rem;
+  color: var(--navy);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.vessel-traffic-header h2 i { color: var(--gold); font-size: 1.1rem; }
+.vessel-traffic-subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.vessel-traffic-empty {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  background: var(--white);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  color: #94a3b8;
+}
+.vessel-traffic-empty i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.vessel-traffic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.vessel-card {
+  background: var(--white);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: box-shadow 0.2s;
+}
+.vessel-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+
+.vessel-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.vessel-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #0B1F3A10;
+  color: #0B1F3A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.vessel-card-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--navy);
+  font-family: var(--font-heading);
+}
+.vessel-card-type {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+.vessel-card-status {
+  margin-left: auto;
+  padding: 0.2rem 0.6rem;
+  border-radius: 100px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: var(--font-heading);
+}
+.vessel-status-en_route { background: #eff6ff; color: #1d4ed8; }
+.vessel-status-in_port { background: #ecfdf5; color: #059669; }
+.vessel-status-departed { background: #f1f5f9; color: #64748b; }
+
+.vessel-card-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 1rem;
+}
+.vessel-detail {
+  display: flex;
+  flex-direction: column;
+}
+.vessel-detail-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin-bottom: 0.1rem;
+}
+.vessel-detail-value {
+  font-size: 0.88rem;
+  color: #334155;
+  font-weight: 500;
+}
+
+/* Vessel dark mode */
+[data-theme="dark"] .vessel-traffic-header h2 { color: #f1f5f9; }
+[data-theme="dark"] .vessel-traffic-subtitle { color: #94a3b8; }
+[data-theme="dark"] .vessel-traffic-empty { background: #1e293b; border-color: #334155; color: #64748b; }
+[data-theme="dark"] .vessel-card { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .vessel-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+[data-theme="dark"] .vessel-card-icon { background: rgba(27,139,235,0.15); color: #1B8BEB; }
+[data-theme="dark"] .vessel-card-name { color: #f1f5f9; }
+[data-theme="dark"] .vessel-card-type { color: #94a3b8; }
+[data-theme="dark"] .vessel-status-en_route { background: #1e3a5f; color: #93c5fd; }
+[data-theme="dark"] .vessel-status-in_port { background: #064e3b; color: #6ee7b7; }
+[data-theme="dark"] .vessel-status-departed { background: #334155; color: #94a3b8; }
+[data-theme="dark"] .vessel-detail-label { color: #64748b; }
+[data-theme="dark"] .vessel-detail-value { color: #cbd5e1; }
+
+/* Admin vessel page */
+.admin-vessel-status-select {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  background: #fff;
+  color: #334155;
+  cursor: pointer;
+}
+[data-theme="dark"] .admin-vessel-status-select {
+  background: #0f172a;
+  border-color: #334155;
+  color: #e2e8f0;
 }
 
 /* ---- Marine Tabs ---- */

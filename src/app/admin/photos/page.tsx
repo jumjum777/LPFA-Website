@@ -12,11 +12,11 @@ interface StagedFile {
 }
 
 const DEFAULT_CATEGORIES = [
-  'Lighthouse', 'Freighters', 'Boat Tours', 'Sunsets & Weather',
-  "Rockin' On The River", 'Outdoor Show', 'Stage Construction',
-  'Carmen Lee', 'Black River Wharf', 'Terminals & Docks',
-  'Controlled Burn', 'Black River Landing', 'Port Lorain',
-  'Disposal Site', '2023 Summer Market', "2024 Cabella's", 'Dredging Tanks',
+  "2023 Summer Market", "2024 Cabella's", 'Black River Landing', 'Black River Wharf',
+  'Boat Tours', 'Carmen Lee', 'Controlled Burn', 'Disposal Site',
+  'Dredging Tanks', 'Freighters', 'Lighthouse', 'Outdoor Show',
+  'Port Lorain', "Rockin' On The River", 'Stage Construction',
+  'Sunsets & Weather', 'Terminals & Docks',
 ];
 
 function formatFileSize(bytes?: number) {
@@ -78,7 +78,7 @@ export default function AdminPhotosPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const categoryNames = dbCategories.length > 0
-    ? dbCategories.map(c => c.name)
+    ? dbCategories.map(c => c.name).sort((a, b) => a.localeCompare(b))
     : DEFAULT_CATEGORIES;
 
   useEffect(() => {

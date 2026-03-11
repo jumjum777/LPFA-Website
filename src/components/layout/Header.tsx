@@ -1,6 +1,7 @@
 import HeaderClient from './HeaderClient';
 import ThemeToggle from '../ui/ThemeToggle';
 import MarineAlertBanner from './MarineAlertBanner';
+import VesselBanner from './VesselBanner';
 import Link from 'next/link';
 
 export default function Header() {
@@ -70,6 +71,7 @@ export default function Header() {
         </div>
       </nav>
       <MarineAlertBanner />
+      <VesselBanner />
     </HeaderClient>
   );
 }
