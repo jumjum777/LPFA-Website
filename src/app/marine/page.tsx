@@ -43,9 +43,13 @@ export default async function MarinePage({ searchParams }: { searchParams: Promi
   const [data, beachData] = await Promise.all([fetchMarineData(), fetchBeachData()]);
   const { forecast, hourly, marineText, marineTextPeriods, buoy, fetchedAt } = data;
 
-  // Merge beach water quality advisories into alerts
+  // Merge beach water quality advisories into alerts (only during swim season with recent data)
   const baseAlerts = params.preview === 'alerts' ? MOCK_ALERTS : data.alerts;
-  const advisoryBeaches = beachData.beaches.filter(b => b.status === 'advisory');
+  const threeDaysAgo = new Date();
+  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+  const advisoryBeaches = beachData.isOffSeason ? [] : beachData.beaches.filter(b =>
+    b.status === 'advisory' && b.latestReading?.date && new Date(b.latestReading.date) >= threeDaysAgo
+  );
   const beachAlerts = advisoryBeaches.map(b => ({
     id: `beach-${b.id}`,
     event: 'Beach Water Quality Advisory',
