@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -17,6 +18,7 @@ const navItems = [
   { href: '/admin/photos', label: 'Photos', icon: 'fas fa-images' },
   { href: '/admin/staff', label: 'Staff', icon: 'fas fa-id-badge' },
   { href: '/admin/board', label: 'Board', icon: 'fas fa-users' },
+  { href: '/admin/vessels', label: 'Vessel Traffic', icon: 'fas fa-anchor' },
 ];
 
 const superAdminItems = [
@@ -26,6 +28,23 @@ const superAdminItems = [
 export default function AdminSidebar({ user }: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    setIsDark(document.documentElement.getAttribute('data-theme') === 'dark');
+  }, []);
+
+  const toggleTheme = () => {
+    const newDark = !isDark;
+    if (newDark) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('lpfa-theme', 'dark');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('lpfa-theme', 'light');
+    }
+    setIsDark(newDark);
+  };
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -47,6 +66,10 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
       </div>
 
       <nav className="admin-sidebar-nav">
+        <button onClick={toggleTheme} className="admin-nav-item admin-theme-btn" title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}>
+          <i className={isDark ? 'fas fa-sun' : 'fas fa-moon'}></i>
+          <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
+        </button>
         {allItems.map((item) => (
           <Link
             key={item.href}

@@ -19,3 +19,10 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Migration/utility files
+*.sql
+migrate-pdfs.mjs
+pdf-url-mapping.json
+LPFA-Platform-Overview.html
+tsconfig.tsbuildinfo
