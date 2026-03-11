@@ -14,8 +14,8 @@ interface Alert {
 
 function getSeverityColor(severity: string) {
   switch (severity.toLowerCase()) {
-    case 'extreme': return '#DC2626';
-    case 'severe': return '#EA580C';
+    case 'extreme': return '#B91C1C';
+    case 'severe': return '#B91C1C';
     case 'moderate': return '#D97706';
     default: return '#1B8BEB';
   }

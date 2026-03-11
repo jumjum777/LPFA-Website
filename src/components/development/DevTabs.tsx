@@ -14,6 +14,13 @@ const tabs: { id: TabId; label: string; icon: string }[] = [
 
 export default function DevTabs() {
   const [active, setActive] = useState<TabId>('rfp');
+  const [showNewsletter, setShowNewsletter] = useState(false);
+  const [nlFirst, setNlFirst] = useState('');
+  const [nlLast, setNlLast] = useState('');
+  const [nlEmail, setNlEmail] = useState('');
+  const [nlLoading, setNlLoading] = useState(false);
+  const [nlError, setNlError] = useState('');
+  const [newsletterSuccess, setNewsletterSuccess] = useState(false);
 
   // Support hash links from nav (e.g. /development#financing)
   useEffect(() => {
@@ -22,6 +29,34 @@ export default function DevTabs() {
       setActive(hash);
     }
   }, []);
+
+  async function handleNewsletterSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setNlError('');
+    setNlLoading(true);
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name: nlFirst,
+          last_name: nlLast,
+          email: nlEmail,
+          subject: 'newsletter',
+          message: 'Newsletter subscription from RFPs & Bids page',
+          newsletter: true,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Something went wrong.');
+      }
+      setNewsletterSuccess(true);
+    } catch (err) {
+      setNlError(err instanceof Error ? err.message : 'Something went wrong.');
+    }
+    setNlLoading(false);
+  }
 
   return (
     <section className="section">
@@ -168,10 +203,25 @@ export default function DevTabs() {
                 <div>
                   <h4>Stay Notified of New RFPs</h4>
                   <p style={{ marginBottom: '0.75rem' }}>Sign up for our newsletter or contact us to be added to our procurement notification list. We&apos;ll alert you when new opportunities are posted.</p>
-                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                    <Link href="/contact" className="btn btn-primary btn-sm">Get Notified</Link>
-                    <Link href="/#newsletter" className="btn btn-outline btn-sm">Subscribe to Newsletter</Link>
-                  </div>
+                  {!showNewsletter ? (
+                    <button onClick={() => setShowNewsletter(true)} className="btn btn-primary btn-sm">Subscribe to Newsletter</button>
+                  ) : newsletterSuccess ? (
+                    <div className="newsletter-inline-success">
+                      <i className="fas fa-check-circle"></i> You&apos;re subscribed! We&apos;ll keep you updated.
+                    </div>
+                  ) : (
+                    <form onSubmit={handleNewsletterSubmit} className="newsletter-inline-form">
+                      <div className="newsletter-inline-fields">
+                        <input type="text" placeholder="First Name" value={nlFirst} onChange={(e) => setNlFirst(e.target.value)} required />
+                        <input type="text" placeholder="Last Name" value={nlLast} onChange={(e) => setNlLast(e.target.value)} required />
+                        <input type="email" placeholder="Email Address" value={nlEmail} onChange={(e) => setNlEmail(e.target.value)} required />
+                        <button type="submit" className="btn btn-primary btn-sm" disabled={nlLoading}>
+                          {nlLoading ? <><i className="fas fa-spinner fa-spin"></i> Sending...</> : 'Subscribe'}
+                        </button>
+                      </div>
+                      {nlError && <p className="newsletter-inline-error"><i className="fas fa-exclamation-circle"></i> {nlError}</p>}
+                    </form>
+                  )}
                 </div>
               </div>
             </div>

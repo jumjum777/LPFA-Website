@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import ScrollAnimator from '@/components/ui/ScrollAnimator';
+import NewsletterForm from '@/components/ui/NewsletterForm';
 import { createServerClient } from '@/lib/supabase/server';
 
 export const revalidate = 60;
@@ -239,14 +240,7 @@ export default async function HomePage() {
               <h2>Stay Connected to the Waterfront</h2>
               <p>Receive updates on events, development opportunities, RFPs, and news from Lorain&apos;s waterfront authority.</p>
             </div>
-            <form className="newsletter-form" id="newsletter-form" noValidate>
-              <div className="newsletter-fields">
-                <input type="text" name="name" placeholder="Your Name" autoComplete="name" required aria-label="Your Name" />
-                <input type="email" name="email" placeholder="Your Email Address" autoComplete="email" required aria-label="Your Email Address" />
-                <button type="submit" className="btn btn-gold">Subscribe <i className="fas fa-arrow-right"></i></button>
-              </div>
-              <p className="newsletter-note">We respect your privacy. Unsubscribe at any time.</p>
-            </form>
+            <NewsletterForm />
           </div>
         </div>
       </section>

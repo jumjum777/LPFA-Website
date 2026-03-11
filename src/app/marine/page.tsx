@@ -10,6 +10,15 @@ export const revalidate = 1800;
 const MOCK_ALERTS = [
   {
     id: 'mock-1',
+    event: 'Severe Thunderstorm Warning',
+    headline: 'Severe Thunderstorm Warning in effect for Lorain County until 8:00 PM EDT',
+    description: 'SEVERE THUNDERSTORM WARNING\n\n* WHAT...60 mph wind gusts and quarter size hail expected.\n\n* WHERE...Lorain, Elyria, Avon, Avon Lake, North Ridgeville and surrounding areas.\n\n* WHEN...Until 8:00 PM EDT.\n\n* IMPACTS...Damaging winds will cause some trees and large branches to fall. Hail damage to vehicles is expected. Wind damage to roofs, siding and windows is possible.',
+    severity: 'Severe',
+    onset: new Date().toISOString(),
+    expires: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'mock-2',
     event: 'Small Craft Advisory',
     headline: 'Small Craft Advisory in effect for Vermilion to Avon Point OH nearshore waters',
     description: 'SMALL CRAFT ADVISORY IN EFFECT FROM THIS EVENING THROUGH SATURDAY AFTERNOON\n\n* WHAT...Southwest winds 20 to 30 knots with gusts up to 35 knots and waves 4 to 7 feet expected.\n\n* WHERE...Vermilion to Avon Point OH.\n\n* WHEN...From this evening through Saturday afternoon.\n\n* IMPACTS...Conditions will be hazardous to small craft.',
@@ -18,7 +27,7 @@ const MOCK_ALERTS = [
     expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
   },
   {
-    id: 'mock-2',
+    id: 'mock-3',
     event: 'Gale Warning',
     headline: 'Gale Warning in effect for Lorain and surrounding Lake Erie nearshore waters',
     description: 'GALE WARNING IN EFFECT FROM SATURDAY EVENING THROUGH SUNDAY AFTERNOON\n\n* WHAT...West winds 35 to 45 knots with gusts to 55 knots. Waves 8 to 13 feet.\n\n* WHERE...Open waters of Lake Erie.\n\n* WHEN...From Saturday evening through Sunday afternoon.\n\n* IMPACTS...Very rough conditions on the lake. All craft should remain in port.',

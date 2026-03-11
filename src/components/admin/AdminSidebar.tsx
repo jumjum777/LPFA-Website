@@ -2,14 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
 interface AdminSidebarProps {
   user: { email: string; role: string; display_name: string };
 }
 
-const navItems = [
+type SidebarContext = 'lpfa' | 'rotr';
+
+const lpfaItems = [
   { href: '/admin', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
   { href: '/admin/news', label: 'News', icon: 'fas fa-newspaper' },
   { href: '/admin/events', label: 'Events', icon: 'fas fa-calendar-alt' },
@@ -19,6 +21,15 @@ const navItems = [
   { href: '/admin/staff', label: 'Staff', icon: 'fas fa-id-badge' },
   { href: '/admin/board', label: 'Board', icon: 'fas fa-users' },
   { href: '/admin/vessels', label: 'Vessel Traffic', icon: 'fas fa-anchor' },
+  { href: '/admin/leads', label: 'Leads', icon: 'fas fa-inbox' },
+];
+
+const rotrItems = [
+  { href: '/admin/rotr', label: 'Overview', icon: 'fas fa-chart-line' },
+  { href: '/admin/rotr?tab=events', label: 'Events', icon: 'fas fa-calendar-alt' },
+  { href: '/admin/rotr?tab=orders', label: 'Orders', icon: 'fas fa-receipt' },
+  { href: '/admin/rotr?tab=customers', label: 'Customers', icon: 'fas fa-users' },
+  { href: '/admin/rotr?tab=finances', label: 'Finances', icon: 'fas fa-file-invoice-dollar' },
 ];
 
 const superAdminItems = [
@@ -28,7 +39,21 @@ const superAdminItems = [
 export default function AdminSidebar({ user }: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isDark, setIsDark] = useState(false);
+
+  // Determine context based on current path
+  const isOnRotr = pathname.startsWith('/admin/rotr');
+  const [context, setContext] = useState<SidebarContext>(isOnRotr ? 'rotr' : 'lpfa');
+
+  // Sync context when navigating
+  useEffect(() => {
+    if (pathname.startsWith('/admin/rotr')) {
+      setContext('rotr');
+    } else if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/rotr')) {
+      setContext('lpfa');
+    }
+  }, [pathname]);
 
   useEffect(() => {
     setIsDark(document.documentElement.getAttribute('data-theme') === 'dark');
@@ -52,17 +77,48 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
     router.push('/admin/login');
   };
 
-  const allItems = user.role === 'super_admin'
-    ? [...navItems, ...superAdminItems]
-    : navItems;
+  const switchContext = (ctx: SidebarContext) => {
+    setContext(ctx);
+    if (ctx === 'rotr') {
+      router.push('/admin/rotr');
+    } else {
+      router.push('/admin');
+    }
+  };
+
+  const navItems = context === 'rotr' ? rotrItems : [
+    ...lpfaItems,
+    ...(user.role === 'super_admin' ? superAdminItems : []),
+  ];
+
+  const viewSiteUrl = context === 'rotr' ? 'https://www.rockinontheriver.com' : '/';
 
   return (
     <aside className="admin-sidebar">
       <div className="admin-sidebar-brand">
-        <Link href="/admin">
-          <i className="fas fa-anchor"></i>
-          <span>LPFA Admin</span>
+        <Link href={context === 'rotr' ? '/admin/rotr' : '/admin'}>
+          <img
+            src={context === 'rotr' ? '/images/rotr-logo.png' : (isDark ? '/images/logo-white.png' : '/images/logo.png')}
+            alt={context === 'rotr' ? "Rockin' on the River" : 'LPFA'}
+            className="admin-sidebar-logo"
+          />
         </Link>
+      </div>
+
+      {/* Context Switcher */}
+      <div className="admin-context-switcher">
+        <button
+          className={`admin-context-btn ${context === 'lpfa' ? 'active' : ''}`}
+          onClick={() => switchContext('lpfa')}
+        >
+          LPFA
+        </button>
+        <button
+          className={`admin-context-btn ${context === 'rotr' ? 'active' : ''}`}
+          onClick={() => switchContext('rotr')}
+        >
+          ROTR
+        </button>
       </div>
 
       <nav className="admin-sidebar-nav">
@@ -70,18 +126,32 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
           <i className={isDark ? 'fas fa-sun' : 'fas fa-moon'}></i>
           <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
         </button>
-        {allItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`admin-nav-item ${pathname === item.href ? 'active' : ''}`}
-          >
-            <i className={item.icon}></i>
-            <span>{item.label}</span>
-          </Link>
-        ))}
+        {navItems.map((item) => {
+          let isActive: boolean;
+          if (item.href.includes('?tab=')) {
+            // ROTR sub-nav: match by tab search param
+            const itemTab = item.href.split('?tab=')[1];
+            isActive = pathname === '/admin/rotr' && searchParams.get('tab') === itemTab;
+          } else if (item.href === '/admin/rotr') {
+            // ROTR overview: active when no tab param
+            isActive = pathname === '/admin/rotr' && !searchParams.get('tab');
+          } else {
+            // Default: existing logic
+            isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
+          }
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`admin-nav-item ${isActive ? 'active' : ''}`}
+            >
+              <i className={item.icon}></i>
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
         <a
-          href="/"
+          href={viewSiteUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="admin-nav-item admin-nav-view-site"
@@ -92,6 +162,10 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
       </nav>
 
       <div className="admin-sidebar-footer">
+        <div className="admin-powered-by">
+          <img src="/images/pulse-logo-white.png" alt="Pulse" className="admin-powered-logo" />
+          <span className="admin-powered-sub">by Crow&apos;s Nest Digital Media</span>
+        </div>
         <div className="admin-user-info">
           <span className="admin-user-name">{user.display_name}</span>
           <span className="admin-user-role">{user.role === 'super_admin' ? 'Super Admin' : 'Admin'}</span>

@@ -4,18 +4,55 @@ import { FormEvent, useState } from 'react';
 
 export default function ContactForm() {
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     if (!form.checkValidity()) {
       form.reportValidity();
       return;
     }
-    // Simulate submission
-    setSubmitted(true);
-    form.reset();
-    setTimeout(() => setSubmitted(false), 5000);
+
+    setSubmitting(true);
+    setError('');
+
+    const formData = new FormData(form);
+    const data = {
+      first_name: formData.get('first_name'),
+      last_name: formData.get('last_name'),
+      email: formData.get('email'),
+      phone: formData.get('phone'),
+      subject: formData.get('subject'),
+      organization: formData.get('organization'),
+      message: formData.get('message'),
+      newsletter: formData.get('newsletter') === 'on',
+    };
+
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        setError(result.error || 'Something went wrong. Please try again.');
+        setSubmitting(false);
+        return;
+      }
+
+      setSubmitted(true);
+      form.reset();
+      setSubmitting(false);
+      setTimeout(() => setSubmitted(false), 5000);
+    } catch {
+      setError('Failed to send message. Please check your connection and try again.');
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -24,6 +61,11 @@ export default function ContactForm() {
       {submitted && (
         <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 'var(--radius)', padding: '1rem 1.25rem', marginBottom: '1.5rem', color: '#059669', fontWeight: 500 }}>
           <i className="fas fa-check-circle" style={{ marginRight: '0.5rem' }}></i> Thank you! Your message has been sent. We&apos;ll be in touch soon.
+        </div>
+      )}
+      {error && (
+        <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 'var(--radius)', padding: '1rem 1.25rem', marginBottom: '1.5rem', color: '#DC2626', fontWeight: 500 }}>
+          <i className="fas fa-exclamation-circle" style={{ marginRight: '0.5rem' }}></i> {error}
         </div>
       )}
       <form id="contact-form" noValidate onSubmit={handleSubmit}>
@@ -73,7 +115,9 @@ export default function ContactForm() {
           <input type="checkbox" id="cf-newsletter" name="newsletter" style={{ width: 'auto', marginTop: '0.2rem', flexShrink: 0 }} />
           <label htmlFor="cf-newsletter" style={{ fontSize: '0.85rem', color: 'var(--gray-600)', fontFamily: 'var(--font-body)', fontWeight: 400, cursor: 'pointer' }}>Sign me up for the LPFA newsletter to receive event and development updates.</label>
         </div>
-        <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: '0.5rem' }}>Send Message <i className="fas fa-paper-plane"></i></button>
+        <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: '0.5rem' }} disabled={submitting}>
+          {submitting ? 'Sending...' : 'Send Message'} <i className={`fas ${submitting ? 'fa-spinner fa-spin' : 'fa-paper-plane'}`}></i>
+        </button>
       </form>
     </div>
   );

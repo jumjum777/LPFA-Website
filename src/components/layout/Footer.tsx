@@ -88,6 +88,7 @@ export default function Footer() {
             <Link href="#">Terms of Use</Link>
             <Link href="#">Accessibility</Link>
           </div>
+          <p className="footer-powered-by">Powered by <a href="https://crowsnestdigitalmedia.com" target="_blank" rel="noopener noreferrer">Pulse</a> from Crow&apos;s Nest Digital Media</p>
         </div>
       </div>
     </footer>
