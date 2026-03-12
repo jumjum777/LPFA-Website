@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ccFetch, getTokens } from '@/lib/constantcontact';
+import { ccFetch, getTokens, getTokenMeta } from '@/lib/constantcontact';
 
 export async function GET(req: NextRequest) {
   const tokens = await getTokens();
@@ -52,11 +52,15 @@ export async function GET(req: NextRequest) {
 
   const listsData = lists.data as { lists?: unknown[]; lists_count?: number } | null;
 
+  // Token metadata
+  const tokenMeta = await getTokenMeta();
+
   return NextResponse.json({
     connected: true,
     campaigns: campaignData,
     aggregates: summariesData?.aggregate_percents?.[0] || null,
     lists: listsData?.lists || [],
     listsCount: listsData?.lists_count || 0,
+    tokenLastRefreshed: tokenMeta?.updated_at || null,
   });
 }

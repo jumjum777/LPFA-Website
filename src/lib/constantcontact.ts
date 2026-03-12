@@ -23,6 +23,16 @@ export async function getTokens(): Promise<CCTokens | null> {
   return { access_token: data.access_token, refresh_token: data.refresh_token };
 }
 
+/** Get token metadata (last updated timestamp) */
+export async function getTokenMeta(): Promise<{ updated_at: string } | null> {
+  const { data } = await supabaseAdmin
+    .from('cc_tokens')
+    .select('updated_at')
+    .eq('id', 'default')
+    .single();
+  return data ? { updated_at: data.updated_at } : null;
+}
+
 /** Save tokens to Supabase */
 async function saveTokens(accessToken: string, refreshToken: string) {
   await supabaseAdmin.from('cc_tokens').upsert({
