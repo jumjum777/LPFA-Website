@@ -1,101 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const CC_BASE = 'https://api.cc.email/v3';
-
-async function getTokens(): Promise<{ access_token: string; refresh_token: string } | null> {
-  const access = process.env.CONSTANTCONTACT_ACCESS_TOKEN;
-  const refresh = process.env.CONSTANTCONTACT_REFRESH_TOKEN;
-  if (access && refresh) return { access_token: access, refresh_token: refresh };
-  return null;
-}
-
-async function refreshAccessToken(refreshToken: string): Promise<string | null> {
-  const clientId = process.env.CONSTANTCONTACT_CLIENT_ID;
-  const clientSecret = process.env.CONSTANTCONTACT_CLIENT_SECRET;
-  if (!clientId || !clientSecret) return null;
-
-  const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-  const res = await fetch('https://authz.constantcontact.com/oauth2/default/v1/token', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Basic ${basic}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: `grant_type=refresh_token&refresh_token=${refreshToken}`,
-  });
-
-  if (!res.ok) return null;
-  const data = await res.json();
-  // In production, you'd persist the new tokens
-  return data.access_token;
-}
-
-async function ccFetch(endpoint: string, accessToken: string) {
-  const res = await fetch(`${CC_BASE}${endpoint}`, {
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-  });
-
-  if (res.status === 401) {
-    return { error: 'unauthorized', status: 401 };
-  }
-  if (!res.ok) {
-    const text = await res.text();
-    return { error: text, status: res.status };
-  }
-  return res.json();
-}
+import { ccFetch, getTokens } from '@/lib/constantcontact';
 
 export async function GET(req: NextRequest) {
   const tokens = await getTokens();
   if (!tokens) {
     return NextResponse.json({
       connected: false,
-      error: 'Constant Contact not connected. Add API credentials to environment variables.',
+      error: 'Constant Contact not connected. Click "Connect" to authorize.',
     });
   }
 
-  let accessToken = tokens.access_token;
-
-  // Try fetching campaign summaries
-  let summaries = await ccFetch(
-    '/reports/summary_reports/email_campaign_summaries?limit=100',
-    accessToken
-  );
-
-  // If unauthorized, try refreshing
-  if (summaries?.error === 'unauthorized') {
-    const newToken = await refreshAccessToken(tokens.refresh_token);
-    if (!newToken) {
-      return NextResponse.json({
-        connected: false,
-        error: 'Token expired. Re-authorize Constant Contact.',
-      });
-    }
-    accessToken = newToken;
-    summaries = await ccFetch(
-      '/reports/summary_reports/email_campaign_summaries?limit=100',
-      accessToken
-    );
-  }
-
-  if (summaries?.error) {
-    return NextResponse.json({ connected: false, error: summaries.error }, { status: summaries.status || 500 });
+  // Fetch campaign summaries
+  const summaries = await ccFetch('/reports/summary_reports/email_campaign_summaries?limit=100');
+  if (summaries.error) {
+    return NextResponse.json({
+      connected: false,
+      error: summaries.error,
+    }, { status: summaries.status || 500 });
   }
 
   // Fetch campaigns list for names/dates
-  const campaigns = await ccFetch('/emails?limit=100', accessToken);
+  const campaigns = await ccFetch('/emails?limit=100');
 
   // Fetch contact lists
-  const lists = await ccFetch('/contact_lists?include_membership_count=active&include_count=true&limit=50', accessToken);
+  const lists = await ccFetch('/contact_lists?include_membership_count=active&include_count=true&limit=50');
 
   // Build campaign name map
   const nameMap: Record<string, { name: string; status: string; created_at: string; updated_at: string }> = {};
-  if (campaigns?.campaigns) {
-    for (const c of campaigns.campaigns) {
+  const campaignsData = campaigns.data as { campaigns?: Record<string, string>[] } | null;
+  if (campaignsData?.campaigns) {
+    for (const c of campaignsData.campaigns) {
       nameMap[c.campaign_id] = {
         name: c.name || 'Untitled',
         status: c.current_status,
@@ -106,7 +40,8 @@ export async function GET(req: NextRequest) {
   }
 
   // Merge summaries with names
-  const campaignData = (summaries?.bulk_email_campaign_summaries || []).map((s: Record<string, unknown>) => ({
+  const summariesData = summaries.data as { bulk_email_campaign_summaries?: Record<string, unknown>[]; aggregate_percents?: Record<string, unknown>[] } | null;
+  const campaignData = (summariesData?.bulk_email_campaign_summaries || []).map((s) => ({
     campaign_id: s.campaign_id,
     name: nameMap[s.campaign_id as string]?.name || 'Unknown Campaign',
     status: nameMap[s.campaign_id as string]?.status || 'Unknown',
@@ -115,11 +50,13 @@ export async function GET(req: NextRequest) {
     stats: s.unique_counts,
   }));
 
+  const listsData = lists.data as { lists?: unknown[]; lists_count?: number } | null;
+
   return NextResponse.json({
     connected: true,
     campaigns: campaignData,
-    aggregates: summaries?.aggregate_percents?.[0] || null,
-    lists: lists?.lists || [],
-    listsCount: lists?.lists_count || 0,
+    aggregates: summariesData?.aggregate_percents?.[0] || null,
+    lists: listsData?.lists || [],
+    listsCount: listsData?.lists_count || 0,
   });
 }

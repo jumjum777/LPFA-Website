@@ -108,6 +108,8 @@ export default function AdminFilesPage() {
   const [uploadProgress, setUploadProgress] = useState('');
   const [newFolderName, setNewFolderName] = useState('');
   const [showNewFolder, setShowNewFolder] = useState(false);
+  const [addingSubfolder, setAddingSubfolder] = useState<string | null>(null);
+  const [subfolderName, setSubfolderName] = useState('');
   const [actionMenu, setActionMenu] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -200,6 +202,23 @@ export default function AdminFilesPage() {
     loadFiles();
   }
 
+  async function handleCreateSubfolder(parentPath: string) {
+    if (!subfolderName.trim()) return;
+    const folderPath = parentPath + '/' + subfolderName.trim();
+    const supabase = createClient();
+    await supabase.from('files').insert({
+      name: '.folder',
+      folder: folderPath,
+      file_url: '',
+      file_name: '.folder',
+      file_size: 0,
+      mime_type: 'application/x-folder',
+    });
+    setSubfolderName('');
+    setAddingSubfolder(null);
+    loadFiles();
+  }
+
   async function handleDelete(file: FileItem) {
     if (!confirm(`Delete "${file.name}"?`)) return;
     const supabase = createClient();
@@ -287,6 +306,13 @@ export default function AdminFilesPage() {
           <span className="fr-folder-name">{node.name}</span>
           {node.count > 0 && <span className="fr-folder-count">{node.count}</span>}
           <button
+            className="fr-folder-add"
+            title="Add subfolder"
+            onClick={(e) => { e.stopPropagation(); setAddingSubfolder(addingSubfolder === node.path ? null : node.path); setSubfolderName(''); }}
+          >
+            <i className="fas fa-plus"></i>
+          </button>
+          <button
             className="fr-folder-delete"
             title="Delete folder"
             onClick={(e) => { e.stopPropagation(); handleDeleteFolder(node.path); }}
@@ -294,6 +320,21 @@ export default function AdminFilesPage() {
             <i className="fas fa-trash"></i>
           </button>
         </div>
+        {addingSubfolder === node.path && (
+          <div className="fr-subfolder-input" style={{ paddingLeft: `${0.75 + (depth + 1) * 1}rem` }}>
+            <i className="fas fa-folder-plus" style={{ color: '#D97706', fontSize: '0.8rem' }}></i>
+            <input
+              type="text"
+              placeholder="Subfolder name..."
+              value={subfolderName}
+              onChange={e => setSubfolderName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleCreateSubfolder(node.path); if (e.key === 'Escape') setAddingSubfolder(null); }}
+              autoFocus
+            />
+            <button onClick={() => handleCreateSubfolder(node.path)} title="Create"><i className="fas fa-check"></i></button>
+            <button onClick={() => setAddingSubfolder(null)} title="Cancel"><i className="fas fa-times"></i></button>
+          </div>
+        )}
         {expanded && node.children.map(child => (
           <FolderTreeItem key={child.path} node={child} depth={depth + 1} />
         ))}

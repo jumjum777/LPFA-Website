@@ -1,31 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const CC_BASE = 'https://api.cc.email/v3';
+import { ccFetch } from '@/lib/constantcontact';
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const campaignId = searchParams.get('id');
+  const campaignId = req.nextUrl.searchParams.get('id');
   if (!campaignId) {
     return NextResponse.json({ error: 'Missing campaign id' }, { status: 400 });
   }
 
-  const accessToken = process.env.CONSTANTCONTACT_ACCESS_TOKEN;
-  if (!accessToken) {
-    return NextResponse.json({ error: 'Not connected' }, { status: 401 });
+  const result = await ccFetch(`/reports/stats/email_campaigns/${campaignId}`);
+  if (result.error) {
+    return NextResponse.json({ error: result.error }, { status: result.status || 500 });
   }
 
-  const res = await fetch(`${CC_BASE}/reports/stats/email_campaigns/${campaignId}`, {
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-  });
-
-  if (!res.ok) {
-    return NextResponse.json({ error: 'Failed to fetch campaign stats' }, { status: res.status });
-  }
-
-  const data = await res.json();
-  return NextResponse.json(data.results?.[0] || null);
+  const data = result.data as { results?: unknown[] } | null;
+  return NextResponse.json(data?.results?.[0] || null);
 }

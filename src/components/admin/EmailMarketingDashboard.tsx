@@ -136,9 +136,16 @@ export default function EmailMarketingDashboard({ context }: Props) {
     setDetailLoading(true);
     try {
       const res = await fetch(`/api/admin/email-marketing/campaign?id=${campaignId}`);
+      if (!res.ok) {
+        setSelectedCampaign(null);
+        setDetailLoading(false);
+        return;
+      }
       const d = await res.json();
       setCampaignDetail(d);
-    } catch { /* ignore */ }
+    } catch {
+      setSelectedCampaign(null);
+    }
     setDetailLoading(false);
   };
 

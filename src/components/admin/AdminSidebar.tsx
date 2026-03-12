@@ -168,8 +168,8 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
             isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
           }
           // Determine inbox badge count
-          const badgeCount = item.label === 'Inbox'
-            ? (context === 'lpfa' ? inboxCounts.lpfa : inboxCounts.rotr)
+          const badgeCount = item.label === 'Inbox' && context === 'lpfa'
+            ? inboxCounts.lpfa
             : 0;
 
           return (

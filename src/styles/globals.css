@@ -10568,6 +10568,7 @@ a.lead-detail-value:hover { text-decoration: underline; }
   text-align: center;
 }
 
+.fr-folder-add,
 .fr-folder-delete {
   opacity: 0;
   background: none;
@@ -10579,8 +10580,38 @@ a.lead-detail-value:hover { text-decoration: underline; }
   font-size: 0.7rem;
   transition: opacity 0.15s, color 0.15s;
 }
+.fr-folder-item:hover .fr-folder-add,
 .fr-folder-item:hover .fr-folder-delete { opacity: 1; }
+.fr-folder-add:hover { color: #059669 !important; background: rgba(5, 150, 105, 0.08); }
 .fr-folder-delete:hover { color: #EF4444 !important; background: rgba(239, 68, 68, 0.08); }
+
+.fr-subfolder-input {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.5rem;
+}
+.fr-subfolder-input input {
+  flex: 1;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--gray-200, #e2e8f0);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  background: var(--card-bg, #fff);
+  color: inherit;
+  min-width: 0;
+}
+.fr-subfolder-input button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gray-500);
+  padding: 0.2rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+.fr-subfolder-input button:first-of-type:hover { color: #059669; }
+.fr-subfolder-input button:last-of-type:hover { color: #EF4444; }
 
 .fr-folder-children { padding-left: 1rem; }
 
