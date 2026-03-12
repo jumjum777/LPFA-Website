@@ -77,6 +77,19 @@ export default function AdminInboxPage() {
     }
   }
 
+  async function markAllRead() {
+    const newMessages = messages.filter(l => l.status === 'new');
+    if (newMessages.length === 0) return;
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('contact_submissions')
+      .update({ status: 'read' })
+      .eq('status', 'new');
+    if (!error) {
+      setInbox(prev => prev.map(l => l.status === 'new' ? { ...l, status: 'read' } : l));
+    }
+  }
+
   async function deleteLead(id: string) {
     if (!confirm('Are you sure you want to delete this lead?')) return;
     const supabase = createClient();
@@ -112,11 +125,16 @@ export default function AdminInboxPage() {
 
   return (
     <div className="admin-page">
-      <div className="admin-page-header">
+      <div className="admin-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h1>Inbox</h1>
           <p>Contact form submissions from the public site.</p>
         </div>
+        {counts.new > 0 && (
+          <button onClick={markAllRead} className="admin-btn" style={{ whiteSpace: 'nowrap' }}>
+            <i className="fas fa-check-double"></i> Mark All as Read ({counts.new})
+          </button>
+        )}
       </div>
 
       <div className="admin-filter-tabs">

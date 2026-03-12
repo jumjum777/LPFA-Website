@@ -161,7 +161,35 @@ function ROTRContent() {
   const [replyText, setReplyText] = useState('');
   const [replySending, setReplySending] = useState(false);
   const [replyError, setReplyError] = useState<string | null>(null);
+  const [readConvoIds, setReadConvoIds] = useState<Set<string>>(new Set());
   const messagesEndRef = { current: null as HTMLDivElement | null };
+
+  // Load read conversation IDs from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('rotr-read-convos');
+      if (stored) setReadConvoIds(new Set(JSON.parse(stored)));
+    } catch { /* ignore */ }
+  }, []);
+
+  // Mark a conversation as read when selected
+  useEffect(() => {
+    if (selectedConvo && !readConvoIds.has(selectedConvo)) {
+      const updated = new Set(readConvoIds);
+      updated.add(selectedConvo);
+      setReadConvoIds(updated);
+      localStorage.setItem('rotr-read-convos', JSON.stringify([...updated]));
+    }
+  }, [selectedConvo]);
+
+  function markAllInboxRead() {
+    const ids = inboxThreads
+      .filter(t => t.lastDirection === 'PARTICIPANT_TO_BUSINESS')
+      .map(t => t.conversationId);
+    const updated = new Set([...readConvoIds, ...ids]);
+    setReadConvoIds(updated);
+    localStorage.setItem('rotr-read-convos', JSON.stringify([...updated]));
+  }
 
   async function handleSendReply() {
     if (!selectedConvo || !replyText.trim() || replySending) return;
@@ -884,7 +912,16 @@ function ROTRContent() {
               <div className="rotr-inbox-threads">
                 <div className="rotr-inbox-threads-header">
                   <span>{inboxThreads.length} conversation{inboxThreads.length !== 1 ? 's' : ''}</span>
-                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                  <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                    {inboxThreads.some(t => t.lastDirection === 'PARTICIPANT_TO_BUSINESS' && !readConvoIds.has(t.conversationId)) && (
+                      <button
+                        className="admin-btn-icon"
+                        title="Mark all as read"
+                        onClick={markAllInboxRead}
+                      >
+                        <i className="fas fa-check-double"></i>
+                      </button>
+                    )}
                     <button
                       className="admin-btn-icon"
                       title="Refresh"
@@ -903,10 +940,12 @@ function ROTRContent() {
                     </a>
                   </div>
                 </div>
-                {inboxThreads.map(thread => (
+                {inboxThreads.map(thread => {
+                  const isUnread = thread.lastDirection === 'PARTICIPANT_TO_BUSINESS' && !readConvoIds.has(thread.conversationId);
+                  return (
                   <button
                     key={thread.conversationId}
-                    className={`rotr-inbox-thread-item ${selectedConvo === thread.conversationId ? 'active' : ''}`}
+                    className={`rotr-inbox-thread-item ${selectedConvo === thread.conversationId ? 'active' : ''}${isUnread ? ' unread' : ''}`}
                     onClick={() => setSelectedConvo(
                       selectedConvo === thread.conversationId ? null : thread.conversationId
                     )}
@@ -933,7 +972,8 @@ function ROTRContent() {
                       )}
                     </div>
                   </button>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Message Viewer */}
