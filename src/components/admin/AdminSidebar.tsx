@@ -22,6 +22,9 @@ const lpfaItems = [
   { href: '/admin/board', label: 'Board', icon: 'fas fa-users' },
   { href: '/admin/vessels', label: 'Vessel Traffic', icon: 'fas fa-anchor' },
   { href: '/admin/rfps', label: 'RFPs & Bids', icon: 'fas fa-file-contract' },
+  { href: '/admin/files', label: 'Files', icon: 'fas fa-folder-open' },
+  { href: '/admin/email-marketing', label: 'Email Marketing', icon: 'fas fa-envelope' },
+  { href: '/admin/analytics', label: 'Analytics', icon: 'fas fa-chart-line' },
   { href: '/admin/leads', label: 'Inbox', icon: 'fas fa-inbox' },
 ];
 
@@ -33,6 +36,8 @@ const rotrItems = [
   { href: '/admin/rotr?tab=inbox', label: 'Inbox', icon: 'fas fa-inbox' },
   { href: '/admin/rotr?tab=finances', label: 'Finances', icon: 'fas fa-file-invoice-dollar' },
   { href: '/admin/rotr?tab=analytics', label: 'Analytics', icon: 'fas fa-chart-bar' },
+  { href: '/admin/rotr?tab=files', label: 'Files', icon: 'fas fa-folder-open' },
+  { href: '/admin/rotr?tab=email', label: 'Email Marketing', icon: 'fas fa-envelope' },
 ];
 
 const superAdminItems = [

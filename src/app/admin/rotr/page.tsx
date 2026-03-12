@@ -4,8 +4,11 @@ import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import EmailMarketingDashboard from '@/components/admin/EmailMarketingDashboard';
+import dynamic from 'next/dynamic';
+const FileRepository = dynamic(() => import('@/app/admin/files/page'), { ssr: false });
 
-type Tab = 'overview' | 'events' | 'orders' | 'customers' | 'inbox' | 'finances' | 'analytics';
+type Tab = 'overview' | 'events' | 'orders' | 'customers' | 'inbox' | 'finances' | 'analytics' | 'files' | 'email';
 
 interface TicketDef {
   id: string;
@@ -434,19 +437,21 @@ function ROTRContent() {
     <div className="admin-page">
       <div className="admin-page-header">
         <div>
-          <h1>Rockin&apos; on the River</h1>
-          <p>Concert series data from Wix Events</p>
+          <h1>{tab === 'email' ? <><i className="fas fa-envelope" style={{ marginRight: '0.5rem', color: '#1B8BEB' }}></i> Email Marketing</> : tab === 'files' ? <><i className="fas fa-folder-open" style={{ marginRight: '0.5rem', color: '#D97706' }}></i> Files</> : "Rockin' on the River"}</h1>
+          <p>{tab === 'email' ? "Campaign analytics from Constant Contact" : tab === 'files' ? "Shared document and asset repository" : "Concert series data from Wix Events"}</p>
         </div>
-        <div className="admin-header-actions">
-          <a
-            href="https://www.rockinontheriver.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="admin-btn admin-btn-secondary"
-          >
-            <i className="fas fa-external-link-alt"></i> Wix Site
-          </a>
-        </div>
+        {tab !== 'email' && tab !== 'files' && (
+          <div className="admin-header-actions">
+            <a
+              href="https://www.rockinontheriver.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="admin-btn admin-btn-secondary"
+            >
+              <i className="fas fa-external-link-alt"></i> Wix Site
+            </a>
+          </div>
+        )}
       </div>
 
       {/* === OVERVIEW TAB === */}
@@ -1780,6 +1785,18 @@ function ROTRContent() {
               No analytics data available.
             </div>
           )}
+        </div>
+      )}
+      {/* === FILES TAB === */}
+      {tab === 'files' && (
+        <div>
+          <FileRepository />
+        </div>
+      )}
+      {/* === EMAIL MARKETING TAB === */}
+      {tab === 'email' && (
+        <div>
+          <EmailMarketingDashboard context="rotr" />
         </div>
       )}
     </div>
