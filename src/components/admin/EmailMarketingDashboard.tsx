@@ -50,6 +50,7 @@ interface EmailData {
   aggregates: Aggregates | null;
   lists: ContactList[];
   listsCount: number;
+  tokenLastRefreshed?: string | null;
 }
 
 type Period = '7d' | '30d' | '90d' | '1y' | 'all' | 'custom';
@@ -292,6 +293,17 @@ export default function EmailMarketingDashboard({ context }: Props) {
           <div className="em-summary-label">Active Contacts</div>
           <div className="em-summary-pct">{data.listsCount} list{data.listsCount !== 1 ? 's' : ''}</div>
         </div>
+      </div>
+
+      {/* Connection Status */}
+      <div className="em-connection-status">
+        <span className="em-status-dot em-status-connected"></span>
+        <span>Connected to Constant Contact</span>
+        {data.tokenLastRefreshed && (
+          <span className="em-status-meta">
+            &middot; Token refreshed {new Date(data.tokenLastRefreshed).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+          </span>
+        )}
       </div>
 
       {/* View Toggle */}

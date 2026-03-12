@@ -10165,6 +10165,24 @@ a.lead-detail-value:hover { text-decoration: underline; }
   .em-period-info { margin-left: 0; }
 }
 
+/* Connection Status */
+.em-connection-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--gray-500);
+  margin-bottom: 1rem;
+}
+.em-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.em-status-connected { background: #10B981; box-shadow: 0 0 6px rgba(16, 185, 129, 0.4); }
+.em-status-meta { color: var(--gray-400, #94a3b8); }
+
 /* View Toggle */
 .em-view-toggle {
   display: flex;
