@@ -159,6 +159,20 @@ export default function EmailMarketingDashboard({ context }: Props) {
   }
 
   if (!data?.connected) {
+    const handleConnect = async () => {
+      try {
+        const res = await fetch('/api/admin/email-marketing/auth');
+        const d = await res.json();
+        if (d.authUrl) {
+          window.location.href = d.authUrl;
+        } else {
+          alert('Could not generate authorization URL. Make sure CONSTANTCONTACT_CLIENT_ID is set in environment variables.');
+        }
+      } catch {
+        alert('Failed to reach authorization endpoint.');
+      }
+    };
+
     return (
       <div className="admin-card em-setup-card">
         <div className="em-setup-icon">
@@ -166,29 +180,12 @@ export default function EmailMarketingDashboard({ context }: Props) {
         </div>
         <h3>Connect Constant Contact</h3>
         <p>Link your Constant Contact account to view campaign analytics for {context === 'rotr' ? "Rockin' on the River" : 'LPFA'}.</p>
-        <div className="em-setup-steps">
-          <div className="em-setup-step">
-            <span className="em-step-num">1</span>
-            <div>
-              <strong>Create an app</strong>
-              <p>Go to <a href="https://app.constantcontact.com/pages/dma/portal/" target="_blank" rel="noopener noreferrer">Constant Contact Developer Portal</a> and create a new application.</p>
-            </div>
-          </div>
-          <div className="em-setup-step">
-            <span className="em-step-num">2</span>
-            <div>
-              <strong>Add credentials</strong>
-              <p>Add <code>CONSTANTCONTACT_CLIENT_ID</code> and <code>CONSTANTCONTACT_CLIENT_SECRET</code> to your <code>.env.local</code> file.</p>
-            </div>
-          </div>
-          <div className="em-setup-step">
-            <span className="em-step-num">3</span>
-            <div>
-              <strong>Authorize</strong>
-              <p>Visit the OAuth authorization URL to connect your account and get access tokens.</p>
-            </div>
-          </div>
-        </div>
+        <button className="admin-btn admin-btn-primary" onClick={handleConnect} style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>
+          <i className="fas fa-plug"></i> Connect Constant Contact
+        </button>
+        <p style={{ color: '#94A3B8', fontSize: '0.85rem' }}>
+          Requires <code>CONSTANTCONTACT_CLIENT_ID</code> and <code>CONSTANTCONTACT_CLIENT_SECRET</code> in your environment variables.
+        </p>
         {data?.error && (
           <div className="em-error-msg">
             <i className="fas fa-exclamation-triangle"></i> {data.error}
