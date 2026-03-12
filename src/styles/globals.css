@@ -3242,6 +3242,10 @@ p { line-height: 1.7; color: var(--gray-600); }
 
   .rfp-card { flex-direction: column; }
   .rfp-meta { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+  .rfp-toggle-meta { flex-direction: column; align-items: flex-start; gap: 0.35rem; }
+  .rfp-chevron { margin-left: 0; position: absolute; top: 1rem; right: 0; }
+  .rfp-toggle { position: relative; padding-right: 1.5rem; }
+  .rfp-description { font-size: 0.85rem; }
   .stats-band-grid { grid-template-columns: 1fr 1fr; }
   .dev-commerce-grid { grid-template-columns: 1fr; }
 
@@ -3683,6 +3687,8 @@ p { line-height: 1.7; color: var(--gray-600); }
   .naming-grid { grid-template-columns: 1fr; }
   .progress-numbers { flex-direction: column; gap: 0.5rem; }
   .progress-goal { text-align: left; }
+  .donate-cta-banner { padding: 2rem 1.5rem; }
+  .donate-cta-banner p { font-size: 0.95rem; }
 }
 
 /* Donate page dark mode */
@@ -4553,6 +4559,7 @@ p { line-height: 1.7; color: var(--gray-600); }
   .facility-detail { grid-template-columns: 1fr; }
   .facility-detail.reverse { direction: ltr; }
   .facility-img-block { height: 260px; }
+  .rental-banner { padding: 2rem 1.5rem; }
 }
 
 /* ---------------------------------------------------------
@@ -8409,6 +8416,7 @@ a.lead-detail-value:hover { text-decoration: underline; }
 
 /* Live cams responsive */
 @media (max-width: 768px) {
+  .livecam-hero { padding: 4rem 0 2rem; }
   .livecam-hero-content h1 { font-size: 1.75rem; }
   .livecam-tabs {
     display: grid;
