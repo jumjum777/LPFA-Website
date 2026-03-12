@@ -58,7 +58,7 @@ export default function AlertsCollapsible({ alerts }: { alerts: Alert[] }) {
             <span className="maa-title">{alert.event}</span>
             <i className={`fas fa-chevron-down maa-icon${openIndex === i ? ' rotated' : ''}`}></i>
           </button>
-          <div className="maa-body" style={{ display: openIndex === i ? 'block' : 'none' }}>
+          <div className={`maa-body${openIndex === i ? ' open' : ''}`}>
             <p className="maa-headline">{alert.headline}</p>
             <p className="maa-description">{alert.description}</p>
             <div className="maa-meta">

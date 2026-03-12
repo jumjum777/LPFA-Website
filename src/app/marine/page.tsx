@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import ScrollAnimator from '@/components/ui/ScrollAnimator';
 import MarineTabs from '@/components/marine/MarineTabs';
+import BoatingSummaryCard from '@/components/marine/BoatingSummaryCard';
 import { fetchMarineData } from '@/lib/marine';
 import { fetchBeachData } from '@/lib/beach';
 
-export const metadata = { title: 'Marine Forecast' };
+export const metadata = { title: 'Marine & Alerts' };
 
 export const revalidate = 1800;
 
@@ -40,7 +41,10 @@ const MOCK_ALERTS = [
 
 export default async function MarinePage({ searchParams }: { searchParams: Promise<{ preview?: string }> }) {
   const params = await searchParams;
-  const [data, beachData] = await Promise.all([fetchMarineData(), fetchBeachData()]);
+  const [data, beachData] = await Promise.all([
+    fetchMarineData(),
+    fetchBeachData(),
+  ]);
   const { forecast, hourly, marineText, marineTextPeriods, buoy, fetchedAt } = data;
 
   // Merge beach water quality advisories into alerts (only during swim season with recent data)
@@ -72,11 +76,18 @@ export default async function MarinePage({ searchParams }: { searchParams: Promi
           <nav className="breadcrumb" aria-label="Breadcrumb">
             <Link href="/">Home</Link>
             <span className="sep"><i className="fas fa-chevron-right"></i></span>
-            <span className="current">Marine Forecast</span>
+            <span className="current">Marine &amp; Alerts</span>
           </nav>
           <div className="page-hero-label">Lake Erie Conditions</div>
-          <h1>Marine Forecast</h1>
-          <p>Current conditions, wave forecasts, and advisories for Lorain Harbor and the Lake Erie nearshore zone. Data sourced from NOAA and the National Weather Service.</p>
+          <h1>Marine &amp; Alerts</h1>
+          <p>Real-time weather alerts, marine forecasts, vessel traffic, beach water quality, and offshore conditions for Lorain Harbor and the Lake Erie nearshore zone.</p>
+        </div>
+      </section>
+
+      {/* BOATING SUMMARY */}
+      <section className="boating-summary-section">
+        <div className="container">
+          <BoatingSummaryCard />
         </div>
       </section>
 

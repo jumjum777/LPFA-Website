@@ -47,6 +47,7 @@ export interface Event {
   is_featured: boolean;
   is_published: boolean;
   sort_order: number;
+  wix_event_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -68,6 +69,7 @@ export interface Tour {
   sort_order: number;
   is_published: boolean;
   peekpro_product_id?: string;
+  booking_url?: string;
   created_at: string;
   updated_at: string;
   schedules?: TourSchedule[];

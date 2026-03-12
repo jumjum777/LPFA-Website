@@ -14,16 +14,17 @@ interface DashboardStats {
   board: number;
   vessels: number;
   leads: number;
+  rfps: number;
   rotrShows: number;
 }
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<DashboardStats>({ news: 0, events: 0, tours: 0, documents: 0, photos: 0, staff: 0, board: 0, vessels: 0, leads: 0, rotrShows: 0 });
+  const [stats, setStats] = useState<DashboardStats>({ news: 0, events: 0, tours: 0, documents: 0, photos: 0, staff: 0, board: 0, vessels: 0, leads: 0, rfps: 0, rotrShows: 0 });
 
   useEffect(() => {
     async function loadStats() {
       const supabase = createClient();
-      const [newsRes, eventsRes, toursRes, docsRes, photosRes, staffRes, boardRes, vesselsRes, leadsRes] = await Promise.all([
+      const [newsRes, eventsRes, toursRes, docsRes, photosRes, staffRes, boardRes, vesselsRes, leadsRes, rfpsRes] = await Promise.all([
         supabase.from('news_articles').select('id', { count: 'exact', head: true }),
         supabase.from('events').select('id', { count: 'exact', head: true }),
         supabase.from('tours').select('id', { count: 'exact', head: true }),
@@ -33,6 +34,7 @@ export default function AdminDashboard() {
         supabase.from('board_members').select('id', { count: 'exact', head: true }),
         supabase.from('vessel_traffic').select('id', { count: 'exact', head: true }).eq('is_active', true),
         supabase.from('contact_submissions').select('id', { count: 'exact', head: true }).eq('status', 'new'),
+        supabase.from('rfps').select('id', { count: 'exact', head: true }).in('status', ['new', 'open']),
       ]);
       // Fetch ROTR upcoming count separately (non-blocking)
       let rotrShows = 0;
@@ -52,6 +54,7 @@ export default function AdminDashboard() {
         board: boardRes.count || 0,
         vessels: vesselsRes.count || 0,
         leads: leadsRes.count || 0,
+        rfps: rfpsRes.count || 0,
         rotrShows,
       });
     }
@@ -67,7 +70,8 @@ export default function AdminDashboard() {
     { title: 'Staff', count: stats.staff, href: '/admin/staff', icon: 'fas fa-id-badge', color: '#EC4899' },
     { title: 'Board Members', count: stats.board, href: '/admin/board', icon: 'fas fa-users', color: '#0D9488' },
     { title: 'Vessel Traffic', count: stats.vessels, href: '/admin/vessels', icon: 'fas fa-anchor', color: '#0B1F3A' },
-    { title: 'Leads (New)', count: stats.leads, href: '/admin/leads', icon: 'fas fa-inbox', color: '#F59E0B' },
+    { title: 'RFPs (Active)', count: stats.rfps, href: '/admin/rfps', icon: 'fas fa-file-contract', color: '#6366F1' },
+    { title: 'Inbox (New)', count: stats.leads, href: '/admin/leads', icon: 'fas fa-inbox', color: '#F59E0B' },
     { title: "Rockin' ROTR", count: stats.rotrShows, href: '/admin/rotr', icon: 'fas fa-guitar', color: '#EF4444' },
   ];
 

@@ -47,22 +47,22 @@ function formatDate(iso: string) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
-export default function AdminLeadsPage() {
-  const [leads, setLeads] = useState<Lead[]>([]);
+export default function AdminInboxPage() {
+  const [messages, setInbox] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterStatus>('all');
 
   useEffect(() => {
-    loadLeads();
+    loadInbox();
   }, []);
 
-  async function loadLeads() {
+  async function loadInbox() {
     const supabase = createClient();
     const { data } = await supabase
       .from('contact_submissions')
       .select('*')
       .order('created_at', { ascending: false });
-    setLeads(data || []);
+    setInbox(data || []);
     setLoading(false);
   }
 
@@ -73,7 +73,20 @@ export default function AdminLeadsPage() {
       .update({ status })
       .eq('id', id);
     if (!error) {
-      setLeads(prev => prev.map(l => l.id === id ? { ...l, status } : l));
+      setInbox(prev => prev.map(l => l.id === id ? { ...l, status } : l));
+    }
+  }
+
+  async function markAllRead() {
+    const newMessages = messages.filter(l => l.status === 'new');
+    if (newMessages.length === 0) return;
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('contact_submissions')
+      .update({ status: 'read' })
+      .eq('status', 'new');
+    if (!error) {
+      setInbox(prev => prev.map(l => l.status === 'new' ? { ...l, status: 'read' } : l));
     }
   }
 
@@ -85,25 +98,25 @@ export default function AdminLeadsPage() {
       .delete()
       .eq('id', id);
     if (!error) {
-      setLeads(prev => prev.filter(l => l.id !== id));
+      setInbox(prev => prev.filter(l => l.id !== id));
     }
   }
 
-  const filtered = filter === 'all' ? leads : leads.filter(l => l.status === filter);
+  const filtered = filter === 'all' ? messages : messages.filter(l => l.status === filter);
 
   const counts = {
-    all: leads.length,
-    new: leads.filter(l => l.status === 'new').length,
-    read: leads.filter(l => l.status === 'read').length,
-    replied: leads.filter(l => l.status === 'replied').length,
-    archived: leads.filter(l => l.status === 'archived').length,
+    all: messages.length,
+    new: messages.filter(l => l.status === 'new').length,
+    read: messages.filter(l => l.status === 'read').length,
+    replied: messages.filter(l => l.status === 'replied').length,
+    archived: messages.filter(l => l.status === 'archived').length,
   };
 
   if (loading) {
     return (
       <div className="admin-page">
         <div className="admin-page-header">
-          <h1>Leads</h1>
+          <h1>Inbox</h1>
         </div>
         <p>Loading...</p>
       </div>
@@ -112,11 +125,16 @@ export default function AdminLeadsPage() {
 
   return (
     <div className="admin-page">
-      <div className="admin-page-header">
+      <div className="admin-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <h1>Leads</h1>
+          <h1>Inbox</h1>
           <p>Contact form submissions from the public site.</p>
         </div>
+        {counts.new > 0 && (
+          <button onClick={markAllRead} className="admin-btn" style={{ whiteSpace: 'nowrap' }}>
+            <i className="fas fa-check-double"></i> Mark All as Read ({counts.new})
+          </button>
+        )}
       </div>
 
       <div className="admin-filter-tabs">
@@ -135,7 +153,7 @@ export default function AdminLeadsPage() {
       {filtered.length === 0 ? (
         <div className="admin-empty">
           <i className="fas fa-inbox" style={{ fontSize: '2rem', opacity: 0.3, marginBottom: '0.5rem' }}></i>
-          <p>No {filter === 'all' ? '' : filter + ' '}leads found.</p>
+          <p>No {filter === 'all' ? '' : filter + ' '}messages found.</p>
         </div>
       ) : (
         <div className="admin-card" style={{ overflow: 'auto' }}>

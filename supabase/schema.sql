@@ -156,6 +156,31 @@ CREATE POLICY "Super admin can manage admin_users" ON admin_users
     EXISTS (SELECT 1 FROM admin_users WHERE user_id = auth.uid() AND role = 'super_admin')
   );
 
+-- RFPs & Bids
+CREATE TABLE IF NOT EXISTS rfps (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  icon TEXT DEFAULT 'fa-file-contract',
+  status TEXT CHECK (status IN ('new', 'open', 'closed', 'archived')) DEFAULT 'new',
+  posted_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  deadline_date DATE,
+  location TEXT DEFAULT 'Lorain, OH',
+  document_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE rfps ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public read non-archived rfps" ON rfps
+  FOR SELECT USING (status != 'archived');
+
+CREATE POLICY "Admin full access rfps" ON rfps
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM admin_users WHERE user_id = auth.uid())
+  );
+
 -- =========================================================
 -- Indexes
 -- =========================================================
@@ -184,4 +209,7 @@ CREATE TRIGGER events_updated_at BEFORE UPDATE ON events
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 CREATE TRIGGER tours_updated_at BEFORE UPDATE ON tours
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER rfps_updated_at BEFORE UPDATE ON rfps
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();

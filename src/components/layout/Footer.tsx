@@ -32,7 +32,7 @@ export default function Footer() {
                 <li><Link href="/events">Events &amp; Boat Tours</Link></li>
                 <li><Link href="/facilities">Facilities</Link></li>
                 <li><Link href="/news">News</Link></li>
-                <li><Link href="/marine">Marine Forecast</Link></li>
+                <li><Link href="/marine">Marine &amp; Alerts</Link></li>
                 <li><Link href="/about">About Us</Link></li>
                 <li><Link href="/contact">Contact</Link></li>
               </ul>

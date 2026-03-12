@@ -21,7 +21,8 @@ const lpfaItems = [
   { href: '/admin/staff', label: 'Staff', icon: 'fas fa-id-badge' },
   { href: '/admin/board', label: 'Board', icon: 'fas fa-users' },
   { href: '/admin/vessels', label: 'Vessel Traffic', icon: 'fas fa-anchor' },
-  { href: '/admin/leads', label: 'Leads', icon: 'fas fa-inbox' },
+  { href: '/admin/rfps', label: 'RFPs & Bids', icon: 'fas fa-file-contract' },
+  { href: '/admin/leads', label: 'Inbox', icon: 'fas fa-inbox' },
 ];
 
 const rotrItems = [
@@ -29,6 +30,7 @@ const rotrItems = [
   { href: '/admin/rotr?tab=events', label: 'Events', icon: 'fas fa-calendar-alt' },
   { href: '/admin/rotr?tab=orders', label: 'Orders', icon: 'fas fa-receipt' },
   { href: '/admin/rotr?tab=customers', label: 'Customers', icon: 'fas fa-users' },
+  { href: '/admin/rotr?tab=inbox', label: 'Inbox', icon: 'fas fa-inbox' },
   { href: '/admin/rotr?tab=finances', label: 'Finances', icon: 'fas fa-file-invoice-dollar' },
   { href: '/admin/rotr?tab=analytics', label: 'Analytics', icon: 'fas fa-chart-bar' },
 ];
@@ -42,6 +44,7 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isDark, setIsDark] = useState(false);
+  const [inboxCounts, setInboxCounts] = useState<{ lpfa: number; rotr: number }>({ lpfa: 0, rotr: 0 });
 
   // Determine context based on current path
   const isOnRotr = pathname.startsWith('/admin/rotr');
@@ -58,6 +61,25 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
 
   useEffect(() => {
     setIsDark(document.documentElement.getAttribute('data-theme') === 'dark');
+  }, []);
+
+  // Fetch unread inbox counts
+  useEffect(() => {
+    fetch('/api/admin/inbox-counts')
+      .then(res => res.json())
+      .then(data => {
+        // Filter out ROTR conversations marked as read locally
+        let rotrCount = data.rotr ?? 0;
+        try {
+          const stored = localStorage.getItem('rotr-read-convos');
+          if (stored && data.rotrUnreadIds) {
+            const readIds = new Set<string>(JSON.parse(stored));
+            rotrCount = (data.rotrUnreadIds as string[]).filter(id => !readIds.has(id)).length;
+          }
+        } catch { /* ignore */ }
+        setInboxCounts({ lpfa: data.lpfa ?? 0, rotr: rotrCount });
+      })
+      .catch(() => {});
   }, []);
 
   const toggleTheme = () => {
@@ -140,6 +162,11 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
             // Default: existing logic
             isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
           }
+          // Determine inbox badge count
+          const badgeCount = item.label === 'Inbox'
+            ? (context === 'lpfa' ? inboxCounts.lpfa : inboxCounts.rotr)
+            : 0;
+
           return (
             <Link
               key={item.href}
@@ -148,6 +175,9 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
             >
               <i className={item.icon}></i>
               <span>{item.label}</span>
+              {badgeCount > 0 && (
+                <span className="admin-inbox-badge">{badgeCount}</span>
+              )}
             </Link>
           );
         })}

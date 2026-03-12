@@ -3,8 +3,9 @@
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
-type Tab = 'overview' | 'events' | 'orders' | 'customers' | 'finances' | 'analytics';
+type Tab = 'overview' | 'events' | 'orders' | 'customers' | 'inbox' | 'finances' | 'analytics';
 
 interface TicketDef {
   id: string;
@@ -130,6 +131,94 @@ function ROTRContent() {
   const [analyticsData, setAnalyticsData] = useState<{ metrics: AnalyticsMetric[]; previousMetrics: AnalyticsMetric[] | null; period: { start: string; end: string; days: number } } | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsDays, setAnalyticsDays] = useState(30);
+  const [publishMap, setPublishMap] = useState<Map<string, { id: string; is_published: boolean }>>(new Map());
+  const [collapsedYears, setCollapsedYears] = useState<Set<number>>(new Set());
+  const [inboxThreads, setInboxThreads] = useState<Array<{
+    conversationId: string;
+    contactName: string;
+    contactEmail?: string;
+    lastMessageDate: string;
+    lastMessagePreview: string;
+    lastDirection: string;
+    messages: Array<{
+      id: string;
+      direction: string;
+      content: { previewText?: string; basic?: { items: { text?: string }[] }; form?: { title: string; fields: { name: string; value: string }[] }; contentType?: string };
+      createdDate: string;
+    }>;
+  }>>([]);
+  const [inboxLoading, setInboxLoading] = useState(false);
+  const [inboxLoaded, setInboxLoaded] = useState(false);
+  const [inboxError, setInboxError] = useState<string | null>(null);
+  const [selectedConvo, setSelectedConvo] = useState<string | null>(null);
+  const [fullMessages, setFullMessages] = useState<Array<{
+    id: string;
+    direction: string;
+    content: { previewText?: string; basic?: { items: { text?: string }[] }; form?: { title: string; fields: { name: string; value: string }[] }; contentType?: string };
+    createdDate: string;
+  }>>([]);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [replySending, setReplySending] = useState(false);
+  const [replyError, setReplyError] = useState<string | null>(null);
+  const [readConvoIds, setReadConvoIds] = useState<Set<string>>(new Set());
+  const messagesEndRef = { current: null as HTMLDivElement | null };
+
+  // Load read conversation IDs from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('rotr-read-convos');
+      if (stored) setReadConvoIds(new Set(JSON.parse(stored)));
+    } catch { /* ignore */ }
+  }, []);
+
+  // Mark a conversation as read when selected
+  useEffect(() => {
+    if (selectedConvo && !readConvoIds.has(selectedConvo)) {
+      const updated = new Set(readConvoIds);
+      updated.add(selectedConvo);
+      setReadConvoIds(updated);
+      localStorage.setItem('rotr-read-convos', JSON.stringify([...updated]));
+    }
+  }, [selectedConvo]);
+
+  function markAllInboxRead() {
+    const ids = inboxThreads
+      .filter(t => t.lastDirection === 'PARTICIPANT_TO_BUSINESS')
+      .map(t => t.conversationId);
+    const updated = new Set([...readConvoIds, ...ids]);
+    setReadConvoIds(updated);
+    localStorage.setItem('rotr-read-convos', JSON.stringify([...updated]));
+  }
+
+  async function handleSendReply() {
+    if (!selectedConvo || !replyText.trim() || replySending) return;
+    setReplySending(true);
+    setReplyError(null);
+    try {
+      const res = await fetch('/api/admin/rotr/inbox', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId: selectedConvo, text: replyText.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send');
+      // Append sent message to chat
+      setFullMessages(prev => [...prev, {
+        id: data.message?.id || Date.now().toString(),
+        direction: 'BUSINESS_TO_PARTICIPANT',
+        content: { previewText: replyText.trim(), basic: { items: [{ text: replyText.trim() }] } },
+        createdDate: new Date().toISOString(),
+      }]);
+      setReplyText('');
+      // Scroll to bottom
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+    } catch (err) {
+      setReplyError(err instanceof Error ? err.message : 'Failed to send message');
+    } finally {
+      setReplySending(false);
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -145,6 +234,58 @@ function ROTRContent() {
     }
     load();
   }, []);
+
+
+  // Load publish status from Supabase for Wix events
+  useEffect(() => {
+    if (events.length > 0) {
+      const supabase = createClient();
+      supabase
+        .from('events')
+        .select('id, wix_event_id, is_published')
+        .not('wix_event_id', 'is', null)
+        .then(({ data }) => {
+          if (data) {
+            setPublishMap(new Map(data.map(e => [e.wix_event_id!, { id: e.id, is_published: e.is_published }])));
+          }
+        });
+    }
+  }, [events]);
+
+  // Auto-collapse past years once events are loaded
+  useEffect(() => {
+    if (events.length > 0) {
+      const thisYear = new Date().getFullYear();
+      const years = new Set<number>();
+      events.forEach(e => {
+        const y = new Date(e.dateAndTimeSettings.startDate).getFullYear();
+        if (y !== thisYear) years.add(y);
+      });
+      setCollapsedYears(years);
+    }
+  }, [events.length]);
+
+  async function toggleEventPublished(wixId: string) {
+    const entry = publishMap.get(wixId);
+    if (!entry) return;
+    const supabase = createClient();
+    const newVal = !entry.is_published;
+    await supabase.from('events').update({ is_published: newVal }).eq('id', entry.id);
+    setPublishMap(prev => {
+      const next = new Map(prev);
+      next.set(wixId, { ...entry, is_published: newVal });
+      return next;
+    });
+  }
+
+  function toggleEventsYear(year: number) {
+    setCollapsedYears(prev => {
+      const next = new Set(prev);
+      if (next.has(year)) next.delete(year);
+      else next.add(year);
+      return next;
+    });
+  }
 
   // Load orders when tab switches to orders, customers, or finances
   useEffect(() => {
@@ -181,6 +322,46 @@ function ROTRContent() {
         .finally(() => setAnalyticsLoading(false));
     }
   }, [tab, analyticsDays]);
+
+  // Load inbox threads when inbox tab opens
+  useEffect(() => {
+    if (tab === 'inbox' && !inboxLoaded && !inboxLoading) {
+      setInboxLoading(true);
+      setInboxError(null);
+      fetch('/api/admin/rotr/inbox')
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            setInboxError(data.error);
+          } else {
+            setInboxThreads(data.threads || []);
+          }
+          setInboxLoaded(true);
+        })
+        .catch(err => {
+          console.error('Failed to load inbox:', err);
+          setInboxError('Failed to load inbox messages');
+          setInboxLoaded(true);
+        })
+        .finally(() => setInboxLoading(false));
+    }
+  }, [tab, inboxLoaded, inboxLoading]);
+
+  // Load full messages when a conversation is selected
+  useEffect(() => {
+    if (!selectedConvo) {
+      setFullMessages([]);
+      return;
+    }
+    setReplyText('');
+    setReplyError(null);
+    setMessagesLoading(true);
+    fetch(`/api/admin/rotr/inbox?conversationId=${selectedConvo}`)
+      .then(res => res.json())
+      .then(data => setFullMessages(data.messages || []))
+      .catch(err => console.error('Failed to load messages:', err))
+      .finally(() => setMessagesLoading(false));
+  }, [selectedConvo]);
 
   // Build event lookup for orders
   const eventMap = new Map(events.map(e => [e.id, e.title]));
@@ -380,86 +561,162 @@ function ROTRContent() {
       )}
 
       {/* === EVENTS TAB === */}
-      {tab === 'events' && (
-        <div className="admin-table-wrap" style={{ marginTop: '1rem' }}>
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th></th>
-                <th>Event</th>
-                <th>Date</th>
-                <th>Price</th>
-                <th>Status</th>
-                <th>Tickets</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedEvents.map(event => {
-                const wixUrl = event.eventPageUrl
-                  ? `${event.eventPageUrl.base}${event.eventPageUrl.path}`
-                  : null;
-                return (
-                  <tr key={event.id}>
-                    <td style={{ width: '50px', padding: '0.5rem' }}>
-                      {event.mainImage ? (
-                        <img
-                          src={event.mainImage.url}
-                          alt=""
-                          style={{ width: '44px', height: '44px', objectFit: 'cover', borderRadius: '6px' }}
-                        />
-                      ) : (
-                        <div style={{ width: '44px', height: '44px', background: 'var(--gray-100)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <i className="fas fa-music" style={{ color: 'var(--gray-400)' }}></i>
-                        </div>
-                      )}
-                    </td>
-                    <td>
-                      <Link href={`/admin/rotr/${event.id}`} style={{ color: 'var(--blue-accent)', fontWeight: 500 }}>
-                        {event.title}
-                      </Link>
-                    </td>
-                    <td style={{ whiteSpace: 'nowrap' }}>
-                      {event.dateAndTimeSettings.formatted.startDate}
-                    </td>
-                    <td>
-                      {event.registration.tickets?.lowestPrice
-                        ? event.registration.tickets.lowestPrice.formattedValue
-                        : 'Free'}
-                    </td>
-                    <td>
-                      <span
-                        className="admin-status-badge"
-                        style={{
-                          background: event.status === 'UPCOMING' ? '#10B981'
-                            : event.status === 'ENDED' ? '#6B7280'
-                            : '#EF4444',
-                        }}
-                      >
-                        {event.status}
-                      </span>
-                    </td>
-                    <td>
-                      {event.registration.tickets?.soldOut ? (
-                        <span style={{ color: '#DC2626', fontWeight: 600, fontSize: '0.82rem' }}>Sold Out</span>
-                      ) : (
-                        <span style={{ color: '#10B981', fontSize: '0.82rem' }}>Available</span>
-                      )}
-                    </td>
-                    <td>
-                      {wixUrl && (
-                        <a href={wixUrl} target="_blank" rel="noopener noreferrer" className="admin-btn admin-btn-icon" title="View on Wix">
-                          <i className="fas fa-external-link-alt"></i>
-                        </a>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {tab === 'events' && (() => {
+        // Group events by year
+        const yearMap = new Map<number, ROTREvent[]>();
+        sortedEvents.forEach(e => {
+          const y = new Date(e.dateAndTimeSettings.startDate).getFullYear();
+          if (!yearMap.has(y)) yearMap.set(y, []);
+          yearMap.get(y)!.push(e);
+        });
+        const yearGroups = Array.from(yearMap.entries())
+          .sort(([a], [b]) => b - a); // newest first
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+            {yearGroups.map(([year, yearEvents]) => {
+              const isCollapsed = collapsedYears.has(year);
+              const liveCount = yearEvents.filter(e => publishMap.get(e.id)?.is_published).length;
+              // Sort: published first, then by date
+              const sorted = [...yearEvents].sort((a, b) => {
+                const aPub = publishMap.get(a.id)?.is_published ?? false;
+                const bPub = publishMap.get(b.id)?.is_published ?? false;
+                if (aPub !== bPub) return aPub ? -1 : 1;
+                return 0;
+              });
+
+              return (
+                <div key={year} className="admin-card" style={{ padding: 0, overflow: 'hidden' }}>
+                  <button
+                    onClick={() => toggleEventsYear(year)}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem',
+                      padding: '0.75rem 1rem', background: 'none', border: 'none', cursor: 'pointer',
+                      color: 'inherit', fontSize: '1rem', fontWeight: 600, textAlign: 'left',
+                    }}
+                  >
+                    <i className={`fas fa-chevron-${isCollapsed ? 'right' : 'down'}`} style={{ fontSize: '0.75rem', width: '0.75rem' }}></i>
+                    <span>{year}</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 400, color: '#94a3b8' }}>
+                      {yearEvents.length} event{yearEvents.length !== 1 ? 's' : ''} &middot; {liveCount} live
+                    </span>
+                  </button>
+                  {!isCollapsed && (
+                    <div className="admin-table-wrap">
+                      <table className="admin-table" style={{ marginTop: 0 }}>
+                        <thead>
+                          <tr>
+                            <th></th>
+                            <th>Event</th>
+                            <th>Date</th>
+                            <th>Price</th>
+                            <th>Wix Status</th>
+                            <th>Tickets</th>
+                            <th>Live on Site</th>
+                            <th></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sorted.map(event => {
+                            const wixUrl = event.eventPageUrl
+                              ? `${event.eventPageUrl.base}${event.eventPageUrl.path}`
+                              : null;
+                            const pubEntry = publishMap.get(event.id);
+                            const isLive = pubEntry?.is_published ?? false;
+                            const isSynced = !!pubEntry;
+                            const dimmed = isSynced && !isLive;
+                            return (
+                              <tr key={event.id} style={dimmed ? { opacity: 0.55 } : undefined}>
+                                <td style={{ width: '50px', padding: '0.5rem' }}>
+                                  {event.mainImage ? (
+                                    <img
+                                      src={event.mainImage.url}
+                                      alt=""
+                                      style={{ width: '44px', height: '44px', objectFit: 'cover', borderRadius: '6px' }}
+                                    />
+                                  ) : (
+                                    <div style={{ width: '44px', height: '44px', background: 'var(--gray-100)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                      <i className="fas fa-music" style={{ color: 'var(--gray-400)' }}></i>
+                                    </div>
+                                  )}
+                                </td>
+                                <td>
+                                  <Link href={`/admin/rotr/${event.id}`} style={{ color: dimmed ? '#94a3b8' : 'var(--blue-accent)', fontWeight: 500 }}>
+                                    {event.title}
+                                  </Link>
+                                </td>
+                                <td style={{ whiteSpace: 'nowrap' }}>
+                                  {event.dateAndTimeSettings.formatted.startDate}
+                                </td>
+                                <td>
+                                  {event.registration.tickets?.lowestPrice
+                                    ? event.registration.tickets.lowestPrice.formattedValue
+                                    : 'Free'}
+                                </td>
+                                <td>
+                                  <span
+                                    className="admin-status-badge"
+                                    style={{
+                                      background: event.status === 'UPCOMING' ? '#10B981'
+                                        : event.status === 'ENDED' ? '#6B7280'
+                                        : '#EF4444',
+                                    }}
+                                  >
+                                    {event.status}
+                                  </span>
+                                </td>
+                                <td>
+                                  {event.registration.tickets?.soldOut ? (
+                                    <span style={{ color: '#DC2626', fontWeight: 600, fontSize: '0.82rem' }}>Sold Out</span>
+                                  ) : (
+                                    <span style={{ color: '#10B981', fontSize: '0.82rem' }}>Available</span>
+                                  )}
+                                </td>
+                                <td>
+                                  {isSynced ? (
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                      <div
+                                        onClick={() => toggleEventPublished(event.id)}
+                                        style={{
+                                          width: '2.5rem', height: '1.35rem', borderRadius: '999px', position: 'relative',
+                                          background: isLive ? '#16a34a' : '#374151', transition: 'background 0.2s', cursor: 'pointer',
+                                        }}
+                                      >
+                                        <div style={{
+                                          width: '1rem', height: '1rem', borderRadius: '50%', background: '#fff',
+                                          position: 'absolute', top: '0.175rem',
+                                          left: isLive ? '1.3rem' : '0.2rem',
+                                          transition: 'left 0.2s',
+                                        }} />
+                                      </div>
+                                      <span style={{ fontSize: '0.75rem', color: isLive ? '#16a34a' : '#94a3b8' }}>
+                                        {isLive ? 'Live' : 'Hidden'}
+                                      </span>
+                                    </label>
+                                  ) : (
+                                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Not synced</span>
+                                  )}
+                                </td>
+                                <td>
+                                  {wixUrl && (
+                                    <a href={wixUrl} target="_blank" rel="noopener noreferrer" className="admin-btn-icon" title="View on Wix">
+                                      <i className="fas fa-external-link-alt"></i>
+                                    </a>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
 
       {/* === ORDERS TAB === */}
       {tab === 'orders' && (
@@ -609,6 +866,216 @@ function ROTRContent() {
                 </table>
               </div>
             </>
+          )}
+        </div>
+      )}
+
+      {/* === INBOX TAB === */}
+      {tab === 'inbox' && (
+        <div>
+          {inboxLoading ? (
+            <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
+              <i className="fas fa-spinner fa-spin" style={{ fontSize: '1.5rem', color: 'var(--blue-accent)' }}></i>
+              <p style={{ marginTop: '0.75rem', color: 'var(--gray-500)' }}>Loading messages from Wix...</p>
+            </div>
+          ) : inboxError ? (
+            <div className="admin-card" style={{ padding: '2rem', textAlign: 'center' }}>
+              <i className="fas fa-exclamation-triangle" style={{ fontSize: '2rem', color: '#D97706', marginBottom: '0.75rem' }}></i>
+              <h3 style={{ marginBottom: '0.5rem' }}>Inbox Unavailable</h3>
+              <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '1.5rem' }}>{inboxError}</p>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+                <button
+                  onClick={() => { setInboxLoaded(false); setInboxError(null); }}
+                  className="admin-btn admin-btn-secondary"
+                >
+                  <i className="fas fa-redo"></i> Retry
+                </button>
+                <a
+                  href="https://www.wix.com/dashboard/inbox"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="admin-btn admin-btn-primary"
+                >
+                  <i className="fas fa-external-link-alt"></i> Open Wix Inbox
+                </a>
+              </div>
+            </div>
+          ) : inboxThreads.length === 0 ? (
+            <div className="admin-card" style={{ padding: '2rem', textAlign: 'center' }}>
+              <i className="fas fa-inbox" style={{ fontSize: '2rem', color: '#94a3b8', marginBottom: '0.75rem' }}></i>
+              <h3 style={{ marginBottom: '0.5rem' }}>No Messages</h3>
+              <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>No inbox conversations found.</p>
+            </div>
+          ) : (
+            <div className={`rotr-inbox-container ${selectedConvo ? 'has-selected' : ''}`}>
+              {/* Thread List */}
+              <div className="rotr-inbox-threads">
+                <div className="rotr-inbox-threads-header">
+                  <span>{inboxThreads.length} conversation{inboxThreads.length !== 1 ? 's' : ''}</span>
+                  <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                    {inboxThreads.some(t => t.lastDirection === 'PARTICIPANT_TO_BUSINESS' && !readConvoIds.has(t.conversationId)) && (
+                      <button
+                        className="admin-btn-icon"
+                        title="Mark all as read"
+                        onClick={markAllInboxRead}
+                      >
+                        <i className="fas fa-check-double"></i>
+                      </button>
+                    )}
+                    <button
+                      className="admin-btn-icon"
+                      title="Refresh"
+                      onClick={() => { setInboxLoaded(false); setInboxThreads([]); setSelectedConvo(null); }}
+                    >
+                      <i className="fas fa-sync-alt"></i>
+                    </button>
+                    <a
+                      href="https://www.wix.com/dashboard/inbox"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="admin-btn-icon"
+                      title="Open in Wix"
+                    >
+                      <i className="fas fa-external-link-alt"></i>
+                    </a>
+                  </div>
+                </div>
+                {inboxThreads.map(thread => {
+                  const isUnread = thread.lastDirection === 'PARTICIPANT_TO_BUSINESS' && !readConvoIds.has(thread.conversationId);
+                  return (
+                  <button
+                    key={thread.conversationId}
+                    className={`rotr-inbox-thread-item ${selectedConvo === thread.conversationId ? 'active' : ''}${isUnread ? ' unread' : ''}`}
+                    onClick={() => setSelectedConvo(
+                      selectedConvo === thread.conversationId ? null : thread.conversationId
+                    )}
+                  >
+                    <div className="rotr-inbox-thread-avatar">
+                      {thread.contactName.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="rotr-inbox-thread-content">
+                      <div className="rotr-inbox-thread-top">
+                        <span className="rotr-inbox-thread-name">{thread.contactName}</span>
+                        <span className="rotr-inbox-thread-date">
+                          {new Date(thread.lastMessageDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                      </div>
+                      <div className="rotr-inbox-thread-preview">
+                        {thread.lastDirection === 'BUSINESS_TO_PARTICIPANT' && (
+                          <span style={{ color: '#94a3b8' }}>You: </span>
+                        )}
+                        {thread.lastMessagePreview.slice(0, 80)}
+                        {thread.lastMessagePreview.length > 80 ? '...' : ''}
+                      </div>
+                      {thread.contactEmail && (
+                        <div className="rotr-inbox-thread-email">{thread.contactEmail}</div>
+                      )}
+                    </div>
+                  </button>
+                  );
+                })}
+              </div>
+
+              {/* Message Viewer */}
+              <div className="rotr-inbox-messages">
+                {!selectedConvo ? (
+                  <div className="rotr-inbox-empty">
+                    <i className="fas fa-comments"></i>
+                    <p>Select a conversation to view messages</p>
+                  </div>
+                ) : messagesLoading ? (
+                  <div className="rotr-inbox-empty">
+                    <i className="fas fa-spinner fa-spin"></i>
+                    <p>Loading messages...</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="rotr-inbox-messages-header">
+                      <button
+                        className="rotr-inbox-back-btn"
+                        onClick={() => setSelectedConvo(null)}
+                      >
+                        <i className="fas fa-arrow-left"></i>
+                      </button>
+                      <span className="rotr-inbox-messages-title">
+                        {inboxThreads.find(t => t.conversationId === selectedConvo)?.contactName || 'Conversation'}
+                      </span>
+                    </div>
+                    <div className="rotr-inbox-messages-list">
+                      {fullMessages.map(msg => {
+                        const isForm = msg.content?.contentType === 'FORM';
+                        const isOutgoing = msg.direction === 'BUSINESS_TO_PARTICIPANT';
+                        const text = isForm
+                          ? null
+                          : (msg.content?.previewText
+                            || msg.content?.basic?.items?.map(i => i.text).filter(Boolean).join(' ')
+                            || '');
+                        if (!isForm && !text) return null;
+                        return (
+                          <div
+                            key={msg.id}
+                            className={`rotr-inbox-message ${isOutgoing ? 'outgoing' : 'incoming'}${isForm ? ' form-submission' : ''}`}
+                          >
+                            <div className="rotr-inbox-message-bubble">
+                              {isForm ? (
+                                <div className="rotr-inbox-form">
+                                  <div className="rotr-inbox-form-badge">
+                                    <i className="fas fa-file-alt"></i> {msg.content?.form?.title || 'Form Submission'}
+                                  </div>
+                                  {msg.content?.form?.fields?.map((field, idx) => (
+                                    <div key={idx} className="rotr-inbox-form-field">
+                                      <span className="rotr-inbox-form-label">{field.name}</span>
+                                      <span className="rotr-inbox-form-value">{field.value}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="rotr-inbox-message-text">{text}</div>
+                              )}
+                              <div className="rotr-inbox-message-time">
+                                {new Date(msg.createdDate).toLocaleDateString('en-US', {
+                                  month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div ref={el => { messagesEndRef.current = el; }} />
+                    </div>
+                    {replyError && (
+                      <div className="rotr-inbox-reply-error">
+                        <i className="fas fa-exclamation-circle"></i> {replyError}
+                      </div>
+                    )}
+                    <form
+                      className="rotr-inbox-reply-form"
+                      onSubmit={e => { e.preventDefault(); handleSendReply(); }}
+                    >
+                      <input
+                        type="text"
+                        className="rotr-inbox-reply-input"
+                        placeholder="Type a message..."
+                        value={replyText}
+                        onChange={e => setReplyText(e.target.value)}
+                        disabled={replySending}
+                      />
+                      <button
+                        type="submit"
+                        className="rotr-inbox-reply-send"
+                        disabled={replySending || !replyText.trim()}
+                        title="Send message"
+                      >
+                        {replySending
+                          ? <i className="fas fa-spinner fa-spin"></i>
+                          : <i className="fas fa-paper-plane"></i>
+                        }
+                      </button>
+                    </form>
+                  </>
+                )}
+              </div>
+            </div>
           )}
         </div>
       )}

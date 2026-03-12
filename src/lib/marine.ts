@@ -199,8 +199,14 @@ function parseMarineText(raw: string): MarineTextPeriod[] {
 export async function fetchMarineData(): Promise<MarineData> {
   const headers = { 'User-Agent': NWS_UA };
 
-  const [alertsRes, forecastRes, hourlyRes, marineTextRes, buoyRes] = await Promise.allSettled([
+  const [alertsRes, marineAlertsRes, forecastRes, hourlyRes, marineTextRes, buoyRes] = await Promise.allSettled([
     fetch('https://api.weather.gov/alerts/active?point=41.4528,-82.1824', {
+      headers,
+      next: { revalidate: 900 },
+    }),
+    // Marine zone alerts (Small Craft Advisory, Gale Warning, etc.) are issued
+    // for offshore zones, not land points — query LEZ145 (Lorain nearshore) separately
+    fetch('https://api.weather.gov/alerts/active?zone=LEZ145', {
       headers,
       next: { revalidate: 900 },
     }),
@@ -229,6 +235,19 @@ export async function fetchMarineData(): Promise<MarineData> {
   try {
     if (alertsRes.status === 'fulfilled' && alertsRes.value.ok) {
       alerts = parseAlerts(await alertsRes.value.json());
+    }
+  } catch { /* ignore */ }
+
+  // Merge marine zone alerts, deduplicating by alert ID
+  try {
+    if (marineAlertsRes.status === 'fulfilled' && marineAlertsRes.value.ok) {
+      const marineAlerts = parseAlerts(await marineAlertsRes.value.json());
+      const existingIds = new Set(alerts.map(a => a.id));
+      for (const a of marineAlerts) {
+        if (!existingIds.has(a.id)) {
+          alerts.push(a);
+        }
+      }
     }
   } catch { /* ignore */ }
 

@@ -13,7 +13,7 @@ interface ForecastPeriod { number: number; name: string; temperature: number; te
 interface BuoyData { windSpeed: number | null; windGust: number | null; windDirection: number | null; waveHeight: number | null; wavePeriod: number | null; waterTemp: number | null; airTemp: number | null; pressure: number | null; isOffline: boolean; }
 interface VesselRecord { mmsi: string; vessel_name: string | null; destination: string | null; vessel_type: number | null; latitude: number | null; longitude: number | null; speed: number | null; heading: number | null; eta: string | null; status: string; first_detected_at?: string; last_seen_at?: string; is_active: boolean; }
 
-type TabId = 'alerts' | 'vessels' | 'forecast' | 'conditions' | 'hourly' | '7day' | 'resources' | 'beach';
+type TabId = 'alerts' | 'wind' | 'vessels' | 'forecast' | 'conditions' | 'hourly' | '7day' | 'resources' | 'beach';
 
 interface BeachReading { date: string; value: number | null; }
 interface BeachData {
@@ -104,19 +104,20 @@ export default function MarineTabs({
 
   // Check URL hash for direct tab navigation (e.g., /marine#beach)
   const hashTab = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : '';
-  const validHashTab = ['alerts', 'vessels', 'forecast', 'conditions', 'hourly', '7day', 'resources', 'beach'].includes(hashTab) ? hashTab as TabId : null;
-  const defaultTab: TabId = validHashTab || (hasAlerts ? 'alerts' : 'vessels');
+  const validHashTab = ['alerts', 'wind', 'vessels', 'forecast', 'conditions', 'hourly', '7day', 'resources', 'beach'].includes(hashTab) ? hashTab as TabId : null;
+  const defaultTab: TabId = validHashTab || (hasAlerts ? 'alerts' : 'forecast');
   const [active, setActive] = useState<TabId>(defaultTab);
 
   const tabs: { id: TabId; label: string; icon: string }[] = [
     ...(hasAlerts ? [{ id: 'alerts' as TabId, label: 'Alerts', icon: 'fa-exclamation-triangle' }] : []),
-    { id: 'vessels', label: 'Vessel Traffic', icon: 'fa-ship' },
     { id: 'forecast', label: 'Marine Forecast', icon: 'fa-anchor' },
+    { id: 'wind', label: 'Wind & Radar', icon: 'fa-wind' },
     { id: 'conditions', label: 'Offshore Conditions', icon: 'fa-water' },
+    { id: 'vessels', label: 'Vessel Traffic', icon: 'fa-ship' },
+    { id: 'beach', label: 'Beach Water Quality', icon: 'fa-umbrella-beach' },
     { id: 'hourly', label: 'Hourly Weather', icon: 'fa-clock' },
     { id: '7day', label: '7-Day Weather', icon: 'fa-calendar-week' },
     { id: 'resources', label: 'Boater Resources', icon: 'fa-life-ring' },
-    { id: 'beach', label: 'Beach Water Quality', icon: 'fa-umbrella-beach' },
   ];
 
   return (
@@ -163,14 +164,75 @@ export default function MarineTabs({
             </div>
           )}
 
+          {/* WIND & RADAR */}
+          {active === 'wind' && (
+            <div>
+              <div className="section-header center">
+                <div className="section-label">Real-Time Wind</div>
+                <h2 className="section-title"><i className="fas fa-wind" style={{ color: 'var(--gold)', marginRight: '0.5rem' }}></i> Wind &amp; Radar</h2>
+                <p className="section-desc">Live interactive wind and radar maps for the Lorain / Lake Erie area, powered by Windy.com. Click a map to interact.</p>
+              </div>
+
+              <div className="dashboard-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                <div className="dashboard-panel">
+                  <div className="dashboard-panel-header">
+                    <i className="fas fa-wind"></i>
+                    <span>Live Wind Map</span>
+                    <span className="dashboard-source">Windy.com</span>
+                  </div>
+                  <div className="dashboard-panel-frame">
+                    <iframe
+                      src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricWind=kt&zoom=8&overlay=wind&product=ecmwf&level=surface&lat=41.453&lon=-82.182"
+                      title="Wind Map"
+                      loading="lazy"
+                      allowFullScreen
+                    />
+                  </div>
+                </div>
+                <div className="dashboard-panel">
+                  <div className="dashboard-panel-header">
+                    <i className="fas fa-satellite-dish"></i>
+                    <span>Weather Radar</span>
+                    <span className="dashboard-source">Windy.com</span>
+                  </div>
+                  <div className="dashboard-panel-frame">
+                    <iframe
+                      src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricWind=kt&zoom=8&overlay=radar&product=radar&level=surface&lat=41.453&lon=-82.182"
+                      title="Weather Radar"
+                      loading="lazy"
+                      allowFullScreen
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* VESSEL TRAFFIC */}
           {active === 'vessels' && (
             <div>
               <div className="section-header center">
                 <div className="section-label">Port Lorain</div>
                 <h2 className="section-title"><i className="fas fa-ship" style={{ color: 'var(--gold)', marginRight: '0.5rem' }}></i> Vessel Traffic</h2>
-                <p className="section-desc">Active commercial vessel traffic heading to or at Port Lorain, tracked via AIS (Automatic Identification System).</p>
+                <p className="section-desc">Commercial vessel traffic heading to, docked at, or recently departed from Port Lorain, tracked via AIS (Automatic Identification System).</p>
               </div>
+              {/* Live vessel map */}
+              <div className="dashboard-panel" style={{ marginBottom: '2rem' }}>
+                <div className="dashboard-panel-header">
+                  <i className="fas fa-map-marked-alt"></i>
+                  <span>Live Marine Traffic Map</span>
+                  <span className="dashboard-source">VesselFinder</span>
+                </div>
+                <div className="dashboard-panel-frame">
+                  <iframe
+                    src="https://www.vesselfinder.com/aismap?lat=41.453&lon=-82.182&zoom=12&width=600&height=400&names=true&mmsi=0&track=0"
+                    title="Marine Traffic Map — Lorain Harbor"
+                    loading="lazy"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+
               {!vesselsLoaded ? (
                 <p style={{ textAlign: 'center', color: 'var(--gray-400)' }}>Loading vessel data...</p>
               ) : vessels.length === 0 ? (
@@ -180,47 +242,76 @@ export default function MarineTabs({
                   <p style={{ fontSize: '0.82rem', marginTop: '0.25rem' }}>Check back later — this page updates automatically when vessels set their AIS destination to Lorain.</p>
                 </div>
               ) : (
-                <div className="vessel-traffic-grid">
-                  {vessels.map(vessel => (
-                    <div key={vessel.mmsi} className="vessel-card">
-                      <div className="vessel-card-header">
-                        <div className="vessel-card-icon">
-                          <i className="fas fa-ship"></i>
+                <>
+                  {/* Group vessels by status */}
+                  {(['in_port', 'en_route', 'departed'] as const).map(statusGroup => {
+                    const groupVessels = vessels.filter(v => v.status === statusGroup);
+                    if (groupVessels.length === 0) return null;
+                    const groupLabels = { in_port: 'In Port', en_route: 'En Route to Lorain', departed: 'Recently Departed' };
+                    const groupIcons = { in_port: 'fa-anchor', en_route: 'fa-route', departed: 'fa-arrow-right-from-bracket' };
+                    return (
+                      <div key={statusGroup} className="vessel-status-group">
+                        <h3 className="vessel-group-heading">
+                          <i className={`fas ${groupIcons[statusGroup]}`}></i> {groupLabels[statusGroup]}
+                          <span className="vessel-group-count">{groupVessels.length}</span>
+                        </h3>
+                        <div className="vessel-traffic-grid">
+                          {groupVessels.map(vessel => (
+                            <div key={vessel.mmsi} className="vessel-card">
+                              <div className="vessel-card-header">
+                                <div className="vessel-card-icon">
+                                  <i className="fas fa-ship"></i>
+                                </div>
+                                <div>
+                                  <h3 className="vessel-card-name">{vessel.vessel_name || 'Unknown'}</h3>
+                                  <span className="vessel-card-type">{getVesselTypeLabel(vessel.vessel_type)}</span>
+                                </div>
+                                <span className={`vessel-card-status vessel-status-${vessel.status}`}>
+                                  {getStatusLabel(vessel.status)}
+                                </span>
+                              </div>
+                              <div className="vessel-card-details">
+                                {statusGroup === 'en_route' && (
+                                  <div className="vessel-detail">
+                                    <span className="vessel-detail-label">ETA</span>
+                                    <span className="vessel-detail-value">{formatVesselEta(vessel.eta)}</span>
+                                  </div>
+                                )}
+                                {statusGroup === 'in_port' && vessel.first_detected_at && (
+                                  <div className="vessel-detail">
+                                    <span className="vessel-detail-label">Arrived</span>
+                                    <span className="vessel-detail-value">{formatVesselEta(vessel.first_detected_at)}</span>
+                                  </div>
+                                )}
+                                {vessel.speed != null && vessel.speed > 0 && (
+                                  <div className="vessel-detail">
+                                    <span className="vessel-detail-label">Speed</span>
+                                    <span className="vessel-detail-value">{vessel.speed.toFixed(1)} kn</span>
+                                  </div>
+                                )}
+                                {vessel.heading != null && vessel.heading > 0 && (
+                                  <div className="vessel-detail">
+                                    <span className="vessel-detail-label">Heading</span>
+                                    <span className="vessel-detail-value">{vessel.heading}&deg;</span>
+                                  </div>
+                                )}
+                                <div className="vessel-detail">
+                                  <span className="vessel-detail-label">Last Updated</span>
+                                  <span className="vessel-detail-value">{formatLastSeen(vessel.last_seen_at)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                        <div>
-                          <h3 className="vessel-card-name">{vessel.vessel_name || 'Unknown'}</h3>
-                          <span className="vessel-card-type">{getVesselTypeLabel(vessel.vessel_type)}</span>
-                        </div>
-                        <span className={`vessel-card-status vessel-status-${vessel.status}`}>
-                          {getStatusLabel(vessel.status)}
-                        </span>
                       </div>
-                      <div className="vessel-card-details">
-                        <div className="vessel-detail">
-                          <span className="vessel-detail-label">ETA</span>
-                          <span className="vessel-detail-value">{formatVesselEta(vessel.eta)}</span>
-                        </div>
-                        {vessel.speed != null && vessel.speed > 0 && (
-                          <div className="vessel-detail">
-                            <span className="vessel-detail-label">Speed</span>
-                            <span className="vessel-detail-value">{vessel.speed.toFixed(1)} kn</span>
-                          </div>
-                        )}
-                        {vessel.heading != null && vessel.heading > 0 && (
-                          <div className="vessel-detail">
-                            <span className="vessel-detail-label">Heading</span>
-                            <span className="vessel-detail-value">{vessel.heading}&deg;</span>
-                          </div>
-                        )}
-                        <div className="vessel-detail">
-                          <span className="vessel-detail-label">Last Updated</span>
-                          <span className="vessel-detail-value">{formatLastSeen(vessel.last_seen_at)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    );
+                  })}
+                </>
               )}
+              <div className="beach-threshold-note" style={{ marginTop: '1.5rem' }}>
+                <i className="fas fa-info-circle"></i>
+                <span>AIS data relies on vessel captains manually entering their destination, ETA, and other details into their transponder. Arrival and departure information may not always be accurate or up to date.</span>
+              </div>
             </div>
           )}
 
