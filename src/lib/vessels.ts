@@ -28,6 +28,29 @@ export function isLorainDestination(dest: string | null | undefined): boolean {
   return dest.toUpperCase().trim().includes('LORAIN');
 }
 
+/** Lorain Harbor area — vessels inside this box are considered "in port".
+ *  Covers the breakwall/harbor entrance south along the Black River
+ *  to capture vessels docked upriver (~1.5 mi from the lake). */
+const LORAIN_PORT_BOX = {
+  latMin: 41.435, latMax: 41.478,
+  lonMin: -82.210, lonMax: -82.165,
+};
+
+export function isNearLorainPort(lat: number | null, lon: number | null): boolean {
+  if (lat === null || lon === null) return false;
+  return (
+    lat >= LORAIN_PORT_BOX.latMin && lat <= LORAIN_PORT_BOX.latMax &&
+    lon >= LORAIN_PORT_BOX.lonMin && lon <= LORAIN_PORT_BOX.lonMax
+  );
+}
+
+/** Determine vessel status based on position relative to port */
+export function determineVesselStatus(lat: number | null, lon: number | null, previousStatus?: string): string {
+  if (isNearLorainPort(lat, lon)) return 'in_port';
+  if (previousStatus === 'in_port') return 'departed';
+  return 'en_route';
+}
+
 export function formatAisEta(eta: { Month?: number; Day?: number; Hour?: number; Minute?: number } | null): string | null {
   if (!eta || !eta.Month || !eta.Day) return null;
   const now = new Date();
@@ -130,7 +153,17 @@ export async function syncVesselTraffic(): Promise<{ found: number; upserted: nu
   const supabase = createAdminClient();
   let upserted = 0;
 
+  // Fetch existing records to check previous status
+  const mmsiList = Array.from(vessels.keys());
+  const { data: existing } = mmsiList.length > 0
+    ? await supabase.from('vessel_traffic').select('mmsi, status').in('mmsi', mmsiList)
+    : { data: [] };
+  const prevStatusMap = new Map((existing || []).map(r => [r.mmsi, r.status]));
+
   for (const vessel of vessels.values()) {
+    const prevStatus = prevStatusMap.get(vessel.mmsi);
+    const status = determineVesselStatus(vessel.latitude, vessel.longitude, prevStatus);
+
     const { error } = await supabase
       .from('vessel_traffic')
       .upsert({
@@ -141,7 +174,7 @@ export async function syncVesselTraffic(): Promise<{ found: number; upserted: nu
         latitude: vessel.latitude,
         longitude: vessel.longitude,
         eta: vessel.eta,
-        status: 'en_route',
+        status,
         last_seen_at: new Date().toISOString(),
         is_active: true,
       }, { onConflict: 'mmsi' });
@@ -152,16 +185,52 @@ export async function syncVesselTraffic(): Promise<{ found: number; upserted: nu
   return { found: vessels.size, upserted };
 }
 
+export async function fetchActiveVessels(): Promise<VesselRecord[]> {
+  const supabase = createAdminClient();
+  const cutoff48h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  const { data } = await supabase
+    .from('vessel_traffic')
+    .select('*')
+    .or(`is_active.eq.true,and(status.eq.departed,last_seen_at.gte.${cutoff48h})`)
+    .order('status', { ascending: true })
+    .order('first_detected_at', { ascending: false });
+  return (data || []) as VesselRecord[];
+}
+
 export async function expireStaleVessels(): Promise<number> {
   const supabase = createAdminClient();
-  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const cutoff48h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  let total = 0;
 
-  const { data } = await supabase
+  // In-port vessels not seen for 24h → mark as departed (visible 48h more)
+  const { data: departedVessels } = await supabase
+    .from('vessel_traffic')
+    .update({ status: 'departed' })
+    .eq('is_active', true)
+    .eq('status', 'in_port')
+    .lt('last_seen_at', cutoff24h)
+    .select('id');
+  total += departedVessels?.length || 0;
+
+  // En-route vessels not seen for 24h → expire
+  const { data: expiredEnRoute } = await supabase
     .from('vessel_traffic')
     .update({ is_active: false, status: 'expired' })
     .eq('is_active', true)
-    .lt('last_seen_at', cutoff)
+    .eq('status', 'en_route')
+    .lt('last_seen_at', cutoff24h)
     .select('id');
+  total += expiredEnRoute?.length || 0;
 
-  return data?.length || 0;
+  // Departed vessels older than 48h → fully expire
+  const { data: expiredDeparted } = await supabase
+    .from('vessel_traffic')
+    .update({ is_active: false, status: 'expired' })
+    .eq('status', 'departed')
+    .lt('last_seen_at', cutoff48h)
+    .select('id');
+  total += expiredDeparted?.length || 0;
+
+  return total;
 }

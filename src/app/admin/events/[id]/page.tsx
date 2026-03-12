@@ -35,11 +35,13 @@ export default function EventEditorPage() {
     headliner_time: '8:45 PM',
     event_policy: DEFAULT_ROTR_POLICY,
     ticket_url: '',
+    wix_event_id: '',
   });
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(!isNew);
+  const isWixEvent = !!form.wix_event_id;
 
   useEffect(() => {
     if (!isNew) {
@@ -185,20 +187,27 @@ export default function EventEditorPage() {
         </div>
       </div>
 
+      {isWixEvent && (
+        <div className="admin-alert admin-alert-info" style={{ marginBottom: '1rem' }}>
+          <i className="fas fa-link"></i>
+          <span>This event is synced from Wix. Title, date, location, price, and ticket link update automatically. You can add headliner details, descriptions, and images below.</span>
+        </div>
+      )}
+
       <div className="admin-form-layout">
         <div className="admin-form-main">
           <div className="admin-card">
             {!isROTR(form.category) && (
               <div className="admin-form-group">
-                <label>Title</label>
-                <input type="text" value={form.title} onChange={e => update('title', e.target.value)} placeholder="Event title" />
+                <label>Title {isWixEvent && <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>(Managed by Wix)</span>}</label>
+                <input type="text" value={form.title} onChange={e => update('title', e.target.value)} placeholder="Event title" readOnly={isWixEvent} style={isWixEvent ? { opacity: 0.7 } : undefined} />
               </div>
             )}
 
             {isROTR(form.category) && (
               <div className="admin-form-group">
-                <label>Event Date</label>
-                <input type="date" value={form.event_date || ''} onChange={e => update('event_date', e.target.value)} />
+                <label>Event Date {isWixEvent && <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>(Managed by Wix)</span>}</label>
+                <input type="date" value={form.event_date || ''} onChange={e => update('event_date', e.target.value)} readOnly={isWixEvent} style={isWixEvent ? { opacity: 0.7 } : undefined} />
               </div>
             )}
 
@@ -239,18 +248,18 @@ export default function EventEditorPage() {
 
             {isROTR(form.category) && (
               <div className="admin-form-group">
-                <label>Ticket / Event Link</label>
-                <input type="url" value={form.ticket_url || ''} onChange={e => update('ticket_url', e.target.value)} placeholder="e.g. https://example.com/tickets" />
+                <label>Ticket / Event Link {isWixEvent && <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>(Managed by Wix)</span>}</label>
+                <input type="url" value={form.ticket_url || ''} onChange={e => update('ticket_url', e.target.value)} placeholder="e.g. https://example.com/tickets" readOnly={isWixEvent} style={isWixEvent ? { opacity: 0.7 } : undefined} />
                 <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.4rem' }}>
-                  Add a link and a &quot;Get Tickets&quot; button will appear on the listing.
+                  {isWixEvent ? 'This link is managed by Wix and updates automatically.' : 'Add a link and a "Get Tickets" button will appear on the listing.'}
                 </p>
               </div>
             )}
 
             <div className="admin-form-row">
               <div className="admin-form-group">
-                <label>Location / Address</label>
-                <input type="text" value={form.location} onChange={e => update('location', e.target.value)} placeholder="e.g. Black River Landing, 319 Black River Ln" />
+                <label>Location / Address {isWixEvent && <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>(Managed by Wix)</span>}</label>
+                <input type="text" value={form.location} onChange={e => update('location', e.target.value)} placeholder="e.g. Black River Landing, 319 Black River Ln" readOnly={isWixEvent} style={isWixEvent ? { opacity: 0.7 } : undefined} />
               </div>
               {!isROTR(form.category) && (
                 <div className="admin-form-group">
@@ -286,9 +295,10 @@ export default function EventEditorPage() {
             <h3>Settings</h3>
             <div className="admin-form-group">
               <label>Category</label>
-              <select value={form.category} onChange={e => handleCategoryChange(e.target.value)}>
+              <select value={form.category} onChange={e => handleCategoryChange(e.target.value)} disabled={isWixEvent} style={isWixEvent ? { opacity: 0.7 } : undefined}>
                 {eventCategories.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
+              {isWixEvent && <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '0.3rem' }}>Synced from Wix</p>}
             </div>
             <div className="admin-form-group">
               <label className="admin-checkbox">

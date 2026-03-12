@@ -39,6 +39,8 @@ export default function Header() {
             <ul className="nav-menu" id="nav-menu" role="menubar">
               <li role="none"><Link href="/" role="menuitem">Home</Link></li>
               <li role="none"><Link href="/news" role="menuitem">News</Link></li>
+              <li role="none"><Link href="/marine" role="menuitem">Marine &amp; Alerts</Link></li>
+              <li role="none"><Link href="/live-cams" role="menuitem">Live Cams</Link></li>
               <li role="none"><Link href="/donate" role="menuitem">Stage Project</Link></li>
               <li className="has-dropdown" role="none">
                 <Link href="/development" role="menuitem" aria-haspopup="true" aria-expanded="false">Development &amp; Finance <i className="fas fa-chevron-down"></i></Link>
@@ -50,8 +52,6 @@ export default function Header() {
                 </ul>
               </li>
               <li role="none"><Link href="/events" role="menuitem">Events &amp; Boat Tours</Link></li>
-              <li role="none"><Link href="/marine" role="menuitem">Marine Forecast</Link></li>
-              <li role="none"><Link href="/live-cams" role="menuitem">Live Cams</Link></li>
               <li className="has-dropdown" role="none">
                 <Link href="/about" role="menuitem" aria-haspopup="true" aria-expanded="false">About <i className="fas fa-chevron-down"></i></Link>
                 <ul className="dropdown" role="menu" aria-label="About">

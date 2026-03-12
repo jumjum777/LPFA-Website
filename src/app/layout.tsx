@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Montserrat, Inter } from 'next/font/google';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import LayoutShell from '@/components/layout/LayoutShell';
 import '@/styles/globals.css';
 
 const montserrat = Montserrat({
@@ -47,9 +48,9 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Header />
-        {children}
-        <Footer />
+        <LayoutShell header={<Header />} footer={<Footer />}>
+          {children}
+        </LayoutShell>
       </body>
     </html>
   );

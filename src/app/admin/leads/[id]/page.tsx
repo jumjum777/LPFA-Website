@@ -122,7 +122,7 @@ export default function AdminLeadDetailPage() {
       <div className="admin-page">
         <p>Lead not found.</p>
         <Link href="/admin/leads" className="admin-btn admin-btn-secondary">
-          <i className="fas fa-arrow-left"></i> Back to Leads
+          <i className="fas fa-arrow-left"></i> Back to Inbox
         </Link>
       </div>
     );
@@ -133,7 +133,7 @@ export default function AdminLeadDetailPage() {
       <div className="admin-page-header">
         <div>
           <Link href="/admin/leads" className="admin-back-link">
-            <i className="fas fa-arrow-left"></i> Back to Leads
+            <i className="fas fa-arrow-left"></i> Back to Inbox
           </Link>
           <h1>{lead.first_name} {lead.last_name}</h1>
           <p>Submitted {formatDate(lead.created_at)}</p>

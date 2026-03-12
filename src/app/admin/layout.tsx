@@ -19,31 +19,37 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const supabase = createClient();
 
     async function checkAuth() {
-      const session = await supabase.auth.getSession();
-      const token = session.data.session?.access_token;
+      try {
+        const session = await supabase.auth.getSession();
+        const token = session.data.session?.access_token;
 
-      if (!token) {
+        if (!token) {
+          router.push('/admin/login');
+          return;
+        }
+
+        // Use API route to check admin access and get user info (bypasses RLS)
+        const res = await fetch('/api/admin/check', {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        const result = await res.json();
+
+        if (!result.isAdmin) {
+          router.push('/admin/login');
+          return;
+        }
+
+        setUser({
+          email: result.email,
+          role: result.role,
+          display_name: result.display_name,
+        });
+      } catch (err) {
+        console.error('Auth check failed:', err);
         router.push('/admin/login');
-        return;
+      } finally {
+        setLoading(false);
       }
-
-      // Use API route to check admin access and get user info (bypasses RLS)
-      const res = await fetch('/api/admin/check', {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      const result = await res.json();
-
-      if (!result.isAdmin) {
-        router.push('/admin/login');
-        return;
-      }
-
-      setUser({
-        email: result.email,
-        role: result.role,
-        display_name: result.display_name,
-      });
-      setLoading(false);
     }
 
     checkAuth();

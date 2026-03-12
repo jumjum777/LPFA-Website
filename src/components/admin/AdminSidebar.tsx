@@ -21,7 +21,7 @@ const lpfaItems = [
   { href: '/admin/staff', label: 'Staff', icon: 'fas fa-id-badge' },
   { href: '/admin/board', label: 'Board', icon: 'fas fa-users' },
   { href: '/admin/vessels', label: 'Vessel Traffic', icon: 'fas fa-anchor' },
-  { href: '/admin/leads', label: 'Leads', icon: 'fas fa-inbox' },
+  { href: '/admin/leads', label: 'Inbox', icon: 'fas fa-inbox' },
 ];
 
 const rotrItems = [
@@ -29,6 +29,7 @@ const rotrItems = [
   { href: '/admin/rotr?tab=events', label: 'Events', icon: 'fas fa-calendar-alt' },
   { href: '/admin/rotr?tab=orders', label: 'Orders', icon: 'fas fa-receipt' },
   { href: '/admin/rotr?tab=customers', label: 'Customers', icon: 'fas fa-users' },
+  { href: '/admin/rotr?tab=inbox', label: 'Inbox', icon: 'fas fa-inbox' },
   { href: '/admin/rotr?tab=finances', label: 'Finances', icon: 'fas fa-file-invoice-dollar' },
   { href: '/admin/rotr?tab=analytics', label: 'Analytics', icon: 'fas fa-chart-bar' },
 ];
