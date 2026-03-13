@@ -162,3 +162,51 @@ export interface AdminUser {
   email: string;
   created_at: string;
 }
+
+export interface ROTRContractor {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  primary_role: string;
+  default_pay_rate: number;
+  pay_type: 'hourly' | 'flat';
+  contract_url: string | null;
+  contract_uploaded_at: string | null;
+  w9_status: 'not_submitted' | 'received' | 'expired';
+  w9_url: string | null;
+  w9_received_date: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
+  shirt_size: string | null;
+  preferred_start: string | null;
+  preferred_end: string | null;
+  availability_notes: string | null;
+  blackout_dates: string | null;
+  status: 'active' | 'inactive' | 'archived';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ROTREventAssignment {
+  id: string;
+  contractor_id: string;
+  wix_event_id: string;
+  event_title: string;
+  event_date: string;
+  role: string;
+  pay_rate: number;
+  pay_type: 'hourly' | 'flat';
+  scheduled_start: string | null;
+  scheduled_end: string | null;
+  scheduled_hours: number | null;
+  actual_hours: number | null;
+  check_in: string | null;
+  check_out: string | null;
+  status: 'scheduled' | 'confirmed' | 'checked_in' | 'completed' | 'no_show' | 'cancelled';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
