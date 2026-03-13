@@ -16,11 +16,24 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ configured: false });
   }
 
-  const days = Math.min(parseInt(req.nextUrl.searchParams.get('days') || '30') || 30, 90);
+  const startParam = req.nextUrl.searchParams.get('start');
+  const endParam = req.nextUrl.searchParams.get('end');
 
-  const end = new Date();
-  const start = new Date();
-  start.setDate(end.getDate() - days);
+  let start: Date;
+  let end: Date;
+  let days: number;
+
+  if (startParam && endParam) {
+    start = new Date(startParam + 'T00:00:00');
+    end = new Date(endParam + 'T23:59:59');
+    days = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    days = Math.min(Math.max(days, 1), 365);
+  } else {
+    days = Math.min(parseInt(req.nextUrl.searchParams.get('days') || '30') || 30, 90);
+    end = new Date();
+    start = new Date();
+    start.setDate(end.getDate() - days);
+  }
 
   const prevEnd = new Date(start);
   prevEnd.setDate(prevEnd.getDate() - 1);

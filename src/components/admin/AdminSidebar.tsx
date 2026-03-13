@@ -23,7 +23,6 @@ const lpfaItems = [
   { href: '/admin/vessels', label: 'Vessel Traffic', icon: 'fas fa-anchor' },
   { href: '/admin/rfps', label: 'RFPs & Bids', icon: 'fas fa-file-contract' },
   { href: '/admin/files', label: 'Files', icon: 'fas fa-folder-open' },
-  { href: '/admin/email-marketing', label: 'Email Marketing', icon: 'fas fa-envelope' },
   { href: '/admin/analytics', label: 'Analytics', icon: 'fas fa-chart-line' },
   { href: '/admin/leads', label: 'Inbox', icon: 'fas fa-inbox' },
 ];
@@ -35,9 +34,9 @@ const rotrItems = [
   { href: '/admin/rotr?tab=customers', label: 'Customers', icon: 'fas fa-users' },
   { href: '/admin/rotr?tab=inbox', label: 'Inbox', icon: 'fas fa-inbox' },
   { href: '/admin/rotr?tab=finances', label: 'Finances', icon: 'fas fa-file-invoice-dollar' },
-  { href: '/admin/rotr?tab=analytics', label: 'Analytics', icon: 'fas fa-chart-bar' },
+  { href: '/admin/rotr?tab=staff', label: 'Staff', icon: 'fas fa-hard-hat' },
+  { href: '/admin/analytics?profile=rotr', label: 'Analytics', icon: 'fas fa-chart-bar' },
   { href: '/admin/rotr?tab=files', label: 'Files', icon: 'fas fa-folder-open' },
-  { href: '/admin/rotr?tab=email', label: 'Email Marketing', icon: 'fas fa-envelope' },
 ];
 
 const superAdminItems = [
@@ -59,10 +58,12 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
   useEffect(() => {
     if (pathname.startsWith('/admin/rotr')) {
       setContext('rotr');
+    } else if (pathname === '/admin/analytics' && searchParams.get('profile') === 'rotr') {
+      setContext('rotr');
     } else if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/rotr')) {
       setContext('lpfa');
     }
-  }, [pathname]);
+  }, [pathname, searchParams]);
 
   useEffect(() => {
     setIsDark(document.documentElement.getAttribute('data-theme') === 'dark');

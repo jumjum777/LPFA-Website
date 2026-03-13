@@ -5,10 +5,12 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import EmailMarketingDashboard from '@/components/admin/EmailMarketingDashboard';
+import { generateFinancePdf } from '@/lib/generateFinancePdf';
 import dynamic from 'next/dynamic';
 const FileRepository = dynamic(() => import('@/app/admin/files/page'), { ssr: false });
+const ROTRStaffManager = dynamic(() => import('@/components/admin/ROTRStaffManager'), { ssr: false });
 
-type Tab = 'overview' | 'events' | 'orders' | 'customers' | 'inbox' | 'finances' | 'analytics' | 'files' | 'email';
+type Tab = 'overview' | 'events' | 'orders' | 'customers' | 'inbox' | 'finances' | 'analytics' | 'files' | 'email' | 'staff';
 
 interface TicketDef {
   id: string;
@@ -128,12 +130,16 @@ function ROTRContent() {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [orderFilter, setOrderFilter] = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState('');
-  const [financePeriod, setFinancePeriod] = useState('all');
+  const [financePeriod, setFinancePeriod] = useState('ytd');
   const [transactions, setTransactions] = useState<Record<string, TransactionData>>({});
+  const [financeSummary, setFinanceSummary] = useState<{ summary: string; highlights: string[]; trend: string; generatedAt: string } | null>(null);
+  const [financeSummaryLoading, setFinanceSummaryLoading] = useState(false);
+  const [financeSummaryError, setFinanceSummaryError] = useState<string | null>(null);
+  const [financePdfLoading, setFinancePdfLoading] = useState(false);
   const [txnLoading, setTxnLoading] = useState(false);
   const [analyticsData, setAnalyticsData] = useState<{ metrics: AnalyticsMetric[]; previousMetrics: AnalyticsMetric[] | null; period: { start: string; end: string; days: number } } | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
-  const [analyticsDays, setAnalyticsDays] = useState(30);
+  const [analyticsPeriod, setAnalyticsPeriod] = useState('30d');
   const [publishMap, setPublishMap] = useState<Map<string, { id: string; is_published: boolean }>>(new Map());
   const [collapsedYears, setCollapsedYears] = useState<Set<number>>(new Set());
   const [inboxThreads, setInboxThreads] = useState<Array<{
@@ -314,17 +320,42 @@ function ROTRContent() {
     }
   }, [tab, transactions, txnLoading]);
 
-  // Load analytics when analytics tab opens (or days changes)
+  // Clear finance summary when period changes
+  useEffect(() => {
+    setFinanceSummary(null);
+    setFinanceSummaryError(null);
+  }, [financePeriod]);
+
+  // Load analytics when analytics tab opens (or period changes)
   useEffect(() => {
     if (tab === 'analytics') {
       setAnalyticsLoading(true);
-      fetch(`/api/admin/rotr/analytics?days=${analyticsDays}`)
+      const now = new Date();
+      const fmt = (d: Date) => d.toISOString().split('T')[0];
+      let url: string;
+
+      if (analyticsPeriod === 'this-month') {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        url = `/api/admin/rotr/analytics?start=${fmt(start)}&end=${fmt(now)}`;
+      } else if (analyticsPeriod === 'last-month') {
+        const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const end = new Date(now.getFullYear(), now.getMonth(), 0);
+        url = `/api/admin/rotr/analytics?start=${fmt(start)}&end=${fmt(end)}`;
+      } else if (analyticsPeriod === 'ytd') {
+        const start = new Date(now.getFullYear(), 0, 1);
+        url = `/api/admin/rotr/analytics?start=${fmt(start)}&end=${fmt(now)}`;
+      } else {
+        const days = parseInt(analyticsPeriod);
+        url = `/api/admin/rotr/analytics?days=${days}`;
+      }
+
+      fetch(url)
         .then(res => res.json())
         .then(data => setAnalyticsData(data))
         .catch(err => console.error('Failed to load analytics:', err))
         .finally(() => setAnalyticsLoading(false));
     }
-  }, [tab, analyticsDays]);
+  }, [tab, analyticsPeriod]);
 
   // Load inbox threads when inbox tab opens
   useEffect(() => {
@@ -437,10 +468,10 @@ function ROTRContent() {
     <div className="admin-page">
       <div className="admin-page-header">
         <div>
-          <h1>{tab === 'email' ? <><i className="fas fa-envelope" style={{ marginRight: '0.5rem', color: '#1B8BEB' }}></i> Email Marketing</> : tab === 'files' ? <><i className="fas fa-folder-open" style={{ marginRight: '0.5rem', color: '#D97706' }}></i> Files</> : "Rockin' on the River"}</h1>
-          <p>{tab === 'email' ? "Campaign analytics from Constant Contact" : tab === 'files' ? "Shared document and asset repository" : "Concert series data from Wix Events"}</p>
+          <h1>{tab === 'email' ? <><i className="fas fa-envelope" style={{ marginRight: '0.5rem', color: '#1B8BEB' }}></i> Email Marketing</> : tab === 'files' ? <><i className="fas fa-folder-open" style={{ marginRight: '0.5rem', color: '#D97706' }}></i> Files</> : tab === 'staff' ? <><i className="fas fa-hard-hat" style={{ marginRight: '0.5rem', color: '#7C3AED' }}></i> Staff &amp; Contractors</> : "Rockin' on the River"}</h1>
+          <p>{tab === 'email' ? "Campaign analytics from Constant Contact" : tab === 'files' ? "Shared document and asset repository" : tab === 'staff' ? "Manage event staff, assignments, hours, and payroll exports" : "Concert series data from Wix Events"}</p>
         </div>
-        {tab !== 'email' && tab !== 'files' && (
+        {tab !== 'email' && tab !== 'files' && tab !== 'staff' && (
           <div className="admin-header-actions">
             <a
               href="https://www.rockinontheriver.com"
@@ -1100,10 +1131,19 @@ function ROTRContent() {
             const hasTxnData = Object.keys(transactions).length > 0;
 
             // Filter orders by period
+            const now = new Date();
+            const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
             const periodOrders = orders.filter(o => {
               if (financePeriod === 'all') return true;
-              const year = new Date(o.created).getFullYear();
-              return year === parseInt(financePeriod);
+              const created = new Date(o.created);
+              if (financePeriod === '7d') return created >= new Date(Date.now() - 7 * 86400000);
+              if (financePeriod === '30d') return created >= new Date(Date.now() - 30 * 86400000);
+              if (financePeriod === '90d') return created >= new Date(Date.now() - 90 * 86400000);
+              if (financePeriod === 'ytd') return created.getFullYear() === currentYear;
+              if (financePeriod === 'this-month') return created >= thisMonthStart;
+              if (financePeriod === 'last-month') return created >= lastMonthStart && created < thisMonthStart;
+              return created.getFullYear() === parseInt(financePeriod);
             });
 
             // Processing fee: 2.9% + $0.30 (verified exact against Wix payout statements)
@@ -1279,42 +1319,206 @@ function ROTRContent() {
               const url = URL.createObjectURL(blob);
               const link = document.createElement('a');
               link.href = url;
-              const periodLabel = financePeriod === 'all' ? 'All-Time' : financePeriod;
-              link.download = `ROTR-Financial-Report-${periodLabel}.csv`;
+              const csvPeriodLabel = financePeriod === 'all' ? 'All-Time' : financePeriod;
+              link.download = `ROTR-Financial-Report-${csvPeriodLabel}.csv`;
               link.click();
               URL.revokeObjectURL(url);
+            };
+
+            // Period label for display
+            const thisMonthName = thisMonthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            const lastMonthName = lastMonthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            const periodLabel = financePeriod === 'all' ? 'All Time'
+              : financePeriod === 'ytd' ? `${currentYear} Year-to-Date`
+              : financePeriod === '7d' ? 'Past 7 Days'
+              : financePeriod === '30d' ? 'Past 30 Days'
+              : financePeriod === '90d' ? 'Past 90 Days'
+              : financePeriod === 'this-month' ? thisMonthName
+              : financePeriod === 'last-month' ? lastMonthName
+              : financePeriod;
+
+            // AI Summary generator
+            const generateFinanceSummary = async () => {
+              setFinanceSummaryLoading(true);
+              setFinanceSummaryError(null);
+              try {
+                const res = await fetch('/api/admin/finance-summary', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    period: periodLabel,
+                    totals: {
+                      grossRevenue: totalRevenue,
+                      processingFees: totalProcessingFees,
+                      serviceFees: totalServiceFees,
+                      netPayout: totalNetPayout,
+                      totalOrders: periodOrders.length,
+                      paidOrders: paidOrders.length,
+                      freeOrders: freeOrders.length,
+                      totalTickets,
+                      avgOrderValue,
+                    },
+                    monthly: monthlyData,
+                    events: eventRevenue,
+                    paymentMethods,
+                    hasTxnData,
+                  }),
+                });
+                if (!res.ok) throw new Error('Failed to generate summary');
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                setFinanceSummary(data);
+              } catch (err) {
+                setFinanceSummaryError(err instanceof Error ? err.message : 'Failed to generate summary');
+              } finally {
+                setFinanceSummaryLoading(false);
+              }
+            };
+
+            // PDF export
+            const exportFinancePdf = async () => {
+              setFinancePdfLoading(true);
+              try {
+                await generateFinancePdf({
+                  periodLabel,
+                  summary: financeSummary,
+                  totals: {
+                    grossRevenue: totalRevenue,
+                    processingFees: totalProcessingFees,
+                    serviceFees: totalServiceFees,
+                    netPayout: totalNetPayout,
+                    totalOrders: periodOrders.length,
+                    paidOrders: paidOrders.length,
+                    freeOrders: freeOrders.length,
+                    totalTickets,
+                    avgOrderValue,
+                  },
+                  monthly: monthlyData,
+                  events: eventRevenue,
+                  paymentMethods,
+                  hasTxnData,
+                });
+              } catch (err) {
+                console.error('PDF export error:', err);
+              } finally {
+                setFinancePdfLoading(false);
+              }
             };
 
             return (
               <>
                 {/* Period Filter + Actions */}
                 <div className="rotr-finance-toolbar">
-                  <select
-                    value={financePeriod}
-                    onChange={e => setFinancePeriod(e.target.value)}
-                    className="rotr-filter-select"
-                  >
-                    <option value="all">All Time</option>
-                    {orderYears.map(y => (
-                      <option key={y} value={String(y)}>
-                        {y}{y === currentYear ? ' (Current)' : ''}
-                      </option>
+                  <div className="rotr-finance-periods">
+                    {(['this-month', 'last-month', '90d', 'ytd'] as const).map(p => (
+                      <button
+                        key={p}
+                        className={`rotr-analytics-period-btn ${financePeriod === p ? 'active' : ''}`}
+                        onClick={() => setFinancePeriod(p)}
+                      >
+                        {p === 'ytd' ? 'YTD' : p === 'this-month' ? 'This Month' : p === 'last-month' ? 'Last Month' : p}
+                      </button>
                     ))}
-                  </select>
+                    <select
+                      value={['this-month', 'last-month', '90d', 'ytd'].includes(financePeriod) ? '' : financePeriod}
+                      onChange={e => setFinancePeriod(e.target.value)}
+                      className="rotr-filter-select"
+                      style={{ marginLeft: '0.5rem' }}
+                    >
+                      <option value="" disabled>More...</option>
+                      <option value="7d">Past 7 Days</option>
+                      <option value="30d">Past 30 Days</option>
+                      <option value="all">All Time</option>
+                      {orderYears.map(y => (
+                        <option key={y} value={String(y)}>
+                          {y}{y === currentYear ? ' (Current)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="rotr-finance-actions">
                     <button onClick={downloadCSV} className="admin-btn admin-btn-secondary">
-                      <i className="fas fa-download"></i> Download CSV
-                    </button>
-                    <button onClick={() => window.print()} className="admin-btn admin-btn-secondary">
-                      <i className="fas fa-print"></i> Print Report
+                      <i className="fas fa-download"></i> CSV
                     </button>
                   </div>
+                </div>
+
+                {/* AI Financial Summary */}
+                <div className="ua-ai-summary-card">
+                  <div className="ua-ai-summary-header">
+                    <div className="ua-ai-summary-title">
+                      <i className="fas fa-robot"></i> AI Financial Summary
+                    </div>
+                    <div className="ua-ai-header-actions">
+                      {financeSummary && !financeSummaryLoading && (
+                        <button className="admin-btn admin-btn-secondary ua-ai-btn" onClick={exportFinancePdf} disabled={financePdfLoading}>
+                          <i className={`fas fa-${financePdfLoading ? 'spinner fa-spin' : 'file-pdf'}`}></i>
+                          {financePdfLoading ? 'Generating...' : 'Export PDF'}
+                        </button>
+                      )}
+                      {!financeSummaryLoading && (
+                        <button className="admin-btn admin-btn-secondary ua-ai-btn" onClick={generateFinanceSummary} disabled={ordersLoading || txnLoading}>
+                          <i className={`fas fa-${financeSummary ? 'sync-alt' : 'magic'}`}></i>
+                          {financeSummary ? 'Refresh' : 'Generate Summary'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {financeSummaryLoading && (
+                    <div className="ua-ai-loading">
+                      <i className="fas fa-spinner fa-spin"></i>
+                      <span>Analyzing financial data for {periodLabel}...</span>
+                    </div>
+                  )}
+
+                  {financeSummaryError && !financeSummaryLoading && (
+                    <div className="ua-ai-error">
+                      <i className="fas fa-exclamation-triangle"></i> {financeSummaryError}
+                    </div>
+                  )}
+
+                  {financeSummary && !financeSummaryLoading && (
+                    <div className="ua-ai-content">
+                      {financeSummary.trend && (
+                        <span className={`ua-ai-trend-badge ua-ai-trend-${financeSummary.trend}`}>
+                          <i className={`fas fa-arrow-${financeSummary.trend === 'positive' ? 'up' : financeSummary.trend === 'declining' ? 'down' : 'right'}`}></i>
+                          {financeSummary.trend.charAt(0).toUpperCase() + financeSummary.trend.slice(1)} Trend
+                        </span>
+                      )}
+                      <div className="ua-ai-summary-text">
+                        {financeSummary.summary.split(/\n\n|\n/).filter(p => p.trim()).map((p, i) => (
+                          <p key={i}>{p}</p>
+                        ))}
+                      </div>
+                      {financeSummary.highlights.length > 0 && (
+                        <div className="ua-ai-highlights">
+                          <div className="ua-ai-highlights-title">Key Highlights</div>
+                          <ul>
+                            {financeSummary.highlights.map((h, i) => (
+                              <li key={i}>{h}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      <div className="ua-ai-footer">
+                        <i className="fas fa-info-circle"></i>
+                        AI-generated financial summary for {periodLabel} &middot; {new Date(financeSummary.generatedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                      </div>
+                    </div>
+                  )}
+
+                  {!financeSummary && !financeSummaryLoading && !financeSummaryError && (
+                    <p className="ua-ai-placeholder">
+                      Click &ldquo;Generate Summary&rdquo; for an AI-powered financial analysis of your {periodLabel} data — including fee reconciliation, revenue trends, and accountant-ready insights.
+                    </p>
+                  )}
                 </div>
 
                 {/* Print-only header */}
                 <div className="rotr-print-header">
                   <h2>Rockin&apos; on the River — Financial Report</h2>
-                  <p>{financePeriod === 'all' ? 'All Time' : financePeriod} &bull; Generated {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                  <p>{periodLabel} &bull; Generated {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
                 </div>
 
                 {/* Summary Cards */}
@@ -1554,18 +1758,29 @@ function ROTRContent() {
       {/* === ANALYTICS TAB === */}
       {tab === 'analytics' && (
         <div>
-          {/* Period Selector */}
-          <div className="rotr-analytics-toolbar">
-            <div className="rotr-analytics-periods">
-              {[7, 14, 30, 60].map(d => (
+          {/* Period Filter + Date Range */}
+          <div className="rotr-finance-toolbar">
+            <div className="rotr-finance-periods">
+              {(['this-month', 'last-month', '30', 'ytd'] as const).map(p => (
                 <button
-                  key={d}
-                  className={`rotr-analytics-period-btn ${analyticsDays === d ? 'active' : ''}`}
-                  onClick={() => setAnalyticsDays(d)}
+                  key={p}
+                  className={`rotr-analytics-period-btn ${analyticsPeriod === p ? 'active' : ''}`}
+                  onClick={() => setAnalyticsPeriod(p)}
                 >
-                  {d}d
+                  {p === 'this-month' ? 'This Month' : p === 'last-month' ? 'Last Month' : p === 'ytd' ? 'YTD' : `${p}d`}
                 </button>
               ))}
+              <select
+                value={['this-month', 'last-month', '30', 'ytd'].includes(analyticsPeriod) ? '' : analyticsPeriod}
+                onChange={e => setAnalyticsPeriod(e.target.value)}
+                className="rotr-filter-select"
+                style={{ marginLeft: '0.5rem' }}
+              >
+                <option value="" disabled>More...</option>
+                <option value="7">Past 7 Days</option>
+                <option value="14">Past 14 Days</option>
+                <option value="60">Past 60 Days</option>
+              </select>
             </div>
             <span className="rotr-analytics-range">
               {analyticsData?.period
@@ -1671,7 +1886,7 @@ function ROTRContent() {
 
                 {previousMetrics && (
                   <p className="rotr-analytics-compare-note">
-                    <i className="fas fa-info-circle"></i> Compared to previous {analyticsDays} days
+                    <i className="fas fa-info-circle"></i> Compared to previous {analyticsData?.period.days || 30} days
                   </p>
                 )}
 
@@ -1776,7 +1991,13 @@ function ROTRContent() {
 
                 <div className="rotr-analytics-note">
                   <i className="fas fa-info-circle"></i>
-                  Data from Wix Analytics. Limited to 62 days lookback. Visitors who decline cookies are not tracked.
+                  <strong>Data source:</strong> Wix Analytics &middot; Max 62-day lookback
+                  {(analyticsPeriod === 'ytd' || analyticsPeriod === '60') && (
+                    <span> &middot; <em>Periods beyond 62 days are capped to the most recent 62 days of web data</em></span>
+                  )}
+                  {analyticsPeriod !== 'ytd' && analyticsPeriod !== '60' && (
+                    <span> &middot; Visitors who decline cookies are not tracked</span>
+                  )}
                 </div>
               </>
             );
@@ -1797,6 +2018,12 @@ function ROTRContent() {
       {tab === 'email' && (
         <div>
           <EmailMarketingDashboard context="rotr" />
+        </div>
+      )}
+      {/* === STAFF TAB === */}
+      {tab === 'staff' && (
+        <div>
+          <ROTRStaffManager events={events} />
         </div>
       )}
     </div>

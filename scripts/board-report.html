@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LPFA Digital Platform Report</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@600;700;800;900&display=swap');
+
+  :root {
+    --navy: #0B1F3A;
+    --blue: #1B8BEB;
+    --gold: #D97706;
+    --green: #059669;
+    --purple: #6366F1;
+    --gray-50: #F8FAFC;
+    --gray-100: #F1F5F9;
+    --gray-200: #E2E8F0;
+    --gray-300: #CBD5E1;
+    --gray-400: #94A3B8;
+    --gray-500: #64748B;
+    --gray-600: #475569;
+    --gray-700: #334155;
+    --gray-800: #1E293B;
+    --white: #ffffff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--gray-800);
+    line-height: 1.6;
+    font-size: 10pt;
+  }
+
+  h1, h2, h3, h4, h5 {
+    font-family: 'Montserrat', sans-serif;
+    color: var(--navy);
+    line-height: 1.2;
+  }
+
+  /* Page break control */
+  .page-break { page-break-after: always; }
+  .no-break { page-break-inside: avoid; }
+  h2, h3, h4 { page-break-after: avoid; }
+  .section-block { page-break-inside: avoid; }
+
+  /* ===== COVER PAGE ===== */
+  .cover {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(135deg, var(--navy) 0%, #142d4f 60%, var(--blue) 100%);
+    color: white;
+    padding: 3rem;
+    margin: -0.6in -0.7in -0.8in -0.7in;
+    position: relative;
+  }
+
+  .cover-logo {
+    width: 100px;
+    height: 100px;
+    background: rgba(255,255,255,0.12);
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    font-weight: 900;
+    font-family: 'Montserrat', sans-serif;
+    margin-bottom: 2rem;
+    letter-spacing: -1px;
+  }
+
+  .cover h1 {
+    font-size: 32pt;
+    font-weight: 900;
+    color: white;
+    margin-bottom: 0.5rem;
+    letter-spacing: -1px;
+  }
+
+  .cover .subtitle {
+    font-size: 14pt;
+    font-weight: 300;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 2.5rem;
+    max-width: 500px;
+  }
+
+  .cover-divider {
+    width: 60px;
+    height: 3px;
+    background: var(--gold);
+    margin-bottom: 2.5rem;
+    border-radius: 2px;
+  }
+
+  .cover-meta {
+    font-size: 9pt;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.8;
+  }
+
+  .cover-badge {
+    display: inline-block;
+    background: rgba(217,119,6,0.2);
+    border: 1px solid rgba(217,119,6,0.4);
+    color: #FCD34D;
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 0.4rem 1.2rem;
+    border-radius: 20px;
+    margin-bottom: 1.5rem;
+  }
+
+  /* ===== SECTION STYLES ===== */
+  .section {
+    margin-bottom: 1.5rem;
+  }
+
+  .section-title {
+    font-size: 18pt;
+    font-weight: 800;
+    margin-bottom: 0.25rem;
+    color: var(--navy);
+  }
+
+  .section-label {
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--blue);
+    margin-bottom: 0.3rem;
+  }
+
+  .section-desc {
+    font-size: 10pt;
+    color: var(--gray-500);
+    margin-bottom: 1.25rem;
+    max-width: 600px;
+  }
+
+  /* ===== EXECUTIVE SUMMARY ===== */
+  .exec-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .exec-stat {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    page-break-inside: avoid;
+  }
+
+  .exec-stat .num {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 22pt;
+    font-weight: 800;
+    color: var(--navy);
+    display: block;
+    line-height: 1;
+    margin-bottom: 0.15rem;
+  }
+
+  .exec-stat .lbl {
+    font-size: 8.5pt;
+    color: var(--gray-500);
+    font-weight: 500;
+  }
+
+  .exec-stat.highlight {
+    background: linear-gradient(135deg, var(--navy) 0%, #142d4f 100%);
+    border-color: transparent;
+  }
+
+  .exec-stat.highlight .num { color: var(--gold); }
+  .exec-stat.highlight .lbl { color: rgba(255,255,255,0.7); }
+
+  /* ===== FEATURE CARDS ===== */
+  .feature-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 1rem 1.15rem;
+    margin-bottom: 0.6rem;
+    page-break-inside: avoid;
+  }
+
+  .feature-card h4 {
+    font-size: 10.5pt;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+
+  .feature-card p {
+    font-size: 9pt;
+    color: var(--gray-600);
+    line-height: 1.5;
+  }
+
+  .feature-icon {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    text-align: center;
+    line-height: 28px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+  }
+
+  .feature-card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.35rem;
+  }
+
+  /* ===== TWO COLUMN ===== */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+
+  .three-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.6rem;
+  }
+
+  /* ===== INTEGRATION TABLE ===== */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+    margin-bottom: 1rem;
+  }
+
+  thead th {
+    background: var(--navy);
+    color: white;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.5rem 0.65rem;
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  thead th:first-child { border-radius: 6px 0 0 0; }
+  thead th:last-child { border-radius: 0 6px 0 0; }
+
+  tbody td {
+    padding: 0.45rem 0.65rem;
+    border-bottom: 1px solid var(--gray-200);
+    vertical-align: top;
+  }
+
+  tbody tr:nth-child(even) td { background: var(--gray-50); }
+
+  .badge {
+    display: inline-block;
+    font-size: 7.5pt;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .badge-blue { background: rgba(27,139,235,0.12); color: var(--blue); }
+  .badge-green { background: rgba(5,150,105,0.12); color: var(--green); }
+  .badge-gold { background: rgba(217,119,6,0.12); color: var(--gold); }
+  .badge-purple { background: rgba(99,102,241,0.12); color: var(--purple); }
+  .badge-navy { background: rgba(11,31,58,0.1); color: var(--navy); }
+
+  /* ===== PRICING TABLE ===== */
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .pricing-card {
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 1.1rem;
+    text-align: center;
+    page-break-inside: avoid;
+    position: relative;
+  }
+
+  .pricing-card.featured {
+    border-color: var(--blue);
+    border-width: 2px;
+    background: rgba(27,139,235,0.03);
+  }
+
+  .pricing-card .tier {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--gray-400);
+    margin-bottom: 0.5rem;
+  }
+
+  .pricing-card .price {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 18pt;
+    font-weight: 800;
+    color: var(--navy);
+    margin-bottom: 0.15rem;
+  }
+
+  .pricing-card .price-sub {
+    font-size: 8pt;
+    color: var(--gray-400);
+    margin-bottom: 0.75rem;
+  }
+
+  .pricing-card .detail {
+    font-size: 8.5pt;
+    color: var(--gray-600);
+    text-align: left;
+    line-height: 1.6;
+  }
+
+  .pricing-card .detail li {
+    margin-bottom: 0.2rem;
+    list-style: none;
+    padding-left: 1rem;
+    position: relative;
+  }
+
+  .pricing-card .detail li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: var(--blue);
+    font-weight: bold;
+  }
+
+  .pricing-featured-label {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--blue);
+    color: white;
+    font-size: 7pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 0.2rem 0.8rem;
+    border-radius: 10px;
+  }
+
+  /* ===== CALLOUT BOX ===== */
+  .callout {
+    background: linear-gradient(135deg, var(--navy) 0%, #142d4f 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin: 1rem 0;
+    page-break-inside: avoid;
+  }
+
+  .callout h3 {
+    color: var(--gold);
+    font-size: 12pt;
+    margin-bottom: 0.35rem;
+  }
+
+  .callout p {
+    font-size: 9.5pt;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.6;
+  }
+
+  /* ===== ARCHITECTURE DIAGRAM ===== */
+  .arch-diagram {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin: 1rem 0;
+    page-break-inside: avoid;
+  }
+
+  .arch-layer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .arch-label {
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--gray-400);
+    width: 80px;
+    flex-shrink: 0;
+  }
+
+  .arch-boxes {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+
+  .arch-box {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 5px;
+    padding: 0.3rem 0.6rem;
+    font-size: 7.5pt;
+    font-weight: 500;
+    color: var(--gray-700);
+  }
+
+  .arch-box.primary { background: var(--navy); color: white; border-color: var(--navy); }
+  .arch-box.blue { background: rgba(27,139,235,0.1); border-color: rgba(27,139,235,0.3); color: var(--blue); }
+  .arch-box.gold { background: rgba(217,119,6,0.1); border-color: rgba(217,119,6,0.3); color: var(--gold); }
+  .arch-box.green { background: rgba(5,150,105,0.1); border-color: rgba(5,150,105,0.3); color: var(--green); }
+
+  .arch-arrow {
+    text-align: center;
+    color: var(--gray-300);
+    font-size: 10pt;
+    margin: 0.15rem 0;
+  }
+
+  /* ===== LIST ===== */
+  .check-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .check-list li {
+    padding: 0.25rem 0;
+    padding-left: 1.2rem;
+    position: relative;
+    font-size: 9pt;
+    color: var(--gray-600);
+  }
+
+  .check-list li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--green);
+    font-weight: 700;
+  }
+
+  /* ===== HR ===== */
+  hr {
+    border: none;
+    border-top: 1px solid var(--gray-200);
+    margin: 1.25rem 0;
+  }
+
+  .hr-gold {
+    border-top: 2px solid var(--gold);
+    width: 40px;
+    margin: 0.75rem 0;
+  }
+
+  /* ===== TOC ===== */
+  .toc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0.4rem 0;
+    border-bottom: 1px dotted var(--gray-200);
+    font-size: 10pt;
+  }
+
+  .toc-item .toc-label {
+    font-weight: 600;
+    color: var(--navy);
+  }
+
+  .toc-item .toc-num {
+    font-weight: 500;
+    color: var(--gray-400);
+    font-size: 9pt;
+  }
+
+  .toc-item.sub {
+    padding-left: 1.25rem;
+    font-size: 9pt;
+  }
+
+  .toc-item.sub .toc-label {
+    font-weight: 500;
+    color: var(--gray-600);
+  }
+
+  .small-note {
+    font-size: 8pt;
+    color: var(--gray-400);
+    font-style: italic;
+  }
+
+  /* Admin feature list compact */
+  .admin-feature {
+    page-break-inside: avoid;
+    margin-bottom: 0.6rem;
+  }
+
+  .admin-feature h4 {
+    font-size: 10pt;
+    margin-bottom: 0.15rem;
+  }
+
+  .admin-feature p {
+    font-size: 8.5pt;
+    color: var(--gray-500);
+    line-height: 1.45;
+  }
+
+  .inline-badge {
+    display: inline-block;
+    font-size: 7pt;
+    font-weight: 600;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    vertical-align: middle;
+    margin-left: 0.3rem;
+  }
+</style>
+</head>
+<body>
+
+<!-- ======================================================= -->
+<!-- COVER PAGE -->
+<!-- ======================================================= -->
+<div class="cover">
+  <div class="cover-badge">Board Presentation</div>
+  <div class="cover-logo">LPFA</div>
+  <h1>Digital Platform<br>Overview</h1>
+  <p class="subtitle">A comprehensive report on the lorainport.com website, integrated admin portal, and technology infrastructure</p>
+  <div class="cover-divider"></div>
+  <div class="cover-meta">
+    Lorain Port &amp; Finance Authority<br>
+    319 Black River Lane, Lorain, OH 44052<br><br>
+    Prepared March 2026 &bull; Confidential
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- ======================================================= -->
+<!-- TABLE OF CONTENTS -->
+<!-- ======================================================= -->
+<div class="section">
+  <div class="section-label">Contents</div>
+  <h2 class="section-title">Table of Contents</h2>
+  <hr class="hr-gold">
+  <div style="margin-top: 1rem;">
+    <div class="toc-item"><span class="toc-label">1. Executive Summary</span><span class="toc-num">3</span></div>
+    <div class="toc-item"><span class="toc-label">2. Platform Architecture</span><span class="toc-num">4</span></div>
+    <div class="toc-item sub"><span class="toc-label">Technology Stack</span></div>
+    <div class="toc-item sub"><span class="toc-label">System Architecture Diagram</span></div>
+    <div class="toc-item"><span class="toc-label">3. Public Website Features</span><span class="toc-num">5</span></div>
+    <div class="toc-item sub"><span class="toc-label">22 Public Pages &amp; Capabilities</span></div>
+    <div class="toc-item"><span class="toc-label">4. Admin Portal — LPFA Management Hub</span><span class="toc-num">7</span></div>
+    <div class="toc-item sub"><span class="toc-label">11 Admin Modules</span></div>
+    <div class="toc-item"><span class="toc-label">5. Admin Portal — Rockin' on the River</span><span class="toc-num">9</span></div>
+    <div class="toc-item sub"><span class="toc-label">Wix Integration &amp; Event Analytics</span></div>
+    <div class="toc-item"><span class="toc-label">6. API Integrations &amp; Data Sources</span><span class="toc-num">10</span></div>
+    <div class="toc-item"><span class="toc-label">7. Automated Systems &amp; Cron Jobs</span><span class="toc-num">11</span></div>
+    <div class="toc-item"><span class="toc-label">8. Market Value Analysis</span><span class="toc-num">12</span></div>
+    <div class="toc-item sub"><span class="toc-label">Pricing Comparisons &amp; Cost Savings</span></div>
+    <div class="toc-item"><span class="toc-label">9. Ongoing Costs &amp; Sustainability</span><span class="toc-num">14</span></div>
+    <div class="toc-item"><span class="toc-label">10. Summary &amp; Recommendations</span><span class="toc-num">15</span></div>
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- ======================================================= -->
+<!-- 1. EXECUTIVE SUMMARY -->
+<!-- ======================================================= -->
+<div class="section">
+  <div class="section-label">Section 1</div>
+  <h2 class="section-title">Executive Summary</h2>
+  <hr class="hr-gold">
+  <p style="margin: 0.75rem 0 1rem; font-size: 10pt; color: var(--gray-600); line-height: 1.7;">
+    The Lorain Port &amp; Finance Authority has deployed a custom-built digital platform at <strong>lorainport.com</strong> that serves as both the public face of the organization and a centralized management hub for all LPFA operations. Unlike off-the-shelf website builders, this platform integrates real-time maritime data, automated event and tour synchronization, vessel traffic monitoring, dual-brand administration (LPFA + Rockin' on the River), and a full content management system — all within a single, unified portal.
+  </p>
+
+  <div class="exec-grid">
+    <div class="exec-stat">
+      <span class="num">22</span>
+      <span class="lbl">Public-Facing Pages</span>
+    </div>
+    <div class="exec-stat">
+      <span class="num">11</span>
+      <span class="lbl">Admin Management Modules</span>
+    </div>
+    <div class="exec-stat">
+      <span class="num">18</span>
+      <span class="lbl">API Routes &amp; Endpoints</span>
+    </div>
+    <div class="exec-stat">
+      <span class="num">9</span>
+      <span class="lbl">External Service Integrations</span>
+    </div>
+    <div class="exec-stat">
+      <span class="num">4</span>
+      <span class="lbl">Automated Background Jobs</span>
+    </div>
+    <div class="exec-stat">
+      <span class="num">30+</span>
+      <span class="lbl">Custom UI Components</span>
+    </div>
+    <div class="exec-stat highlight">
+      <span class="num">2</span>
+      <span class="lbl">Organizations Managed (LPFA + ROTR)</span>
+    </div>
+    <div class="exec-stat highlight">
+      <span class="num">$0</span>
+      <span class="lbl">Monthly CMS/Software License Fees</span>
+    </div>
+  </div>
+
+  <div class="callout">
+    <h3>Key Differentiator: Dual-Brand Hub</h3>
+    <p>This platform uniquely manages <strong>two distinct organizations</strong> from a single admin portal. The LPFA side handles port operations, development, events, and public services. The Rockin' on the River side provides a complete event management dashboard with Wix-integrated ticket sales, customer data, inbox, and financial analytics — all accessible to authorized administrators without leaving the platform.</p>
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- ======================================================= -->
+<!-- 2. PLATFORM ARCHITECTURE -->
+<!-- ======================================================= -->
+<div class="section">
+  <div class="section-label">Section 2</div>
+  <h2 class="section-title">Platform Architecture</h2>
+  <hr class="hr-gold">
+
+  <p style="margin-bottom: 1rem; font-size: 9.5pt; color: var(--gray-600);">
+    The platform is built on a modern, enterprise-grade technology stack optimized for performance, security, and scalability.
+  </p>
+
+  <div class="two-col" style="margin-bottom: 1rem;">
+    <div class="feature-card">
+      <h4>Frontend Framework</h4>
+      <p><strong>Next.js 15</strong> (App Router) with TypeScript. Server-side rendering, static generation, and incremental revalidation for optimal performance and SEO.</p>
+    </div>
+    <div class="feature-card">
+      <h4>Database &amp; Auth</h4>
+      <p><strong>Supabase</strong> — PostgreSQL database with Row-Level Security (RLS), JWT authentication, role-based admin access (super_admin, admin).</p>
+    </div>
+    <div class="feature-card">
+      <h4>Hosting &amp; Deployment</h4>
+      <p><strong>Vercel</strong> — Global CDN, automatic Git deployments, serverless functions, cron job scheduling, and zero-downtime deploys.</p>
+    </div>
+    <div class="feature-card">
+      <h4>Design System</h4>
+      <p>Custom CSS with variables, responsive breakpoints, dark mode support, scroll animations, and consistent typography (Montserrat + Inter).</p>
+    </div>
+  </div>
+
+  <h3 style="font-size: 11pt; margin-bottom: 0.5rem;">System Architecture</h3>
+
+  <div class="arch-diagram">
+    <div class="arch-layer">
+      <div class="arch-label">Users</div>
+      <div class="arch-boxes">
+        <div class="arch-box primary">Public Website</div>
+        <div class="arch-box primary">Admin Portal (LPFA)</div>
+        <div class="arch-box primary">Admin Portal (ROTR)</div>
+      </div>
+    </div>
+    <div class="arch-arrow">▼</div>
+    <div class="arch-layer">
+      <div class="arch-label">Frontend</div>
+      <div class="arch-boxes">
+        <div class="arch-box blue">Next.js App Router</div>
+        <div class="arch-box blue">React Components</div>
+        <div class="arch-box blue">TypeScript</div>
+        <div class="arch-box blue">CSS Design System</div>
+      </div>
+    </div>
+    <div class="arch-arrow">▼</div>
+    <div class="arch-layer">
+      <div class="arch-label">API Layer</div>
+      <div class="arch-boxes">
+        <div class="arch-box gold">18 API Routes</div>
+        <div class="arch-box gold">Auth Middleware</div>
+        <div class="arch-box gold">ISR Caching</div>
+        <div class="arch-box gold">Cron Jobs</div>
+      </div>
+    </div>
+    <div class="arch-arrow">▼</div>
+    <div class="arch-layer">
+      <div class="arch-label">Data</div>
+      <div class="arch-boxes">
+        <div class="arch-box green">Supabase (15+ tables)</div>
+        <div class="arch-box green">Supabase Storage</div>
+        <div class="arch-box green">Supabase Auth</div>
+      </div>
+    </div>
+    <div class="arch-arrow">▼</div>
+    <div class="arch-layer">
+      <div class="arch-label">External</div>
+      <div class="arch-boxes">
+        <div class="arch-box">NWS/NOAA</div>
+        <div class="arch-box">NDBC Buoy</div>
+        <div class="arch-box">AISSTREAM</div>
+        <div class="arch-box">Wix</div>
+        <div class="arch-box">PeekPro</div>
+        <div class="arch-box">Formspree</div>
+        <div class="arch-box">USGS</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- ======================================================= -->
+<!-- 3. PUBLIC WEBSITE FEATURES -->
+<!-- ======================================================= -->
+<div class="section">
+  <div class="section-label">Section 3</div>
+  <h2 class="section-title">Public Website Features</h2>
+  <hr class="hr-gold">
+  <p class="section-desc">22 public-facing pages delivering comprehensive information about LPFA services, facilities, events, marine conditions, and development opportunities.</p>
+
+  <h3 style="font-size: 11pt; margin-bottom: 0.5rem;">Core Pages</h3>
+  <div class="two-col">
+    <div class="section-block">
+      <div class="feature-card">
+        <div class="feature-card-header">
+          <div class="feature-icon" style="background:rgba(27,139,235,0.1);color:var(--blue);">⌂</div>
+          <h4>Homepage</h4>
+        </div>
+        <p>Video hero, development highlights, upcoming events carousel, live cam embeds, and newsletter signup. Auto-refreshes every 60 seconds.</p>
+      </div>
+    </div>
+    <div class="section-block">
+      <div class="feature-card">
+        <div class="feature-card-header">
+          <div class="feature-icon" style="background:rgba(5,150,105,0.1);color:var(--green);">⚓</div>
+          <h4>Marine &amp; Alerts</h4>
+        </div>
+        <p>6-tab dashboard with NWS alerts, marine text forecasts, hourly conditions, marine zones, NDBC buoy data (45005), and beach water quality. Real-time data, 30-min cache.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col" style="margin-top: 0.6rem;">
+    <div class="section-block">
+      <div class="feature-card">
+        <div class="feature-card-header">
+          <div class="feature-icon" style="background:rgba(217,119,6,0.1);color:var(--gold);">📅</div>
+          <h4>Events &amp; Boat Tours</h4>
+        </div>
+        <p>Dynamic event grid with category filters, featured event banners, water taxi schedules, private charter info, and PeekPro-synced tour availability.</p>
+      </div>
+    </div>
+    <div class="section-block">
+      <div class="feature-card">
+        <div class="feature-card-header">
+          <div class="feature-icon" style="background:rgba(99,102,241,0.1);color:var(--purple);">🏗</div>
+          <h4>Development &amp; Finance</h4>
+        </div>
+        <p>Tabbed interface: RFPs &amp; Bids (dynamic from admin), Financing ($144M+ in bonds), Brownfields remediation, and Waterborne Commerce.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-size: 11pt; margin: 1rem 0 0.5rem;">Information &amp; Services Pages</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Page</th>
+        <th>Key Features</th>
+        <th>Data Source</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>About Us</strong></td>
+        <td>Mission, history timeline, overview</td>
+        <td>Static</td>
+      </tr>
+      <tr>
+        <td><strong>Staff Directory</strong></td>
+        <td>Team members with photos, titles, contact info</td>
+        <td>Supabase (dynamic)</td>
+      </tr>
+      <tr>
+        <td><strong>Board of Directors</strong></td>
+        <td>Governance team with photos and bios</td>
+        <td>Supabase (dynamic)</td>
+      </tr>
+      <tr>
+        <td><strong>Meeting Minutes</strong></td>
+        <td>Agendas, minutes, resolutions, board packets with pagination</td>
+        <td>Supabase (dynamic)</td>
+      </tr>
+      <tr>
+        <td><strong>Facilities</strong></td>
+        <td>5 facilities with sticky jump nav: BRL, Mile-Long Pier, Lakeside Landing, Boat Launch, Riverside Park</td>
+        <td>Static</td>
+      </tr>
+      <tr>
+        <td><strong>News</strong></td>
+        <td>News articles grid with category filtering</td>
+        <td>Supabase (dynamic)</td>
+      </tr>
+      <tr>
+        <td><strong>Live Cams</strong></td>
+        <td>2 YouTube live streams (Lake Erie &amp; Black River)</td>
+        <td>YouTube embeds</td>
+      </tr>
+      <tr>
+        <td><strong>July 4th Fireworks</strong></td>
+        <td>Tabbed YouTube recordings from 2022–2025</td>
+        <td>YouTube embeds</td>
+      </tr>
+      <tr>
+        <td><strong>Stage Project (Donate)</strong></td>
+        <td>BRL green room/storage project, $9.14M/$11.9M progress bar, naming opportunities</td>
+        <td>Static</td>
+      </tr>
+      <tr>
+        <td><strong>Brownfields</strong></td>
+        <td>EPA grants, 5 completed remediation projects, partner agencies</td>
+        <td>Static</td>
+      </tr>
+      <tr>
+        <td><strong>Financing</strong></td>
+        <td>4 programs, PACE loans, 22 financed projects table ($144M total)</td>
+        <td>Static</td>
+      </tr>
+      <tr>
+        <td><strong>Waterborne Commerce</strong></td>
+        <td>Port operations, dike disposal, terminal shipping, Foreign Trade Zone</td>
+        <td>Static</td>
+      </tr>
+      <tr>
+        <td><strong>Contact Us</strong></td>
+        <td>Contact form, office hours, FAQ accordion, Google Maps</td>
+        <td>Formspree + Supabase</td>
+      </tr>
+      <tr>
+        <td><strong>Public Records</strong></td>
+        <td>ORC 149.43 request info with downloadable form</td>
+        <td>Static</td>
+      </tr>
+      <tr>
+        <td><strong>Did You Know?</strong></td>
+        <td>3 FAQ sections: General, Events &amp; Vendors, Drone Policy</td>
+        <td>Static</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="section-block">
+    <h3 style="font-size: 11pt; margin-bottom: 0.5rem;">Design &amp; UX Features</h3>
+    <div class="three-col">
+      <div class="feature-card">
+        <h4>Responsive Design</h4>
+        <p>Fully optimized for desktop, tablet, and mobile with custom breakpoints and mobile-specific navigation patterns.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Dark Mode</h4>
+        <p>Complete dark theme with CSS variable system. User preference saved and respected across sessions.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Scroll Animations</h4>
+        <p>Intersection Observer-based fade-in animations for engaging content presentation. Performance-optimized.</p>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- ======================================================= -->
+<!-- 4. ADMIN PORTAL — LPFA -->
+<!-- ======================================================= -->
+<div class="section">
+  <div class="section-label">Section 4</div>
+  <h2 class="section-title">Admin Portal — LPFA Management Hub</h2>
+  <hr class="hr-gold">
+  <p class="section-desc">A full-featured content management system with role-based access, real-time dashboards, and direct database management across 11 modules.</p>
+
+  <div class="section-block">
+    <div class="feature-card" style="background: var(--gray-50);">
+      <h4>Dashboard Overview</h4>
+      <p>Central hub displaying live counts across all content types: News Articles, Events, Boat Tours, Meeting Minutes, Photos, Staff, Board Members, Vessel Traffic, Active RFPs, Inbox messages, and ROTR upcoming shows — all updated in real-time.</p>
+    </div>
+  </div>
+
+  <div class="two-col" style="margin-top: 0.5rem;">
+    <div>
+      <div class="admin-feature">
+        <h4>📰 News Management</h4>
+        <p>Create, edit, publish, and schedule news articles. Rich text editor, image uploads, gallery support, category tagging, and SEO-friendly slugs.</p>
+      </div>
+
+      <div class="admin-feature">
+        <h4>📅 Event Management</h4>
+        <p>Full CRUD with year-based grouping. Auto-sync from Wix. Supports headliner/opener fields, gallery images, featured flags, and ticket URLs.</p>
+      </div>
+
+      <div class="admin-feature">
+        <h4>🚢 Boat Tour Management</h4>
+        <p>Tour catalog with monthly schedule management. Auto-syncs availability from PeekPro (OCTO API). Pricing, duration, booking info, and departure details.</p>
+      </div>
+
+      <div class="admin-feature">
+        <h4>👥 Staff &amp; Board Management</h4>
+        <p>Separate modules for team members and board of directors. Photo uploads, bios, contact info, custom sort ordering, and publish/unpublish controls.</p>
+      </div>
+
+      <div class="admin-feature">
+        <h4>📄 Meeting Minutes</h4>
+        <p>Document management for board materials: agendas, minutes, resolutions, and board packets. PDF upload with date filtering and public display.</p>
+      </div>
+    </div>
+    <div>
+      <div class="admin-feature">
+        <h4>📋 RFPs &amp; Bids</h4>
+        <p>Procurement management with lifecycle tracking: New → Open → Closed → Archived. Rich text descriptions, document upload, deadline tracking. Public display with collapsible detail cards.</p>
+      </div>
+
+      <div class="admin-feature">
+        <h4>🖼 Photo Library</h4>
+        <p>Centralized image management with tagging. Photo picker component for inserting images into articles, events, and tours.</p>
+      </div>
+
+      <div class="admin-feature">
+        <h4>⚓ Vessel Traffic Monitor</h4>
+        <p>Real-time AIS vessel tracking for Lorain harbor. Displays vessel name, MMSI, destination, position, speed, ETA, and time in port. Status: En Route, In Port, Departed, Expired.</p>
+      </div>
+
+      <div class="admin-feature">
+        <h4>📨 Inbox / Contact Leads</h4>
+        <p>All contact form submissions with status workflow: New → Read → Replied → Archived. Subject categorization, newsletter subscription tracking, and bulk actions.</p>
+      </div>
+
+      <div class="admin-feature">
+        <h4>👤 User Management</h4>
+        <p>Admin user provisioning with invitation system. Role-based access: Super Admin (full control) and Admin (content management). Secure password reset flow.</p>
+      </div>
+
+      <div class="admin-feature">
+        <h4>🔔 Unread Badges</h4>
+        <p>Real-time unread message counts displayed on sidebar menu items for both LPFA Inbox and ROTR Inbox. Auto-refreshes to keep admins informed.</p>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- ======================================================= -->
+<!-- 5. ADMIN PORTAL — ROTR -->
+<!-- ======================================================= -->
+<div class="section">
+  <div class="section-label">Section 5</div>
+  <h2 class="section-title">Admin Portal — Rockin' on the River</h2>
+  <hr class="hr-gold">
+  <p class="section-desc">A dedicated management dashboard for the Rockin' on the River concert series, fully integrated with Wix for event, ticket, and customer management.</p>
+
+  <div class="callout">
+    <h3>One Platform, Two Organizations</h3>
+    <p>The ROTR admin panel operates within the same portal as LPFA management. Authorized staff can seamlessly switch between managing port authority operations and concert series administration. This eliminates the need for separate websites, logins, or management tools — reducing cost and complexity.</p>
+  </div>
+
+  <h3 style="font-size: 11pt; margin: 0.75rem 0 0.5rem;">ROTR Dashboard Tabs</h3>
+
+  <div class="two-col">
+    <div class="section-block">
+      <div class="feature-card">
+        <h4>Overview Tab</h4>
+        <p>Summary metrics: total events, upcoming shows, total orders, revenue, and tickets sold. Quick-glance health check of the concert series.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Events Tab</h4>
+        <p>All ROTR events synced from Wix. View event details, dates, venues, ticket tiers, and pricing. Upcoming vs. past event filtering.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Orders Tab</h4>
+        <p>Per-event order details: buyer name, email, ticket quantity, order total, confirmation status. Filterable by event.</p>
+      </div>
+    </div>
+    <div class="section-block">
+      <div class="feature-card">
+        <h4>Customers Tab</h4>
+        <p>Customer database from ticket purchases. Contact information, order history, and engagement tracking.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Inbox Tab</h4>
+        <p>Customer communications via Wix. Thread-based conversations, unread indicators, and "Mark All as Read" bulk action with client-side tracking.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Analytics Tab</h4>
+        <p>Revenue analytics with date range selection, period comparisons, and trend analysis powered by Wix Analytics API.</p>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- ======================================================= -->
+<!-- 6. API INTEGRATIONS -->
+<!-- ======================================================= -->
+<div class="section">
+  <div class="section-label">Section 6</div>
+  <h2 class="section-title">API Integrations &amp; Data Sources</h2>
+  <hr class="hr-gold">
+  <p class="section-desc">The platform connects to 9 external services, processing real-time data from government agencies, booking platforms, event management systems, and maritime monitoring networks.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Integration</th>
+        <th>Purpose</th>
+        <th>Data Flow</th>
+        <th>Update Frequency</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>National Weather Service (NWS)</strong></td>
+        <td>Marine alerts, forecasts, hourly conditions, marine zone text</td>
+        <td>API → Cache → Marine page</td>
+        <td>Every 30 min</td>
+      </tr>
+      <tr>
+        <td><strong>NDBC / NOAA</strong></td>
+        <td>Lake Erie buoy 45005 — wind, waves, temp, pressure</td>
+        <td>API → Cache → Marine page</td>
+        <td>Every 30 min</td>
+      </tr>
+      <tr>
+        <td><strong>USGS Water Quality</strong></td>
+        <td>Beach E. coli monitoring for swim advisories</td>
+        <td>API → Cache → Marine page</td>
+        <td>Every 60 min</td>
+      </tr>
+      <tr>
+        <td><strong>AISSTREAM</strong></td>
+        <td>AIS vessel tracking — real-time ship positions in Lorain harbor</td>
+        <td>WebSocket → Supabase → Admin</td>
+        <td>Cron (scheduled)</td>
+      </tr>
+      <tr>
+        <td><strong>Wix (Events)</strong></td>
+        <td>ROTR concert events, ticket definitions, orders, customer data</td>
+        <td>REST API → Admin dashboard</td>
+        <td>On demand</td>
+      </tr>
+      <tr>
+        <td><strong>Wix (Analytics)</strong></td>
+        <td>Revenue, attendance, and customer analytics for ROTR</td>
+        <td>REST API → Admin analytics</td>
+        <td>On demand</td>
+      </tr>
+      <tr>
+        <td><strong>PeekPro (OCTO API)</strong></td>
+        <td>Boat tour products, pricing, and 90-day availability schedules</td>
+        <td>REST API → Supabase → Public site</td>
+        <td>Daily (6 AM cron)</td>
+      </tr>
+      <tr>
+        <td><strong>Formspree</strong></td>
+        <td>Contact form processing and newsletter signups</td>
+        <td>POST → Formspree + Supabase</td>
+        <td>Real-time</td>
+      </tr>
+      <tr>
+        <td><strong>YouTube</strong></td>
+        <td>Live camera feeds, fireworks recordings, promotional video</td>
+        <td>Iframe embeds</td>
+        <td>Live stream</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ======================================================= -->
+<!-- 7. AUTOMATED SYSTEMS -->
+<!-- ======================================================= -->
+<div class="section">
+  <div class="section-label">Section 7</div>
+  <h2 class="section-title">Automated Systems &amp; Background Jobs</h2>
+  <hr class="hr-gold">
+
+  <p style="margin-bottom: 1rem; font-size: 9.5pt; color: var(--gray-600);">
+    The platform operates several automated processes that run without human intervention, keeping data fresh and reducing administrative overhead.
+  </p>
+
+  <div class="two-col">
+    <div class="section-block">
+      <div class="feature-card">
+        <h4>Vessel Traffic Sync <span class="inline-badge badge-blue">Cron</span></h4>
+        <p>Connects to AISSTREAM via WebSocket, collects AIS data for 45 seconds, upserts vessel positions to database, and marks stale vessels (&gt;48h unseen) as expired. Automated and hands-off.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Boat Tour Availability Sync <span class="inline-badge badge-green">Daily 6AM</span></h4>
+        <p>Pulls product catalog and 90-day availability from PeekPro's OCTO API. Creates or updates tours in database with pricing and monthly schedules. New tours flagged for admin review.</p>
+      </div>
+    </div>
+    <div class="section-block">
+      <div class="feature-card">
+        <h4>Marine Data Refresh <span class="inline-badge badge-gold">ISR 30min</span></h4>
+        <p>Aggregates data from NWS (alerts, forecast, hourly, zones), NDBC buoy, and USGS water quality. Cached via Incremental Static Regeneration for fast page loads with fresh data.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Page Cache Revalidation <span class="inline-badge badge-purple">On Save</span></h4>
+        <p>When admins save content changes, the system automatically revalidates affected public pages via the revalidation API, ensuring visitors see updated content within seconds.</p>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- ======================================================= -->
+<!-- 8. MARKET VALUE ANALYSIS -->
+<!-- ======================================================= -->
+<div class="section">
+  <div class="section-label">Section 8</div>
+  <h2 class="section-title">Market Value Analysis</h2>
+  <hr class="hr-gold">
+  <p class="section-desc">Based on 2025–2026 market research, the following analysis compares what this platform would cost to build across three common engagement models.</p>
+
+  <h3 style="font-size: 11pt; margin-bottom: 0.75rem;">Development Cost Comparison</h3>
+
+  <div class="pricing-grid">
+    <div class="pricing-card">
+      <div class="tier">Large Agency</div>
+      <div class="price">$150K–$300K+</div>
+      <div class="price-sub">16–30 weeks · 5–8 person team</div>
+      <ul class="detail">
+        <li>Dedicated PM, UX/UI designers, 2–3 devs, QA</li>
+        <li>Full discovery &amp; wireframing phase</li>
+        <li>Extensive documentation</li>
+        <li>30–90 day post-launch warranty</li>
+        <li>Hourly rate: $150–$250+/hr</li>
+      </ul>
+    </div>
+    <div class="pricing-card featured">
+      <div class="pricing-featured-label">Closest Comparable</div>
+      <div class="tier">Boutique Firm</div>
+      <div class="price">$50K–$120K</div>
+      <div class="price-sub">12–24 weeks · 2–4 person team</div>
+      <ul class="detail">
+        <li>Senior team, direct communication</li>
+        <li>Less overhead, comparable quality</li>
+        <li>Design + dev often same team</li>
+        <li>More flexible scope management</li>
+        <li>Hourly rate: $75–$150/hr</li>
+      </ul>
+    </div>
+    <div class="pricing-card">
+      <div class="tier">Solo Developer</div>
+      <div class="price">$25K–$60K</div>
+      <div class="price-sub">16–32 weeks · 1 person</div>
+      <ul class="detail">
+        <li>Direct relationship, max flexibility</li>
+        <li>Zero overhead costs</li>
+        <li>Single point of failure risk</li>
+        <li>May need separate design work</li>
+        <li>Hourly rate: $75–$150/hr</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="font-size: 11pt; margin: 0.75rem 0 0.5rem;">Feature-by-Feature Value Breakdown</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Feature / Component</th>
+        <th>Estimated Market Value</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Custom CMS / Admin Portal</strong></td>
+        <td>$15,000 – $30,000</td>
+        <td>11 modules, role-based auth, WYSIWYG editor</td>
+      </tr>
+      <tr>
+        <td><strong>Public Website (22 pages)</strong></td>
+        <td>$12,000 – $25,000</td>
+        <td>Responsive, dark mode, animations, SEO</td>
+      </tr>
+      <tr>
+        <td><strong>Marine Data Dashboard</strong></td>
+        <td>$8,000 – $15,000</td>
+        <td>6-tab interface, 4 API integrations, caching</td>
+      </tr>
+      <tr>
+        <td><strong>ROTR Management Hub</strong></td>
+        <td>$10,000 – $20,000</td>
+        <td>6-tab dashboard, Wix API, analytics</td>
+      </tr>
+      <tr>
+        <td><strong>Vessel Traffic System</strong></td>
+        <td>$8,000 – $15,000</td>
+        <td>AIS WebSocket, real-time tracking, auto-sync</td>
+      </tr>
+      <tr>
+        <td><strong>Event/Tour Management + PeekPro</strong></td>
+        <td>$6,000 – $12,000</td>
+        <td>Auto-sync, schedule management, CRUD</td>
+      </tr>
+      <tr>
+        <td><strong>RFP Management System</strong></td>
+        <td>$3,000 – $6,000</td>
+        <td>Status lifecycle, document upload, public display</td>
+      </tr>
+      <tr>
+        <td><strong>Contact/Inbox System</strong></td>
+        <td>$3,000 – $5,000</td>
+        <td>Form processing, status workflow, dual inbox</td>
+      </tr>
+      <tr>
+        <td><strong>Authentication &amp; User Management</strong></td>
+        <td>$5,000 – $10,000</td>
+        <td>JWT, RLS policies, invitation flow, password reset</td>
+      </tr>
+      <tr>
+        <td><strong>Infrastructure &amp; DevOps</strong></td>
+        <td>$3,000 – $6,000</td>
+        <td>CI/CD, cron jobs, caching, database schema</td>
+      </tr>
+      <tr style="font-weight: bold;">
+        <td><strong>Total Estimated Value</strong></td>
+        <td><strong>$73,000 – $144,000</strong></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <h3>Bottom Line</h3>
+    <p>Based on current market rates, the lorainport.com platform represents <strong>$73,000 to $144,000</strong> in development value. A comparable project from a large marketing agency would likely exceed <strong>$150,000</strong> and take 6–8 months to deliver. The current platform was built efficiently using modern AI-assisted development practices, resulting in significant cost savings while maintaining enterprise-grade quality.</p>
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- ======================================================= -->
+<!-- 8B. ONGOING MAINTENANCE COMPARISON -->
+<!-- ======================================================= -->
+<div class="section">
+  <div class="section-label">Section 8 (continued)</div>
+  <h2 class="section-title">Ongoing Maintenance &amp; Cost Comparison</h2>
+  <hr class="hr-gold">
+
+  <h3 style="font-size: 11pt; margin-bottom: 0.5rem;">Monthly Maintenance Costs by Provider</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Cost Category</th>
+        <th>Large Agency</th>
+        <th>Boutique Firm</th>
+        <th>Solo Developer</th>
+        <th>Current (In-House)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Monthly Retainer</strong></td>
+        <td>$2,000 – $5,000</td>
+        <td>$500 – $2,500</td>
+        <td>$200 – $1,000</td>
+        <td style="color: var(--green); font-weight: 600;">$0</td>
+      </tr>
+      <tr>
+        <td><strong>Hosting (Vercel)</strong></td>
+        <td>$20–$50</td>
+        <td>$20–$50</td>
+        <td>$20–$50</td>
+        <td>$20–$50</td>
+      </tr>
+      <tr>
+        <td><strong>Database (Supabase)</strong></td>
+        <td>$25–$125</td>
+        <td>$25–$125</td>
+        <td>$25–$125</td>
+        <td>$25–$125</td>
+      </tr>
+      <tr>
+        <td><strong>Domain &amp; Email</strong></td>
+        <td>~$5</td>
+        <td>~$5</td>
+        <td>~$5</td>
+        <td>~$5</td>
+      </tr>
+      <tr>
+        <td><strong>CMS License Fees</strong></td>
+        <td>$0–$99</td>
+        <td>$0–$99</td>
+        <td>$0–$99</td>
+        <td style="color: var(--green); font-weight: 600;">$0 (custom built)</td>
+      </tr>
+      <tr style="font-weight: bold; background: var(--gray-50);">
+        <td><strong>Monthly Total</strong></td>
+        <td><strong>$2,070 – $5,280</strong></td>
+        <td><strong>$570 – $2,780</strong></td>
+        <td><strong>$270 – $1,280</strong></td>
+        <td style="color: var(--green);"><strong>$50 – $180</strong></td>
+      </tr>
+      <tr style="font-weight: bold; background: var(--gray-50);">
+        <td><strong>Annual Total</strong></td>
+        <td><strong>$24,840 – $63,360</strong></td>
+        <td><strong>$6,840 – $33,360</strong></td>
+        <td><strong>$3,240 – $15,360</strong></td>
+        <td style="color: var(--green);"><strong>$600 – $2,160</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="section-block">
+    <h3 style="font-size: 11pt; margin: 0.75rem 0 0.5rem;">Current Infrastructure Costs</h3>
+    <div class="feature-card" style="background: var(--gray-50);">
+      <p style="font-size: 9.5pt; line-height: 1.7;">
+        The platform currently operates on a lean infrastructure stack with <strong>no recurring software license fees</strong>. The custom-built CMS eliminates the need for WordPress, Squarespace, or other paid platforms. Vercel's generous free tier covers most usage, and Supabase's free tier includes 500MB storage and 50,000 monthly active users — well within LPFA's needs. Total monthly infrastructure cost is estimated at <strong>$50–$180/month</strong> ($600–$2,160/year), depending on traffic and storage usage.
+      </p>
+    </div>
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- ======================================================= -->
+<!-- 9. ONGOING COSTS & SUSTAINABILITY -->
+<!-- ======================================================= -->
+<div class="section">
+  <div class="section-label">Section 9</div>
+  <h2 class="section-title">Platform Sustainability</h2>
+  <hr class="hr-gold">
+
+  <div class="two-col">
+    <div class="section-block">
+      <div class="feature-card">
+        <h4>Scalability</h4>
+        <p>Built on serverless architecture (Vercel + Supabase), the platform scales automatically with traffic. No server management required. Handles traffic spikes during events like July 4th without manual intervention.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Security</h4>
+        <p>Row-Level Security (RLS) on all database tables. JWT-based authentication. Admin role verification on every protected route. HTTPS everywhere via Vercel. No exposed credentials in client code.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Performance</h4>
+        <p>Global CDN delivery via Vercel. Static pages load in under 1 second. Server-rendered pages with ISR caching. Optimized images and code splitting for fast mobile performance.</p>
+      </div>
+    </div>
+    <div class="section-block">
+      <div class="feature-card">
+        <h4>Maintainability</h4>
+        <p>TypeScript provides type safety and catches errors before deployment. Single CSS file with design system variables ensures visual consistency. Git version control tracks every change.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Content Independence</h4>
+        <p>Staff can update news, events, tours, staff bios, board info, meeting minutes, RFPs, and photos without developer assistance. The admin portal provides full self-service content management.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Vendor Independence</h4>
+        <p>All code is owned by LPFA. No vendor lock-in. The codebase can be maintained by any qualified Next.js developer. Open-source technologies throughout.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- 10. SUMMARY -->
+<!-- ======================================================= -->
+<div class="section" style="margin-top: 1.5rem;">
+  <div class="section-label">Section 10</div>
+  <h2 class="section-title">Summary &amp; Recommendations</h2>
+  <hr class="hr-gold">
+
+  <p style="margin: 0.75rem 0 1rem; font-size: 10pt; color: var(--gray-600); line-height: 1.7;">
+    The lorainport.com platform is not a typical municipal website. It is a custom-built digital operations hub that combines public information delivery, real-time maritime monitoring, event management, dual-organization administration, and automated data processing into a single, cohesive system.
+  </p>
+
+  <div class="callout">
+    <h3>Platform Value Summary</h3>
+    <p style="margin-bottom: 0.5rem;">
+      <strong>Estimated market value:</strong> $73,000 – $144,000 (boutique to agency pricing)<br>
+      <strong>Annual maintenance savings vs. agency:</strong> $24,000 – $61,000/year<br>
+      <strong>Monthly operating cost:</strong> $50 – $180 (infrastructure only)<br>
+      <strong>CMS license fees:</strong> $0 (custom-built, no recurring platform fees)<br>
+      <strong>External integrations:</strong> 9 services, fully automated<br>
+      <strong>Admin self-service:</strong> 11 content management modules
+    </p>
+  </div>
+
+  <h3 style="font-size: 11pt; margin: 0.75rem 0 0.5rem;">Key Takeaways</h3>
+
+  <ul class="check-list">
+    <li><strong>Enterprise-grade platform</strong> built with modern technology (Next.js, TypeScript, Supabase) used by companies like Netflix, Nike, and Uber.</li>
+    <li><strong>Dual-brand management</strong> — LPFA and Rockin' on the River administered from a single portal, eliminating duplicate systems and logins.</li>
+    <li><strong>Real-time data integration</strong> — Marine forecasts, vessel traffic, beach water quality, and event data updated automatically from 9 external sources.</li>
+    <li><strong>Self-service content management</strong> — Staff can independently manage news, events, tours, documents, staff profiles, RFPs, and more without developer intervention.</li>
+    <li><strong>Minimal ongoing costs</strong> — No CMS license fees, no proprietary software subscriptions. Infrastructure runs on free/low-cost tiers of proven platforms.</li>
+    <li><strong>Full code ownership</strong> — LPFA owns 100% of the codebase. No vendor lock-in. Any qualified developer can maintain and extend the platform.</li>
+    <li><strong>Automated operations</strong> — Vessel tracking, tour availability, marine data, and cache management run on autopilot, reducing staff workload.</li>
+    <li><strong>Future-proof architecture</strong> — Built on industry-standard open-source tools with a large developer ecosystem, ensuring long-term supportability.</li>
+  </ul>
+
+  <div style="margin-top: 1.5rem; text-align: center; padding: 1.5rem; border-top: 2px solid var(--gray-200);">
+    <p style="font-size: 9pt; color: var(--gray-400); margin-bottom: 0.25rem;">
+      Lorain Port &amp; Finance Authority
+    </p>
+    <p style="font-size: 8pt; color: var(--gray-300);">
+      319 Black River Lane, Lorain, OH 44052 &bull; 440.204.2269 &bull; info@lorainport.com
+    </p>
+  </div>
+</div>
+
+</body>
+</html>
