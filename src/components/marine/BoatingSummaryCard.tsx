@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface BoatingSummary {
   rating: string;
@@ -13,29 +13,42 @@ interface BoatingSummary {
 
 export default function BoatingSummaryCard() {
   const [data, setData] = useState<BoatingSummary | null>(null);
+  const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
-  useEffect(() => {
+  function generateReport() {
+    setLoading(true);
     fetch('/api/boating-summary')
       .then(r => r.json())
-      .then(setData)
-      .catch(() => {});
-  }, []);
+      .then((d) => { setData(d); setExpanded(true); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }
 
   if (!data) {
     return (
       <div className="boating-summary-card">
-        <div className="boating-summary-toggle boating-summary-loading">
+        <div className="boating-summary-toggle">
           <div className="boating-summary-header">
             <div className="boating-summary-title">
               <i className="fas fa-compass"></i>
               <h2>Today&apos;s Boating Conditions</h2>
             </div>
-            <div className="boating-summary-header-right">
-              <span className="boating-summary-rating-skeleton"></span>
-            </div>
           </div>
-          <p className="boating-summary-preview-skeleton">&nbsp;</p>
+          <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0.25rem 0 0.75rem' }}>
+            Get a real-time conditions report for Lake Erie near Lorain based on current weather, wave, and wind data.
+          </p>
+          <button
+            className="boating-summary-generate-btn"
+            onClick={generateReport}
+            disabled={loading}
+          >
+            {loading ? (
+              <><i className="fas fa-spinner fa-spin"></i> Generating Report...</>
+            ) : (
+              <><i className="fas fa-bolt"></i> Generate Report</>
+            )}
+          </button>
         </div>
       </div>
     );

@@ -237,40 +237,35 @@ function parseMarineText(raw: string): MarineTextPeriod[] {
   return periods;
 }
 
+// --- In-memory cache ---
+let marineCache: { data: MarineData; ts: number } | null = null;
+const MARINE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 // --- Main fetch ---
 
 export async function fetchMarineData(): Promise<MarineData> {
+  if (marineCache && Date.now() - marineCache.ts < MARINE_CACHE_TTL) {
+    return marineCache.data;
+  }
   const headers = { 'User-Agent': NWS_UA };
 
+  function fetchWithTimeout(url: string, opts: RequestInit = {}, ms = 10000): Promise<Response> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), ms);
+    return fetch(url, { ...opts, cache: 'no-store', signal: controller.signal }).finally(() => clearTimeout(timeout));
+  }
+
   const [alertsRes, marineAlertsRes, forecastRes, hourlyRes, marineTextRes, buoyRes, coopsRes] = await Promise.allSettled([
-    fetch('https://api.weather.gov/alerts/active?point=41.4528,-82.1824', {
-      headers,
-      next: { revalidate: 900 },
-    }),
+    fetchWithTimeout('https://api.weather.gov/alerts/active?point=41.4528,-82.1824', { headers }),
     // Marine zone alerts — LEZ144 (Islands–Vermilion), LEZ145 (Vermilion–Avon Point),
     // LEZ146 (Avon Point–Willowick) — three nearshore zones covering Lorain area
-    fetch('https://api.weather.gov/alerts/active?zone=LEZ144,LEZ145,LEZ146', {
-      headers,
-      next: { revalidate: 900 },
-    }),
-    fetch('https://api.weather.gov/gridpoints/CLE/67,61/forecast', {
-      headers,
-      next: { revalidate: 1800 },
-    }),
-    fetch('https://api.weather.gov/gridpoints/CLE/67,61/forecast/hourly', {
-      headers,
-      next: { revalidate: 1800 },
-    }),
-    fetch('https://tgftp.nws.noaa.gov/data/forecasts/marine/near_shore/le/lez145.txt', {
-      next: { revalidate: 1800 },
-    }),
-    fetch('https://www.ndbc.noaa.gov/data/realtime2/45005.txt', {
-      next: { revalidate: 1800 },
-    }),
+    fetchWithTimeout('https://api.weather.gov/alerts/active?zone=LEZ144,LEZ145,LEZ146', { headers }),
+    fetchWithTimeout('https://api.weather.gov/gridpoints/CLE/67,61/forecast', { headers }),
+    fetchWithTimeout('https://api.weather.gov/gridpoints/CLE/67,61/forecast/hourly', { headers }),
+    fetchWithTimeout('https://tgftp.nws.noaa.gov/data/forecasts/marine/near_shore/le/lez145.txt'),
+    fetchWithTimeout('https://www.ndbc.noaa.gov/data/realtime2/45005.txt'),
     // NOAA CO-OPS Cleveland station — year-round nearshore water temp
-    fetch('https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?date=latest&station=9063063&product=water_temperature&units=english&time_zone=lst_ldt&format=json', {
-      next: { revalidate: 1800 },
-    }),
+    fetchWithTimeout('https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?date=latest&station=9063063&product=water_temperature&units=english&time_zone=lst_ldt&format=json'),
   ]);
 
   let alerts: MarineAlert[] = [];
@@ -339,7 +334,7 @@ export async function fetchMarineData(): Promise<MarineData> {
     nearshoreTemp = parseNwsTextWaterTemp(marineText);
   }
 
-  return {
+  const result: MarineData = {
     alerts,
     forecast,
     hourly,
@@ -349,4 +344,7 @@ export async function fetchMarineData(): Promise<MarineData> {
     nearshoreTemp,
     fetchedAt: new Date().toISOString(),
   };
+
+  marineCache = { data: result, ts: Date.now() };
+  return result;
 }

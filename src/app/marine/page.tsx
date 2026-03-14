@@ -7,7 +7,7 @@ import { fetchBeachData } from '@/lib/beach';
 
 export const metadata = { title: 'Marine & Alerts' };
 
-export const revalidate = 1800;
+export const dynamic = 'force-dynamic';
 
 const MOCK_ALERTS = [
   {
@@ -41,9 +41,16 @@ const MOCK_ALERTS = [
 
 export default async function MarinePage({ searchParams }: { searchParams: Promise<{ preview?: string }> }) {
   const params = await searchParams;
+  const emptyMarine = {
+    alerts: [], forecast: [], hourly: [], marineText: null,
+    marineTextPeriods: [], buoy: null, nearshoreTemp: { value: null, source: null, station: '', timestamp: '' },
+    fetchedAt: new Date().toISOString(),
+  };
+  const emptyBeach = { beaches: [], seasonYear: new Date().getFullYear(), isOffSeason: true, fetchedAt: new Date().toISOString() };
+
   const [data, beachData] = await Promise.all([
-    fetchMarineData(),
-    fetchBeachData(),
+    Promise.race([fetchMarineData(), new Promise<typeof emptyMarine>(r => setTimeout(() => r(emptyMarine), 12000))]),
+    Promise.race([fetchBeachData(), new Promise<typeof emptyBeach>(r => setTimeout(() => r(emptyBeach), 12000))]),
   ]);
   const { forecast, hourly, marineText, marineTextPeriods, buoy, fetchedAt } = data;
 

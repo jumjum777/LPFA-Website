@@ -16,5 +16,9 @@ export async function GET() {
     .order('status', { ascending: true })
     .order('first_detected_at', { ascending: false });
 
-  return NextResponse.json({ vessels: vessels || [] });
+  return NextResponse.json({ vessels: vessels || [] }, {
+    headers: {
+      'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+    },
+  });
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useState, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 
 interface Alert {
@@ -29,6 +29,7 @@ const MOCK_ALERTS: Alert[] = [
 
 function MarineAlertBannerInner() {
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const isPreview = searchParams.get('preview') === 'alerts';
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
@@ -36,39 +37,60 @@ function MarineAlertBannerInner() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [fading, setFading] = useState(false);
 
+  // Only fetch alerts on marine-related pages (or preview mode) to avoid
+  // blocking the dev server with slow external API calls on every page
+  const shouldFetch = isPreview || pathname === '/' || pathname === '/marine' || pathname === '/fishing';
+
   useEffect(() => {
     if (isPreview) {
       setAlerts(MOCK_ALERTS);
       setLoaded(true);
       return;
     }
-    Promise.all([
-      fetch('/api/marine').then(res => res.json()).catch(() => ({ alerts: [] })),
-      fetch('/api/beach-quality').then(res => res.json()).catch(() => ({ beaches: [] })),
-    ]).then(([marineData, beachData]) => {
-      const allAlerts: Alert[] = [...(marineData.alerts || [])];
-      // Add beach water quality advisories (only during swim season with recent data)
-      if (!beachData.isOffSeason) {
-        const threeDaysAgo = new Date();
-        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-        const beaches = beachData.beaches || [];
-        const advisoryBeaches = beaches.filter((b: { status: string; latestReading?: { date: string } }) =>
-          b.status === 'advisory' && b.latestReading?.date && new Date(b.latestReading.date) >= threeDaysAgo
-        );
-        if (advisoryBeaches.length > 0) {
-          const beachNames = advisoryBeaches.map((b: { name: string }) => b.name).join(', ');
-          allAlerts.push({
-            id: 'beach-advisory',
-            event: 'Beach Water Quality Advisory',
-            headline: `Elevated E. coli levels detected at ${beachNames}. Avoid swimming at affected beaches.`,
-            severity: 'Moderate',
-          });
-        }
-      }
-      setAlerts(allAlerts);
+    if (!shouldFetch) {
       setLoaded(true);
-    });
-  }, [isPreview]);
+      return;
+    }
+    let cancelled = false;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
+    (async () => {
+      try {
+        const [marineData, beachData] = await Promise.all([
+          fetch('/api/marine', { signal: controller.signal }).then(r => r.json()).catch(() => ({ alerts: [] })),
+          fetch('/api/beach-quality', { signal: controller.signal }).then(r => r.json()).catch(() => ({ beaches: [] })),
+        ]);
+        if (cancelled) return;
+        const allAlerts: Alert[] = [...(marineData.alerts || [])];
+        if (!beachData.isOffSeason) {
+          const threeDaysAgo = new Date();
+          threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+          const beaches = beachData.beaches || [];
+          const advisoryBeaches = beaches.filter((b: { status: string; latestReading?: { date: string } }) =>
+            b.status === 'advisory' && b.latestReading?.date && new Date(b.latestReading.date) >= threeDaysAgo
+          );
+          if (advisoryBeaches.length > 0) {
+            const beachNames = advisoryBeaches.map((b: { name: string }) => b.name).join(', ');
+            allAlerts.push({
+              id: 'beach-advisory',
+              event: 'Beach Water Quality Advisory',
+              headline: `Elevated E. coli levels detected at ${beachNames}. Avoid swimming at affected beaches.`,
+              severity: 'Moderate',
+            });
+          }
+        }
+        setAlerts(allAlerts);
+      } catch {
+        // Aborted or failed — just skip
+      } finally {
+        clearTimeout(timeout);
+        if (!cancelled) setLoaded(true);
+      }
+    })();
+
+    return () => { cancelled = true; controller.abort(); clearTimeout(timeout); };
+  }, [isPreview, shouldFetch]);
 
   const active = alerts.filter(a => !dismissed.has(a.id));
 

@@ -46,17 +46,24 @@ export default function DevTabs() {
     }
   }, []);
 
-  // Fetch RFPs from Supabase
+  // Fetch RFPs from Supabase (with timeout to prevent infinite loading)
   useEffect(() => {
     async function loadRfps() {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('rfps')
-        .select('*')
-        .neq('status', 'archived')
-        .order('posted_date', { ascending: false });
-      setRfps(data || []);
-      setRfpsLoading(false);
+      const timeout = setTimeout(() => setRfpsLoading(false), 6000);
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('rfps')
+          .select('*')
+          .neq('status', 'archived')
+          .order('posted_date', { ascending: false });
+        setRfps(data || []);
+      } catch (err) {
+        console.error('Failed to load RFPs:', err);
+      } finally {
+        clearTimeout(timeout);
+        setRfpsLoading(false);
+      }
     }
     loadRfps();
   }, []);

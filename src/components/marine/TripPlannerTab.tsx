@@ -630,21 +630,9 @@ export default function TripPlannerTab() {
 
   return (
     <div className="trip-planner-form" style={{ maxWidth: 700, margin: '0 auto' }}>
-      <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-        <h3 style={{ margin: '0 0 0.35rem', fontSize: '1.15rem' }}>
-          <i className="fas fa-route" style={{ color: '#1B8BEB', marginRight: '0.4rem' }}></i>
-          Plan Your Boat Trip
-        </h3>
-        <p style={{ color: '#64748b', fontSize: '0.88rem', margin: 0 }}>
-          Enter your trip details and we&apos;ll analyze weather, marine forecasts, and alerts for your specific trip window.
-        </p>
-      </div>
-
       <div className="trip-disclaimer-banner">
         <i className="fas fa-exclamation-triangle"></i>
-        <div>
-          <strong>For informational purposes only.</strong> This tool does not replace checking official marine forecasts and conditions on your own. Lake Erie conditions can change rapidly and without warning. Always monitor VHF Channel 16, check NOAA forecasts, wear proper safety gear, and use your own judgment before heading out on the water.
-        </div>
+        <span><strong>For informational purposes only.</strong> Lake Erie conditions can change rapidly. Always check official forecasts, monitor VHF Ch. 16, and use your own judgment.</span>
       </div>
 
       <div className="trip-form-card">
@@ -748,6 +736,8 @@ export default function TripPlannerTab() {
           </div>
         </div>
 
+        <div className="trip-form-divider" />
+
         {/* Experience Level */}
         <div className="trip-form-group">
           <label>Experience Level</label>
@@ -768,6 +758,8 @@ export default function TripPlannerTab() {
             ))}
           </div>
         </div>
+
+        <div className="trip-form-divider" />
 
         {!multiStop ? (
           <>

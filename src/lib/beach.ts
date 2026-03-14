@@ -71,8 +71,15 @@ function parseWqpCsv(csv: string): Map<string, BeachReading[]> {
   return byStation;
 }
 
+// --- In-memory cache ---
+let beachCache: { data: BeachQualityResponse; ts: number } | null = null;
+const BEACH_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
 /** Fetch beach water quality data from WQP API */
 export async function fetchBeachData(): Promise<BeachQualityResponse> {
+  if (beachCache && Date.now() - beachCache.ts < BEACH_CACHE_TTL) {
+    return beachCache.data;
+  }
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1; // 1-indexed
@@ -88,7 +95,10 @@ export async function fetchBeachData(): Promise<BeachQualityResponse> {
 
   let csv = '';
   try {
-    const res = await fetch(url, { cache: 'no-store' });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(url, { cache: 'no-store', signal: controller.signal });
+    clearTimeout(timeout);
     if (res.ok) {
       csv = await res.text();
     }
@@ -101,7 +111,10 @@ export async function fetchBeachData(): Promise<BeachQualityResponse> {
   if (!csv || csv.split('\n').length < 2) {
     const fallbackUrl = `https://www.waterqualitydata.us/data/Result/search?siteid=${encodeURIComponent(stationIds)}&characteristicName=Escherichia%20coli&mimeType=csv&sorted=no&startDateLo=01-01-${seasonYear - 1}&startDateHi=12-31-${seasonYear - 1}`;
     try {
-      const res = await fetch(fallbackUrl, { cache: 'no-store' });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      const res = await fetch(fallbackUrl, { cache: 'no-store', signal: controller.signal });
+      clearTimeout(timeout);
       if (res.ok) {
         csv = await res.text();
         actualYear = seasonYear - 1;
@@ -141,10 +154,13 @@ export async function fetchBeachData(): Promise<BeachQualityResponse> {
     };
   });
 
-  return {
+  const result: BeachQualityResponse = {
     beaches,
     seasonYear: actualYear,
     isOffSeason,
     fetchedAt: new Date().toISOString(),
   };
+
+  beachCache = { data: result, ts: Date.now() };
+  return result;
 }
