@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { fetchMarineData } from '@/lib/marine';
 
-export const revalidate = 1800; // 30 minutes
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const data = await fetchMarineData();

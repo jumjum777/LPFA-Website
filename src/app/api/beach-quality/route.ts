@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { fetchBeachData } from '@/lib/beach';
 
-export const revalidate = 3600; // 1 hour — beach data updates daily
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const data = await fetchBeachData();

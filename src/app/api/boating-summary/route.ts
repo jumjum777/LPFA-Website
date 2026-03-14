@@ -4,7 +4,7 @@ import { fetchBeachData } from '@/lib/beach';
 import { fetchActiveVessels } from '@/lib/vessels';
 import { generateBoatingSummary } from '@/lib/marine-summary';
 
-export const revalidate = 1800; // Cache for 30 minutes
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const [marine, beach, vessels] = await Promise.all([
