@@ -780,62 +780,72 @@ export default function PurchaseOrdersPage() {
             <h4 className="mb-3 text-base text-slate-600 dark:text-slate-400">
               <i className="fas fa-list mr-1.5"></i> Line Items
             </h4>
+
+            {/* Column headers */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 120px 90px 28px', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 600, color: '#64748b' }}>Description</span>
+              <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 600, color: '#64748b', textAlign: 'center' }}>Qty</span>
+              <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 600, color: '#64748b' }}>Unit Price</span>
+              <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 600, color: '#64748b', textAlign: 'right' }}>Total</span>
+              <span></span>
+            </div>
+
             {form.line_items.map((item, idx) => (
-              <div key={idx} className="flex gap-2 items-center mb-2 flex-wrap md:flex-nowrap">
-                <input type="text" className={`${inputClass} flex-[3] min-w-0`} placeholder="Description" value={item.description}
+              <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 120px 90px 28px', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
+                <input type="text" className={inputClass} placeholder="Item description" value={item.description}
                   onChange={e => {
                     const items = [...form.line_items];
                     items[idx] = { ...items[idx], description: e.target.value };
                     setForm(f => ({ ...f, line_items: items }));
                   }} />
-                <input type="number" className={`${inputClass} w-18 text-center`} placeholder="Qty" min="1" value={item.qty}
+                <input type="number" className={inputClass} style={{ textAlign: 'center' }} placeholder="1" min="1" value={item.qty}
                   onChange={e => {
                     const items = [...form.line_items];
                     items[idx] = { ...items[idx], qty: parseInt(e.target.value) || 0 };
                     setForm(f => ({ ...f, line_items: items }));
                   }} />
-                <div className="relative w-28">
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm">$</span>
-                  <input type="number" className={`${inputClass} pl-5 w-full`} step="0.01" min="0" placeholder="0.00" value={item.unit_price || ''}
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: '0.6rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontSize: '0.85rem', pointerEvents: 'none' }}>$</span>
+                  <input type="number" className={inputClass} style={{ paddingLeft: '1.4rem' }} step="0.01" min="0" placeholder="0.00" value={item.unit_price || ''}
                     onChange={e => {
                       const items = [...form.line_items];
                       items[idx] = { ...items[idx], unit_price: parseFloat(e.target.value) || 0 };
                       setForm(f => ({ ...f, line_items: items }));
                     }} />
                 </div>
-                <span className="min-w-20 text-right font-semibold text-sm text-slate-600 dark:text-slate-300">
+                <span style={{ textAlign: 'right', fontWeight: 600, fontSize: '0.88rem', color: '#475569' }}>
                   {formatCurrency(item.qty * item.unit_price)}
                 </span>
-                {form.line_items.length > 1 && (
-                  <button type="button" className="border-none bg-transparent cursor-pointer text-red-600 p-1 text-sm"
+                {form.line_items.length > 1 ? (
+                  <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626', padding: '0.2rem', fontSize: '0.85rem' }}
                     onClick={() => setForm(f => ({ ...f, line_items: f.line_items.filter((_, i) => i !== idx) }))}>
                     <i className="fas fa-times"></i>
                   </button>
-                )}
+                ) : <span></span>}
               </div>
             ))}
-            <button type="button" className="admin-btn admin-btn-secondary text-sm mt-1"
+            <button type="button" className="admin-btn admin-btn-secondary" style={{ fontSize: '0.85rem', marginTop: '0.25rem' }}
               onClick={() => setForm(f => ({ ...f, line_items: [...f.line_items, { ...emptyLineItem }] }))}>
               <i className="fas fa-plus"></i> Add Line Item
             </button>
 
             {/* Totals */}
-            <div className="flex flex-col items-end gap-1.5 mt-4 pt-3 border-t border-slate-200 dark:border-slate-700">
-              <div className="flex gap-4 items-center">
-                <span className="text-slate-500 dark:text-slate-400 text-sm">Subtotal:</span>
-                <span className="font-medium min-w-24 text-right text-slate-800 dark:text-slate-200">{formatCurrency(subtotal)}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem', marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid #e2e8f0' }}>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <span style={{ color: '#64748b', fontSize: '0.88rem' }}>Subtotal:</span>
+                <span style={{ fontWeight: 500, minWidth: '6rem', textAlign: 'right' }}>{formatCurrency(subtotal)}</span>
               </div>
-              <div className="flex gap-4 items-center">
-                <span className="text-slate-500 dark:text-slate-400 text-sm">Tax:</span>
-                <div className="relative w-24">
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm">$</span>
-                  <input type="number" className={`${inputClass} pl-5 w-full text-right text-sm`} step="0.01" min="0" placeholder="0.00" value={form.tax}
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <span style={{ color: '#64748b', fontSize: '0.88rem' }}>Tax:</span>
+                <div style={{ position: 'relative', width: '6rem' }}>
+                  <span style={{ position: 'absolute', left: '0.6rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontSize: '0.85rem', pointerEvents: 'none' }}>$</span>
+                  <input type="number" className={inputClass} style={{ paddingLeft: '1.4rem', textAlign: 'right', width: '100%' }} step="0.01" min="0" placeholder="0.00" value={form.tax}
                     onChange={e => setForm(f => ({ ...f, tax: e.target.value }))} />
                 </div>
               </div>
-              <div className="flex gap-4 items-center font-bold text-lg pt-1.5 border-t-2 border-slate-300 dark:border-slate-600 dark:text-slate-100">
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', fontWeight: 700, fontSize: '1.1rem', paddingTop: '0.5rem', borderTop: '2px solid #cbd5e1' }}>
                 <span>Total:</span>
-                <span className="min-w-24 text-right">{formatCurrency(total)}</span>
+                <span style={{ minWidth: '6rem', textAlign: 'right' }}>{formatCurrency(total)}</span>
               </div>
             </div>
           </div>
@@ -945,7 +955,7 @@ export default function PurchaseOrdersPage() {
       </div>
 
       {/* Filter tabs */}
-      <div className="admin-filter-tabs overflow-x-auto">
+      <div className="admin-filter-tabs" style={{ flexWrap: 'wrap', gap: '0.4rem', marginTop: '1.5rem' }}>
         {(['all', 'pending_approval', 'approved', 'draft', 'denied', 'completed', 'archived'] as POStatus[]).map(s => (
           <button key={s} className={`admin-filter-tab shrink-0${filter === s ? ' active' : ''}`} onClick={() => setFilter(s)}>
             {s === 'all' ? 'All' : STATUS_LABELS[s] || s}
@@ -956,8 +966,11 @@ export default function PurchaseOrdersPage() {
 
       {/* Search */}
       <div className="my-4 max-w-md relative">
-        <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm"></i>
-        <input type="text" className={`${inputClass} pl-8`} placeholder="Search by PO#, title, vendor, or requester..." value={search} onChange={e => setSearch(e.target.value)} />
+        <i className="fas fa-search absolute top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm pointer-events-none" style={{ left: '0.85rem' }}></i>
+        <input type="text"
+          className="w-full py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 focus:outline-none focus:border-blue focus:ring-2 focus:ring-blue/10 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-colors"
+          style={{ paddingLeft: '2.5rem', paddingRight: '0.75rem' }}
+          placeholder="Search by PO#, title, vendor, or requester..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       {/* Orders Table */}
