@@ -84,6 +84,26 @@ interface WixData {
   period: { start: string; end: string; days: number };
 }
 
+interface TripAnalyticsData {
+  totalTrips: number;
+  tripsByType: Record<string, number>;
+  tripsByBoatSize: Record<string, number>;
+  tripsByBoatType: Record<string, number>;
+  tripsByExperience: Record<string, number>;
+  tripsByRating: Record<string, number>;
+  tripsByActivity: Record<string, number>;
+  topDestinations: { destination: string; count: number }[];
+  tripsByDayOfWeek: { day: string; count: number }[];
+  tripsByHour: { hour: number; count: number }[];
+  tripsByMonth: { month: string; count: number }[];
+  uniqueUsers: number;
+  recentTrips: {
+    tripType: string; boatSize: string; boatType: string;
+    experienceLevel: string; destinations: string[]; overallRating: string;
+    departureTime: string; createdAt: string;
+  }[];
+}
+
 type Profile = 'lpfa' | 'rotr';
 type Period = 'this-month' | 'last-month' | '7d' | '14d' | '30d' | '60d' | 'ytd' | 'custom';
 
@@ -209,6 +229,7 @@ export default function UnifiedAnalyticsPage() {
   const [socialData, setSocialData] = useState<SocialData | null>(null);
   const [emailData, setEmailData] = useState<EmailData | null>(null);
   const [eventsData, setEventsData] = useState<Record<string, unknown> | null>(null);
+  const [tripData, setTripData] = useState<TripAnalyticsData | null>(null);
   const [socialEmailLoading, setSocialEmailLoading] = useState(true);
 
   // AI Executive Summary
@@ -287,6 +308,28 @@ export default function UnifiedAnalyticsPage() {
       .then(web => setWebData(web))
       .finally(() => setWebLoading(false));
   }, [profile, webDays, period, customStart, customEnd]);
+
+  // Trip planner analytics: re-fetch when period changes (LPFA only)
+  useEffect(() => {
+    if (profile !== 'lpfa') { setTripData(null); return; }
+    const fmt = (d: Date) => d.toISOString().split('T')[0];
+    let tripUrl = '/api/admin/trip-analytics';
+    if (period === 'custom' && customStart && customEnd) {
+      tripUrl += `?start=${customStart}&end=${customEnd}`;
+    } else if (period === 'this-month') {
+      tripUrl += `?start=${fmt(new Date(now.getFullYear(), now.getMonth(), 1))}&end=${fmt(now)}`;
+    } else if (period === 'last-month') {
+      tripUrl += `?start=${fmt(new Date(now.getFullYear(), now.getMonth() - 1, 1))}&end=${fmt(new Date(now.getFullYear(), now.getMonth(), 0))}`;
+    } else if (period === 'ytd') {
+      tripUrl += `?start=${fmt(new Date(now.getFullYear(), 0, 1))}&end=${fmt(now)}`;
+    } else {
+      const start = new Date();
+      start.setDate(start.getDate() - periodDays);
+      tripUrl += `?start=${fmt(start)}&end=${fmt(now)}`;
+    }
+    fetch(tripUrl).then(r => r.json()).catch(() => null)
+      .then(data => setTripData(data as TripAnalyticsData | null));
+  }, [profile, period, periodDays, customStart, customEnd]);
 
   // Generate AI executive summary
   const periodLabel = (() => {
@@ -786,6 +829,22 @@ export default function UnifiedAnalyticsPage() {
           </div>
         )}
       </CollapsibleSection>
+
+      {/* ─── Trip Planner Analytics (LPFA only) ─────────────────────────────── */}
+      {profile === 'lpfa' && (
+        <CollapsibleSection
+          title="Trip Planner Usage"
+          icon="fas fa-route"
+          iconColor="#059669"
+          badge={tripData?.totalTrips ? `${formatNumber(tripData.totalTrips)} trips` : undefined}
+        >
+          {tripData && tripData.totalTrips > 0 ? <TripPlannerSection data={tripData} /> : (
+            <p style={{ color: '#94a3b8', textAlign: 'center', padding: '1rem' }}>
+              {tripData ? 'No trip submissions in this period.' : 'Loading trip data...'}
+            </p>
+          )}
+        </CollapsibleSection>
+      )}
 
       {/* ─── Footer Note ────────────────────────────────────────────────────── */}
       <div className="rotr-analytics-note" style={{ marginTop: '1.5rem' }}>
@@ -1395,6 +1454,227 @@ function EmailSection({ data }: { data: EmailData }) {
           <a href="/admin/email-marketing" style={{ display: 'inline-block', marginTop: '0.5rem', color: 'var(--blue-accent)', fontSize: '0.85rem', textDecoration: 'none' }}>
             View all campaigns <i className="fas fa-arrow-right"></i>
           </a>
+        </SubSection>
+      )}
+    </>
+  );
+}
+
+// ─── Trip Planner Analytics Section ─────────────────────────────────────────
+
+const DEST_LABELS: Record<string, string> = {
+  lorain: 'Lorain', vermilion: 'Vermilion', huron: 'Huron', 'cedar-point': 'Cedar Point',
+  'kelleys-island': 'Kelleys Island', 'put-in-bay': 'Put-in-Bay', sandusky: 'Sandusky',
+  'sheffield-lake': 'Sheffield Lake', 'avon-lake': 'Avon Lake', 'bay-village': 'Bay Village',
+  'rocky-river': 'Rocky River', lakewood: 'Lakewood', 'edgewater-marina': 'Edgewater Marina',
+  'cleveland-harbor': 'Cleveland Harbor', 'fairport-harbor': 'Fairport Harbor',
+  'mentor-headlands': 'Mentor Headlands', 'geneva-on-the-lake': 'Geneva-on-the-Lake',
+  'ashtabula-harbor': 'Ashtabula Harbor', 'open-water': 'Open Water',
+};
+
+const RATING_COLORS: Record<string, string> = {
+  Excellent: '#059669', Good: '#16a34a', Fair: '#D97706', Poor: '#DC2626', Dangerous: '#991B1B',
+};
+
+function TripPlannerSection({ data }: { data: TripAnalyticsData }) {
+  const maxDestCount = data.topDestinations.length > 0 ? data.topDestinations[0].count : 1;
+  const maxDayCount = Math.max(...data.tripsByDayOfWeek.map(d => d.count), 1);
+  const maxHourCount = Math.max(...data.tripsByHour.map(h => h.count), 1);
+
+  return (
+    <>
+      {/* Summary stat cards */}
+      <div className="rotr-stat-grid" style={{ marginBottom: '1.25rem' }}>
+        <div className="rotr-stat-card">
+          <div className="rotr-stat-icon" style={{ background: '#05966915', color: '#059669' }}>
+            <i className="fas fa-route"></i>
+          </div>
+          <div className="rotr-stat-value">{formatNumber(data.totalTrips)}</div>
+          <div className="rotr-stat-label">Trips Planned</div>
+        </div>
+        <div className="rotr-stat-card">
+          <div className="rotr-stat-icon" style={{ background: '#1B8BEB15', color: '#1B8BEB' }}>
+            <i className="fas fa-users"></i>
+          </div>
+          <div className="rotr-stat-value">{formatNumber(data.uniqueUsers)}</div>
+          <div className="rotr-stat-label">Unique Users</div>
+        </div>
+        <div className="rotr-stat-card">
+          <div className="rotr-stat-icon" style={{ background: '#D9770615', color: '#D97706' }}>
+            <i className="fas fa-ship"></i>
+          </div>
+          <div className="rotr-stat-value">
+            {data.tripsByType['multi-stop'] || 0}
+          </div>
+          <div className="rotr-stat-label">Multi-Stop Trips</div>
+        </div>
+        <div className="rotr-stat-card">
+          <div className="rotr-stat-icon" style={{ background: '#EF444415', color: '#EF4444' }}>
+            <i className="fas fa-exclamation-triangle"></i>
+          </div>
+          <div className="rotr-stat-value">
+            {(data.tripsByRating['Poor'] || 0) + (data.tripsByRating['Dangerous'] || 0)}
+          </div>
+          <div className="rotr-stat-label">Poor/Dangerous Ratings</div>
+        </div>
+      </div>
+
+      {/* Top Destinations */}
+      <SubSection title="Top Destinations" icon="fas fa-map-marker-alt" defaultOpen={true}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+          {data.topDestinations.map(d => (
+            <div key={d.destination} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+              <span style={{ width: 130, flexShrink: 0, fontWeight: 500, color: 'var(--text-primary)' }}>
+                {DEST_LABELS[d.destination] || d.destination}
+              </span>
+              <div style={{ flex: 1, height: 18, background: 'var(--bg-secondary, #f1f5f9)', borderRadius: 4, overflow: 'hidden' }}>
+                <div style={{
+                  width: `${(d.count / maxDestCount) * 100}%`,
+                  height: '100%',
+                  background: 'linear-gradient(90deg, #1B8BEB, #059669)',
+                  borderRadius: 4,
+                  minWidth: 2,
+                }} />
+              </div>
+              <span style={{ width: 36, textAlign: 'right', fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>{d.count}</span>
+            </div>
+          ))}
+        </div>
+      </SubSection>
+
+      {/* Vessel Breakdown */}
+      <SubSection title="Vessel Breakdown" icon="fas fa-ship" defaultOpen={true}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.03em' }}>By Size</div>
+            <BreakdownBar segments={[
+              { label: 'Small', value: data.tripsByBoatSize['small'] || 0, color: '#3B82F6' },
+              { label: 'Medium', value: data.tripsByBoatSize['medium'] || 0, color: '#8B5CF6' },
+              { label: 'Large', value: data.tripsByBoatSize['large'] || 0, color: '#059669' },
+              { label: 'Jet Ski', value: data.tripsByBoatSize['jetski'] || 0, color: '#F59E0B' },
+            ]} />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.03em' }}>By Type</div>
+            <BreakdownBar segments={[
+              { label: 'Powerboat', value: data.tripsByBoatType['powerboat'] || 0, color: '#1B8BEB' },
+              { label: 'Sailboat', value: data.tripsByBoatType['sailboat'] || 0, color: '#10B981' },
+            ]} />
+          </div>
+        </div>
+      </SubSection>
+
+      {/* Activities */}
+      <SubSection title="Planned Activities" icon="fas fa-compass" defaultOpen={true}>
+        <BreakdownBar segments={[
+          { label: 'Cruising', value: data.tripsByActivity['cruising'] || 0, color: '#1B8BEB' },
+          { label: 'Fishing', value: data.tripsByActivity['fishing'] || 0, color: '#059669' },
+          { label: 'Swimming', value: data.tripsByActivity['swimming'] || 0, color: '#06B6D4' },
+          { label: 'Water Sports', value: data.tripsByActivity['watersports'] || 0, color: '#8B5CF6' },
+          { label: 'Wave Jumping', value: data.tripsByActivity['wave-jumping'] || 0, color: '#F59E0B' },
+        ]} />
+      </SubSection>
+
+      {/* Trip Timing */}
+      <SubSection title="Trip Timing" icon="fas fa-clock">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          {/* Day of week */}
+          <div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.03em' }}>By Day of Week</div>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 80 }}>
+              {data.tripsByDayOfWeek.map(d => (
+                <div key={d.day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{
+                    width: '100%', maxWidth: 28,
+                    height: `${Math.max((d.count / maxDayCount) * 60, 2)}px`,
+                    background: ['Sat', 'Sun'].includes(d.day) ? '#1B8BEB' : '#cbd5e1',
+                    borderRadius: '3px 3px 0 0',
+                  }} />
+                  <span style={{ fontSize: '0.65rem', color: '#64748b', marginTop: 2 }}>{d.day}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Hour of day */}
+          <div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.03em' }}>By Hour (Departure)</div>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 80 }}>
+              {data.tripsByHour.filter((_, i) => i >= 5 && i <= 21).map(h => (
+                <div key={h.hour} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{
+                    width: '100%',
+                    height: `${Math.max((h.count / maxHourCount) * 60, 1)}px`,
+                    background: h.hour >= 6 && h.hour <= 18 ? '#F59E0B' : '#94a3b8',
+                    borderRadius: '2px 2px 0 0',
+                  }} />
+                  {h.hour % 3 === 0 && <span style={{ fontSize: '0.6rem', color: '#64748b', marginTop: 1 }}>{h.hour % 12 || 12}{h.hour < 12 ? 'a' : 'p'}</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </SubSection>
+
+      {/* Conditions Ratings */}
+      <SubSection title="Conditions Ratings" icon="fas fa-star">
+        <BreakdownBar segments={[
+          { label: 'Excellent', value: data.tripsByRating['Excellent'] || 0, color: RATING_COLORS['Excellent'] },
+          { label: 'Good', value: data.tripsByRating['Good'] || 0, color: RATING_COLORS['Good'] },
+          { label: 'Fair', value: data.tripsByRating['Fair'] || 0, color: RATING_COLORS['Fair'] },
+          { label: 'Poor', value: data.tripsByRating['Poor'] || 0, color: RATING_COLORS['Poor'] },
+          { label: 'Dangerous', value: data.tripsByRating['Dangerous'] || 0, color: RATING_COLORS['Dangerous'] },
+        ]} />
+      </SubSection>
+
+      {/* Experience Levels */}
+      <SubSection title="Experience Levels" icon="fas fa-user-graduate">
+        <BreakdownBar segments={[
+          { label: 'Beginner', value: data.tripsByExperience['beginner'] || 0, color: '#3B82F6' },
+          { label: 'Intermediate', value: data.tripsByExperience['intermediate'] || 0, color: '#8B5CF6' },
+          { label: 'Experienced', value: data.tripsByExperience['experienced'] || 0, color: '#059669' },
+        ]} />
+      </SubSection>
+
+      {/* Recent Submissions */}
+      {data.recentTrips.length > 0 && (
+        <SubSection title={`Recent Submissions (${data.recentTrips.length})`} icon="fas fa-list">
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Destinations</th>
+                  <th>Vessel</th>
+                  <th>Experience</th>
+                  <th>Rating</th>
+                  <th style={{ textAlign: 'right' }}>Submitted</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.recentTrips.map((t, i) => (
+                  <tr key={i}>
+                    <td>
+                      <div style={{ fontWeight: 500 }}>
+                        {t.destinations.map(d => DEST_LABELS[d] || d).join(' → ')}
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{t.tripType}</div>
+                    </td>
+                    <td style={{ textTransform: 'capitalize' }}>
+                      {t.boatSize === 'jetski' ? 'Jet Ski' : `${t.boatSize} ${t.boatType}`}
+                    </td>
+                    <td style={{ textTransform: 'capitalize' }}>{t.experienceLevel || '—'}</td>
+                    <td>
+                      <span style={{ color: RATING_COLORS[t.overallRating] || '#64748b', fontWeight: 600 }}>
+                        {t.overallRating}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'right', fontSize: '0.8rem', color: '#64748b' }}>
+                      {new Date(t.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </SubSection>
       )}
     </>

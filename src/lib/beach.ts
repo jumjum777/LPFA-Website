@@ -88,7 +88,7 @@ export async function fetchBeachData(): Promise<BeachQualityResponse> {
 
   let csv = '';
   try {
-    const res = await fetch(url, { next: { revalidate: 3600 } });
+    const res = await fetch(url, { cache: 'no-store' });
     if (res.ok) {
       csv = await res.text();
     }
@@ -101,7 +101,7 @@ export async function fetchBeachData(): Promise<BeachQualityResponse> {
   if (!csv || csv.split('\n').length < 2) {
     const fallbackUrl = `https://www.waterqualitydata.us/data/Result/search?siteid=${encodeURIComponent(stationIds)}&characteristicName=Escherichia%20coli&mimeType=csv&sorted=no&startDateLo=01-01-${seasonYear - 1}&startDateHi=12-31-${seasonYear - 1}`;
     try {
-      const res = await fetch(fallbackUrl, { next: { revalidate: 3600 } });
+      const res = await fetch(fallbackUrl, { cache: 'no-store' });
       if (res.ok) {
         csv = await res.text();
         actualYear = seasonYear - 1;

@@ -3,9 +3,70 @@ import { fetchMarineData } from '@/lib/marine';
 import { fetchBeachData } from '@/lib/beach';
 import { fetchActiveVessels } from '@/lib/vessels';
 import { generateTripAnalysis, generateMultiStopAnalysis, DESTINATIONS } from '@/lib/trip-planner';
-import type { TripRequest, TripLeg, MultiStopRequest } from '@/lib/trip-planner';
+import type { TripRequest, TripLeg, MultiStopRequest, BoatingRating, BoatActivity } from '@/lib/trip-planner';
+import { createAdminClient } from '@/lib/supabase/admin';
+
+// ─── Rate Limiting (in-memory, per-instance) ───────────────────────────────
+const ipSubmissions = new Map<string, number[]>();
+const RATE_LIMIT = 10;       // max submissions
+const RATE_WINDOW = 3600000; // per hour
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const timestamps = (ipSubmissions.get(ip) || []).filter(t => now - t < RATE_WINDOW);
+  if (timestamps.length >= RATE_LIMIT) return true;
+  timestamps.push(now);
+  ipSubmissions.set(ip, timestamps);
+  return false;
+}
+
+// ─── Trip Logging ───────────────────────────────────────────────────────────
+async function logTrip(params: {
+  ip: string;
+  tripType: 'single' | 'multi-stop';
+  boatSize: string;
+  boatType: string;
+  experienceLevel: string;
+  activities: string[];
+  destinations: string[];
+  departureTime: string;
+  overallRating: BoatingRating;
+  legCount: number;
+}) {
+  try {
+    const supabase = createAdminClient();
+    await supabase.from('trip_submissions').insert({
+      ip_hash: await hashIP(params.ip),
+      trip_type: params.tripType,
+      boat_size: params.boatSize,
+      boat_type: params.boatType,
+      experience_level: params.experienceLevel,
+      activities: params.activities,
+      destinations: params.destinations,
+      departure_time: params.departureTime,
+      overall_rating: params.overallRating,
+      leg_count: params.legCount,
+    });
+  } catch {
+    // Non-blocking — don't fail the request if logging fails
+  }
+}
+
+async function hashIP(ip: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(ip + (process.env.SUPABASE_SERVICE_ROLE_KEY || '').slice(0, 8));
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
+}
 
 export async function POST(request: Request) {
+  // Rate limit check
+  const forwarded = request.headers.get('x-forwarded-for');
+  const ip = forwarded?.split(',')[0]?.trim() || 'unknown';
+  if (isRateLimited(ip)) {
+    return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
+  }
+
   let body: TripRequest & { legs?: TripLeg[] };
 
   try {
@@ -15,8 +76,13 @@ export async function POST(request: Request) {
   }
 
   const { boatSize, experienceLevel } = body;
+  const boatType = body.boatType || 'powerboat';
+  const validActivities: BoatActivity[] = ['cruising', 'fishing', 'swimming', 'watersports', 'wave-jumping'];
+  const activities: BoatActivity[] = Array.isArray(body.activities)
+    ? body.activities.filter((a: string) => validActivities.includes(a as BoatActivity)) as BoatActivity[]
+    : ['cruising'];
 
-  if (!['small', 'medium', 'large'].includes(boatSize)) {
+  if (!['small', 'medium', 'large', 'jetski'].includes(boatSize)) {
     return NextResponse.json({ error: 'Invalid boat size' }, { status: 400 });
   }
   if (!['beginner', 'intermediate', 'experienced'].includes(experienceLevel)) {
@@ -67,8 +133,19 @@ export async function POST(request: Request) {
       fetchActiveVessels(),
     ]);
 
-    const msRequest: MultiStopRequest = { boatSize, experienceLevel, legs };
+    const msRequest: MultiStopRequest = { boatSize, experienceLevel, boatType, activities, legs };
     const analysis = await generateMultiStopAnalysis(msRequest, marine, beach, vessels);
+
+    // Log (non-blocking)
+    const allDests = legs.map(l => l.from).concat(legs[legs.length - 1].to);
+    logTrip({
+      ip, tripType: 'multi-stop', boatSize, boatType, experienceLevel, activities,
+      destinations: [...new Set(allDests)],
+      departureTime: legs[0].departureTime,
+      overallRating: analysis.overallRating,
+      legCount: legs.length,
+    });
+
     return NextResponse.json(analysis);
   }
 
@@ -105,6 +182,8 @@ export async function POST(request: Request) {
 
   const trip: TripRequest = {
     boatSize,
+    boatType,
+    activities,
     departurePoint: departurePoint || 'Lorain Harbor',
     destination,
     departureTime,
@@ -113,5 +192,15 @@ export async function POST(request: Request) {
   };
 
   const analysis = await generateTripAnalysis(trip, marine, beach, vessels);
+
+  // Log (non-blocking)
+  logTrip({
+    ip, tripType: 'single', boatSize, boatType, experienceLevel, activities,
+    destinations: ['lorain', destination],
+    departureTime,
+    overallRating: analysis.overallRating,
+    legCount: 1,
+  });
+
   return NextResponse.json(analysis);
 }

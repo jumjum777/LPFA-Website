@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, Fragment } from 'react';
+import { useState, useRef, Fragment } from 'react';
 import { DESTINATIONS, getTransitMinutes, formatTransitTime, getDestLabel } from '@/lib/trip-planner';
-import type { TripAnalysis, MultiStopAnalysis, BoatingRating } from '@/lib/trip-planner';
+import type { TripAnalysis, MultiStopAnalysis, BoatingRating, BoatSize, BoatType, BoatActivity } from '@/lib/trip-planner';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -72,8 +72,12 @@ interface StopEntry {
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function TripPlannerTab() {
+  const resultsRef = useRef<HTMLDivElement>(null);
+
   // Form state
-  const [boatSize, setBoatSize] = useState<'small' | 'medium' | 'large'>('small');
+  const [boatSize, setBoatSize] = useState<BoatSize>('small');
+  const [boatType, setBoatType] = useState<BoatType>('powerboat');
+  const [activities, setActivities] = useState<BoatActivity[]>(['cruising']);
   const [experience, setExperience] = useState<'beginner' | 'intermediate' | 'experienced'>('intermediate');
   const [destination, setDestination] = useState('lorain');
   const [depDate, setDepDate] = useState(getTodayStr());
@@ -114,6 +118,17 @@ export default function TripPlannerTab() {
   function removeStop(index: number) {
     if (stops.length <= 1) return;
     setStops(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function toggleActivity(activity: BoatActivity) {
+    setActivities(prev => {
+      if (prev.includes(activity)) {
+        // Don't allow deselecting the last activity
+        if (prev.length === 1) return prev;
+        return prev.filter(a => a !== activity);
+      }
+      return [...prev, activity];
+    });
   }
 
   function getPrevDest(index: number): string {
@@ -167,7 +182,7 @@ export default function TripPlannerTab() {
         const res = await fetch('/api/trip-planner', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ boatSize, experienceLevel: experience, legs }),
+          body: JSON.stringify({ boatSize, boatType, activities, experienceLevel: experience, legs }),
         });
 
         if (!res.ok) {
@@ -195,6 +210,8 @@ export default function TripPlannerTab() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             boatSize,
+            boatType,
+            activities,
             experienceLevel: experience,
             departurePoint: 'Lorain Harbor',
             destination,
@@ -217,6 +234,9 @@ export default function TripPlannerTab() {
       setError('Failed to connect. Please try again.');
     }
     setLoading(false);
+    setTimeout(() => {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
   }
 
   function handleReset() {
@@ -227,11 +247,15 @@ export default function TripPlannerTab() {
 
   // ─── Multi-Stop Results View ─────────────────────────────────────────
 
+  const [expandedLeg, setExpandedLeg] = useState(0);
+  const [showHazards, setShowHazards] = useState(false);
+  const [showRecs, setShowRecs] = useState(false);
+
   if (msResult) {
     const routeStr = msResult.legs.map(l => l.fromLabel).join(' → ') + ' → ' + msResult.legs[msResult.legs.length - 1].toLabel;
 
     return (
-      <div className="trip-planner-results" style={{ maxWidth: 800, margin: '0 auto' }}>
+      <div ref={resultsRef} className="trip-planner-results" style={{ maxWidth: 800, margin: '0 auto' }}>
         <button onClick={handleReset} className="trip-back-btn">
           <i className="fas fa-arrow-left" style={{ marginRight: '0.35rem', fontSize: '0.75rem' }}></i> Plan Another Trip
         </button>
@@ -258,82 +282,144 @@ export default function TripPlannerTab() {
           <p className="trip-overview-summary">{msResult.summary}</p>
         </div>
 
-        {/* Leg Cards */}
-        <div className="trip-legs-timeline">
-          {msResult.legs.map((leg, i) => (
-            <div key={i} className="trip-leg-card">
-              <div className="trip-leg-header">
-                <div className="trip-leg-route">
-                  <span className="trip-leg-number">Leg {i + 1}</span>
-                  <span>{leg.fromLabel} <i className="fas fa-long-arrow-alt-right" style={{ margin: '0 0.4rem', color: '#94a3b8', fontSize: '0.75rem' }}></i> {leg.toLabel}</span>
+        {/* Leg Accordion */}
+        <div className="trip-legs-accordion">
+          {msResult.legs.map((leg, i) => {
+            const isOpen = expandedLeg === i;
+            return (
+              <div key={i} className={`trip-leg-accord${isOpen ? ' open' : ''}`}>
+                <button
+                  className="trip-leg-accord-trigger"
+                  onClick={() => setExpandedLeg(i)}
+                  type="button"
+                >
+                  <div className="trip-leg-accord-left">
+                    <span className="trip-leg-number">Leg {i + 1}</span>
+                    <span className="trip-leg-accord-route">
+                      {leg.fromLabel}
+                      <i className="fas fa-long-arrow-alt-right" style={{ margin: '0 0.4rem', color: '#94a3b8', fontSize: '0.7rem' }}></i>
+                      {leg.toLabel}
+                    </span>
+                  </div>
+                  <div className="trip-leg-accord-right">
+                    <span className="trip-window-rating" style={{ background: getRatingBg(leg.conditions.rating), color: getRatingColor(leg.conditions.rating) }}>
+                      <i className={`fas ${getRatingIcon(leg.conditions.rating)}`} style={{ marginRight: '0.25rem', fontSize: '0.65rem' }}></i>
+                      {leg.conditions.rating}
+                    </span>
+                    <i className={`fas fa-chevron-down trip-leg-accord-chevron${isOpen ? ' open' : ''}`}></i>
+                  </div>
+                </button>
+                <div className={`trip-leg-accord-body${isOpen ? ' open' : ''}`}>
+                  <div className="trip-leg-accord-content">
+                    <div className="trip-leg-times">
+                      <span>
+                        <i className="fas fa-clock" style={{ marginRight: '0.3rem', color: '#94a3b8', fontSize: '0.7rem' }}></i>
+                        Departing {formatTripDate(leg.departureTime)}
+                      </span>
+                      <span style={{ color: '#94a3b8' }}>&middot;</span>
+                      <span>{formatTransitTime(leg.transitMinutes)} transit</span>
+                      <span style={{ color: '#94a3b8' }}>&middot;</span>
+                      <span>Arriving {formatTripDate(leg.estimatedArrival)}</span>
+                    </div>
+                    {leg.travelWarning && (
+                      <div className="trip-travel-warning" style={{ marginTop: '0.5rem', marginBottom: 0 }}>
+                        <i className="fas fa-clock" style={{ color: '#D97706', marginRight: '0.4rem' }}></i>
+                        {leg.travelWarning}
+                      </div>
+                    )}
+                    <p className="trip-window-narrative">{leg.conditions.narrative}</p>
+                    <div className="trip-window-stats">
+                      {leg.conditions.wind && <span><i className="fas fa-wind"></i> {leg.conditions.wind}</span>}
+                      {leg.conditions.waves && <span><i className="fas fa-water"></i> {leg.conditions.waves}</span>}
+                      {leg.conditions.temp && <span><i className="fas fa-thermometer-half"></i> {leg.conditions.temp}</span>}
+                      {leg.conditions.precip && <span><i className="fas fa-cloud-rain"></i> {leg.conditions.precip}</span>}
+                    </div>
+                    {i < msResult.legs.length - 1 && (
+                      <button
+                        className="trip-leg-next-btn"
+                        onClick={() => setExpandedLeg(i + 1)}
+                        type="button"
+                      >
+                        Next: Leg {i + 2} — {msResult.legs[i + 1].fromLabel} to {msResult.legs[i + 1].toLabel}
+                        <i className="fas fa-chevron-right" style={{ marginLeft: '0.4rem', fontSize: '0.7rem' }}></i>
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <span className="trip-window-rating" style={{ background: getRatingBg(leg.conditions.rating), color: getRatingColor(leg.conditions.rating) }}>
-                  <i className={`fas ${getRatingIcon(leg.conditions.rating)}`} style={{ marginRight: '0.25rem', fontSize: '0.65rem' }}></i>
-                  {leg.conditions.rating}
-                </span>
               </div>
-              <div className="trip-leg-times">
-                <span>
-                  <i className="fas fa-clock" style={{ marginRight: '0.3rem', color: '#94a3b8', fontSize: '0.7rem' }}></i>
-                  Departing {formatTripDate(leg.departureTime)}
-                </span>
-                <span style={{ color: '#94a3b8' }}>&middot;</span>
-                <span>{formatTransitTime(leg.transitMinutes)} transit</span>
-                <span style={{ color: '#94a3b8' }}>&middot;</span>
-                <span>Arriving {formatTripDate(leg.estimatedArrival)}</span>
-              </div>
-              {leg.travelWarning && (
-                <div className="trip-travel-warning" style={{ marginTop: '0.5rem', marginBottom: 0 }}>
-                  <i className="fas fa-clock" style={{ color: '#D97706', marginRight: '0.4rem' }}></i>
-                  {leg.travelWarning}
-                </div>
-              )}
-              <p className="trip-window-narrative">{leg.conditions.narrative}</p>
-              <div className="trip-window-stats">
-                {leg.conditions.wind && <span><i className="fas fa-wind"></i> {leg.conditions.wind}</span>}
-                {leg.conditions.waves && <span><i className="fas fa-water"></i> {leg.conditions.waves}</span>}
-                {leg.conditions.temp && <span><i className="fas fa-thermometer-half"></i> {leg.conditions.temp}</span>}
-                {leg.conditions.precip && <span><i className="fas fa-cloud-rain"></i> {leg.conditions.precip}</span>}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
-        {/* Hazards */}
+        {/* Hazards (collapsible) */}
         {msResult.hazards.length > 0 && (
-          <div className="trip-section-card trip-hazards">
-            <h4><i className="fas fa-exclamation-triangle" style={{ color: '#D97706', marginRight: '0.4rem' }}></i> Hazards</h4>
-            {msResult.hazards.map((h, i) => (
-              <div key={i} className="trip-hazard-item">
-                <i className="fas fa-exclamation-circle" style={{ color: '#D97706', marginRight: '0.4rem', fontSize: '0.8rem', flexShrink: 0 }}></i>
-                {h}
+          <div className="trip-collapsible-section">
+            <button className="trip-collapsible-trigger" onClick={() => setShowHazards(v => !v)} type="button">
+              <span>
+                <i className="fas fa-exclamation-triangle" style={{ color: '#D97706', marginRight: '0.4rem' }}></i>
+                Hazards
+                <span className="trip-collapsible-count">{msResult.hazards.length}</span>
+              </span>
+              <i className={`fas fa-chevron-down trip-collapsible-chevron${showHazards ? ' open' : ''}`}></i>
+            </button>
+            <div className={`trip-collapsible-body${showHazards ? ' open' : ''}`}>
+              <div className="trip-collapsible-content">
+                {msResult.hazards.map((h, i) => (
+                  <div key={i} className="trip-hazard-item">
+                    <i className="fas fa-exclamation-circle" style={{ color: '#D97706', marginRight: '0.4rem', fontSize: '0.8rem', flexShrink: 0 }}></i>
+                    {h}
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         )}
 
-        {/* Recommendations */}
+        {/* Recommendations (collapsible) */}
         {msResult.recommendations.length > 0 && (
-          <div className="trip-section-card trip-recommendations">
-            <h4><i className="fas fa-lightbulb" style={{ color: '#1B8BEB', marginRight: '0.4rem' }}></i> Recommendations</h4>
-            {msResult.recommendations.map((r, i) => (
-              <div key={i} className="trip-recommendation-item">
-                <i className="fas fa-arrow-right" style={{ color: '#1B8BEB', marginRight: '0.4rem', fontSize: '0.7rem', flexShrink: 0 }}></i>
-                {r}
+          <div className="trip-collapsible-section">
+            <button className="trip-collapsible-trigger" onClick={() => setShowRecs(v => !v)} type="button">
+              <span>
+                <i className="fas fa-lightbulb" style={{ color: '#1B8BEB', marginRight: '0.4rem' }}></i>
+                Recommendations
+                <span className="trip-collapsible-count">{msResult.recommendations.length}</span>
+              </span>
+              <i className={`fas fa-chevron-down trip-collapsible-chevron${showRecs ? ' open' : ''}`}></i>
+            </button>
+            <div className={`trip-collapsible-body${showRecs ? ' open' : ''}`}>
+              <div className="trip-collapsible-content">
+                {msResult.recommendations.map((r, i) => (
+                  <div key={i} className="trip-recommendation-item">
+                    <i className="fas fa-arrow-right" style={{ color: '#1B8BEB', marginRight: '0.4rem', fontSize: '0.7rem', flexShrink: 0 }}></i>
+                    {r}
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         )}
 
-        {/* Data Limitations */}
+        {/* Data Limitations (collapsible) */}
         {msResult.dataLimitations.length > 0 && (
-          <div className="trip-data-notes">
-            {msResult.dataLimitations.map((note, i) => (
-              <div key={i} className="trip-data-note">
-                <i className="fas fa-info-circle" style={{ color: '#94a3b8', marginRight: '0.35rem', fontSize: '0.75rem', flexShrink: 0 }}></i>
-                {note}
+          <div className="trip-collapsible-section">
+            <button className="trip-collapsible-trigger trip-collapsible-subtle" onClick={(e) => { const body = e.currentTarget.nextElementSibling; body?.classList.toggle('open'); e.currentTarget.querySelector('.trip-collapsible-chevron')?.classList.toggle('open'); }} type="button">
+              <span>
+                <i className="fas fa-info-circle" style={{ color: '#94a3b8', marginRight: '0.4rem' }}></i>
+                Data Notes
+                <span className="trip-collapsible-count">{msResult.dataLimitations.length}</span>
+              </span>
+              <i className="fas fa-chevron-down trip-collapsible-chevron"></i>
+            </button>
+            <div className="trip-collapsible-body">
+              <div className="trip-collapsible-content">
+                {msResult.dataLimitations.map((note, i) => (
+                  <div key={i} className="trip-data-note">
+                    <i className="fas fa-info-circle" style={{ color: '#94a3b8', marginRight: '0.35rem', fontSize: '0.75rem', flexShrink: 0 }}></i>
+                    {note}
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         )}
 
@@ -356,10 +442,16 @@ export default function TripPlannerTab() {
     const durationHrs = Math.round(
       (new Date(retDate + 'T' + retTime).getTime() - new Date(depDate + 'T' + depTime).getTime()) / 3600000 * 10
     ) / 10;
-    const sizeLabels = { small: 'Small Boat (<20ft)', medium: 'Medium Boat (20-30ft)', large: 'Large Boat (30+ft)' };
+    const sizeLabels: Record<BoatSize, string> = {
+      small: 'Small (<20ft)',
+      medium: 'Medium (20-30ft)',
+      large: 'Large (30+ft)',
+      jetski: 'Jet Ski / PWC',
+    };
+    const typeLabel = boatSize === 'jetski' ? 'Jet Ski' : boatType === 'sailboat' ? 'Sailboat' : 'Powerboat';
 
     return (
-      <div className="trip-planner-results" style={{ maxWidth: 800, margin: '0 auto' }}>
+      <div ref={resultsRef} className="trip-planner-results" style={{ maxWidth: 800, margin: '0 auto' }}>
         <button onClick={handleReset} className="trip-back-btn">
           <i className="fas fa-arrow-left" style={{ marginRight: '0.35rem', fontSize: '0.75rem' }}></i> Plan Another Trip
         </button>
@@ -377,7 +469,7 @@ export default function TripPlannerTab() {
               <div className="trip-overview-meta">
                 {formatWindowTime(depDate, depTime)} – {formatWindowTime(retDate, retTime)} ({durationHrs} hrs)
                 <span style={{ margin: '0 0.4rem', color: '#cbd5e1' }}>|</span>
-                {sizeLabels[boatSize]}
+                {sizeLabels[boatSize]} {typeLabel}
                 <span style={{ margin: '0 0.4rem', color: '#cbd5e1' }}>|</span>
                 {experience.charAt(0).toUpperCase() + experience.slice(1)}
               </div>
@@ -423,29 +515,51 @@ export default function TripPlannerTab() {
           ))}
         </div>
 
-        {/* Hazards */}
+        {/* Hazards (collapsible) */}
         {result.hazards.length > 0 && (
-          <div className="trip-section-card trip-hazards">
-            <h4><i className="fas fa-exclamation-triangle" style={{ color: '#D97706', marginRight: '0.4rem' }}></i> Hazards</h4>
-            {result.hazards.map((h, i) => (
-              <div key={i} className="trip-hazard-item">
-                <i className="fas fa-exclamation-circle" style={{ color: '#D97706', marginRight: '0.4rem', fontSize: '0.8rem', flexShrink: 0 }}></i>
-                {h}
+          <div className="trip-collapsible-section">
+            <button className="trip-collapsible-trigger" onClick={() => setShowHazards(v => !v)} type="button">
+              <span>
+                <i className="fas fa-exclamation-triangle" style={{ color: '#D97706', marginRight: '0.4rem' }}></i>
+                Hazards
+                <span className="trip-collapsible-count">{result.hazards.length}</span>
+              </span>
+              <i className={`fas fa-chevron-down trip-collapsible-chevron${showHazards ? ' open' : ''}`}></i>
+            </button>
+            <div className={`trip-collapsible-body${showHazards ? ' open' : ''}`}>
+              <div className="trip-collapsible-content">
+                {result.hazards.map((h, i) => (
+                  <div key={i} className="trip-hazard-item">
+                    <i className="fas fa-exclamation-circle" style={{ color: '#D97706', marginRight: '0.4rem', fontSize: '0.8rem', flexShrink: 0 }}></i>
+                    {h}
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         )}
 
-        {/* Recommendations */}
+        {/* Recommendations (collapsible) */}
         {result.recommendations.length > 0 && (
-          <div className="trip-section-card trip-recommendations">
-            <h4><i className="fas fa-lightbulb" style={{ color: '#1B8BEB', marginRight: '0.4rem' }}></i> Recommendations</h4>
-            {result.recommendations.map((r, i) => (
-              <div key={i} className="trip-recommendation-item">
-                <i className="fas fa-arrow-right" style={{ color: '#1B8BEB', marginRight: '0.4rem', fontSize: '0.7rem', flexShrink: 0 }}></i>
-                {r}
+          <div className="trip-collapsible-section">
+            <button className="trip-collapsible-trigger" onClick={() => setShowRecs(v => !v)} type="button">
+              <span>
+                <i className="fas fa-lightbulb" style={{ color: '#1B8BEB', marginRight: '0.4rem' }}></i>
+                Recommendations
+                <span className="trip-collapsible-count">{result.recommendations.length}</span>
+              </span>
+              <i className={`fas fa-chevron-down trip-collapsible-chevron${showRecs ? ' open' : ''}`}></i>
+            </button>
+            <div className={`trip-collapsible-body${showRecs ? ' open' : ''}`}>
+              <div className="trip-collapsible-content">
+                {result.recommendations.map((r, i) => (
+                  <div key={i} className="trip-recommendation-item">
+                    <i className="fas fa-arrow-right" style={{ color: '#1B8BEB', marginRight: '0.4rem', fontSize: '0.7rem', flexShrink: 0 }}></i>
+                    {r}
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         )}
 
@@ -472,15 +586,27 @@ export default function TripPlannerTab() {
           </div>
         )}
 
-        {/* Data Confidence */}
+        {/* Data Notes (collapsible) */}
         {result.dataLimitations.length > 0 && (
-          <div className="trip-data-notes">
-            {result.dataLimitations.map((note, i) => (
-              <div key={i} className="trip-data-note">
-                <i className="fas fa-info-circle" style={{ color: '#94a3b8', marginRight: '0.35rem', fontSize: '0.75rem', flexShrink: 0 }}></i>
-                {note}
+          <div className="trip-collapsible-section">
+            <button className="trip-collapsible-trigger trip-collapsible-subtle" onClick={(e) => { const body = e.currentTarget.nextElementSibling; body?.classList.toggle('open'); e.currentTarget.querySelector('.trip-collapsible-chevron')?.classList.toggle('open'); }} type="button">
+              <span>
+                <i className="fas fa-info-circle" style={{ color: '#94a3b8', marginRight: '0.4rem' }}></i>
+                Data Notes
+                <span className="trip-collapsible-count">{result.dataLimitations.length}</span>
+              </span>
+              <i className="fas fa-chevron-down trip-collapsible-chevron"></i>
+            </button>
+            <div className="trip-collapsible-body">
+              <div className="trip-collapsible-content">
+                {result.dataLimitations.map((note, i) => (
+                  <div key={i} className="trip-data-note">
+                    <i className="fas fa-info-circle" style={{ color: '#94a3b8', marginRight: '0.35rem', fontSize: '0.75rem', flexShrink: 0 }}></i>
+                    {note}
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         )}
 
@@ -514,6 +640,13 @@ export default function TripPlannerTab() {
         </p>
       </div>
 
+      <div className="trip-disclaimer-banner">
+        <i className="fas fa-exclamation-triangle"></i>
+        <div>
+          <strong>For informational purposes only.</strong> This tool does not replace checking official marine forecasts and conditions on your own. Lake Erie conditions can change rapidly and without warning. Always monitor VHF Channel 16, check NOAA forecasts, wear proper safety gear, and use your own judgment before heading out on the water.
+        </div>
+      </div>
+
       <div className="trip-form-card">
         {/* Trip Mode Toggle */}
         <div className="trip-form-group">
@@ -538,22 +671,80 @@ export default function TripPlannerTab() {
 
         {/* Boat Size */}
         <div className="trip-form-group">
-          <label>Boat Size</label>
+          <label>Vessel Size</label>
           <div className="trip-segment-group">
             {([
-              { value: 'small', label: 'Small', sub: '< 20ft' },
-              { value: 'medium', label: 'Medium', sub: '20-30ft' },
-              { value: 'large', label: 'Large', sub: '30ft+' },
-            ] as const).map(opt => (
+              { value: 'small' as BoatSize, label: 'Small', sub: '< 20ft' },
+              { value: 'medium' as BoatSize, label: 'Medium', sub: '20-30ft' },
+              { value: 'large' as BoatSize, label: 'Large', sub: '30ft+' },
+              { value: 'jetski' as BoatSize, label: 'Jet Ski', sub: 'PWC' },
+            ]).map(opt => (
               <button
                 key={opt.value}
                 className={`trip-segment-btn${boatSize === opt.value ? ' active' : ''}`}
-                onClick={() => setBoatSize(opt.value)}
+                onClick={() => {
+                  setBoatSize(opt.value);
+                  if (opt.value === 'jetski') setBoatType('powerboat');
+                }}
                 type="button"
               >
                 {opt.label} <span className="trip-segment-sub">{opt.sub}</span>
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Boat Type (Powerboat vs Sailboat) — only for small/medium/large */}
+        {boatSize !== 'jetski' && (
+          <div className="trip-form-group">
+            <label>Vessel Type</label>
+            <div className="trip-segment-group trip-boat-type-toggle">
+              <button
+                className={`trip-segment-btn${boatType === 'powerboat' ? ' active' : ''}`}
+                onClick={() => setBoatType('powerboat')}
+                type="button"
+              >
+                <i className="fas fa-ship" style={{ marginRight: '0.3rem', fontSize: '0.75rem' }}></i> Powerboat
+              </button>
+              <button
+                className={`trip-segment-btn${boatType === 'sailboat' ? ' active' : ''}`}
+                onClick={() => setBoatType('sailboat')}
+                type="button"
+              >
+                <i className="fas fa-wind" style={{ marginRight: '0.3rem', fontSize: '0.75rem' }}></i> Sailboat
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Planned Activities */}
+        <div className="trip-form-group">
+          <label>Planned Activities</label>
+          <div className="trip-activity-chips">
+            {(boatSize === 'jetski' ? [
+              { value: 'cruising' as BoatActivity, label: 'Cruising', icon: 'fa-compass' },
+              { value: 'wave-jumping' as BoatActivity, label: 'Wave Jumping', icon: 'fa-water' },
+              { value: 'fishing' as BoatActivity, label: 'Fishing', icon: 'fa-fish' },
+              { value: 'swimming' as BoatActivity, label: 'Swimming', icon: 'fa-swimmer' },
+            ] : [
+              { value: 'cruising' as BoatActivity, label: 'Cruising', icon: 'fa-compass' },
+              { value: 'fishing' as BoatActivity, label: 'Fishing', icon: 'fa-fish' },
+              { value: 'swimming' as BoatActivity, label: 'Swimming', icon: 'fa-swimmer' },
+              { value: 'watersports' as BoatActivity, label: 'Tubing / Water Sports', icon: 'fa-skiing' },
+            ]).map(act => (
+              <button
+                key={act.value}
+                className={`trip-activity-chip${activities.includes(act.value) ? ' active' : ''}`}
+                onClick={() => toggleActivity(act.value)}
+                type="button"
+              >
+                <i className={`fas ${act.icon}`}></i> {act.label}
+              </button>
+            ))}
+          </div>
+          <div className="trip-field-hint" style={{ marginTop: '0.3rem' }}>
+            <i className="fas fa-info-circle" style={{ marginRight: '0.3rem' }}></i>
+            Select all that apply — conditions are analyzed for each activity
           </div>
         </div>
 
@@ -588,10 +779,10 @@ export default function TripPlannerTab() {
                   <option key={d.value} value={d.value}>{d.label} — {d.distance}</option>
                 ))}
               </select>
-              {dest && dest.time !== '—' && (
+              {dest && dest.value !== 'open-water' && (
                 <div className="trip-field-hint">
                   <i className="fas fa-info-circle" style={{ marginRight: '0.3rem' }}></i>
-                  ~{dest.time} transit at cruising speed
+                  ~{formatTransitTime(getTransitMinutes('lorain', dest.value, boatType))} transit at cruising speed
                 </div>
               )}
             </div>
@@ -655,7 +846,7 @@ export default function TripPlannerTab() {
                 </div>
                 <div className="trip-chain-transit-hint">
                   <i className="fas fa-ship" style={{ marginRight: '0.3rem', fontSize: '0.7rem' }}></i>
-                  {formatTransitTime(getTransitMinutes('lorain', stops[0].destination))} to {getDestLabel(stops[0].destination)}
+                  {formatTransitTime(getTransitMinutes('lorain', stops[0].destination, boatType))} to {getDestLabel(stops[0].destination)}
                 </div>
               </div>
 
@@ -663,7 +854,7 @@ export default function TripPlannerTab() {
               {stops.map((stop, i) => {
                 const nextDest = i < stops.length - 1 ? stops[i + 1].destination : 'lorain';
                 const nextLabel = i < stops.length - 1 ? getDestLabel(nextDest) : 'Lorain Harbor';
-                const transitOut = getTransitMinutes(stop.destination, nextDest);
+                const transitOut = getTransitMinutes(stop.destination, nextDest, boatType);
 
                 return (
                   <div key={i} className="trip-stop-card">

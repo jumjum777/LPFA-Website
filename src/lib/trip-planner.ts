@@ -6,11 +6,15 @@ import type { VesselRecord } from './vessels';
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export type BoatingRating = 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Dangerous';
-type BoatSize = 'small' | 'medium' | 'large';
+export type BoatSize = 'small' | 'medium' | 'large' | 'jetski';
+export type BoatType = 'powerboat' | 'sailboat';
+export type BoatActivity = 'cruising' | 'fishing' | 'swimming' | 'watersports' | 'wave-jumping';
 type ExperienceLevel = 'beginner' | 'intermediate' | 'experienced';
 
 export interface TripRequest {
   boatSize: BoatSize;
+  boatType?: BoatType;
+  activities?: BoatActivity[];
   departurePoint: string;
   destination: string;
   departureTime: string; // ISO datetime
@@ -84,6 +88,8 @@ export interface MultiStopAnalysis {
 
 export interface MultiStopRequest {
   boatSize: BoatSize;
+  boatType?: BoatType;
+  activities?: BoatActivity[];
   experienceLevel: ExperienceLevel;
   legs: TripLeg[];
 }
@@ -92,12 +98,23 @@ export interface MultiStopRequest {
 
 export const DESTINATIONS = [
   { value: 'lorain', label: 'Lorain Harbor', distance: '0 mi', time: '—', lat: 41.468, lng: -82.178, transitMinutes: 0 },
-  { value: 'avon-point', label: 'Avon Point', distance: '~5 mi E', time: '~20 min', lat: 41.506, lng: -82.032, transitMinutes: 20 },
-  { value: 'vermilion', label: 'Vermilion Harbor', distance: '~8 mi W', time: '~30 min', lat: 41.424, lng: -82.365, transitMinutes: 30 },
-  { value: 'huron', label: 'Huron Harbor', distance: '~20 mi W', time: '~1 hr', lat: 41.405, lng: -82.555, transitMinutes: 60 },
-  { value: 'sandusky', label: 'Sandusky Bay', distance: '~25 mi W', time: '~1.5 hr', lat: 41.464, lng: -82.708, transitMinutes: 90 },
-  { value: 'kelleys-island', label: 'Kelleys Island', distance: '~35 mi NW', time: '~2 hr', lat: 41.601, lng: -82.708, transitMinutes: 120 },
-  { value: 'put-in-bay', label: 'Put-in-Bay', distance: '~50 mi NW', time: '~2.5-3 hr', lat: 41.653, lng: -82.820, transitMinutes: 165 },
+  { value: 'ashtabula', label: 'Ashtabula Harbor', distance: '65 mi E', time: '~3.5 hr', lat: 41.911, lng: -80.790, transitMinutes: 210 },
+  { value: 'avon-lake', label: 'Avon Lake', distance: '6 mi E', time: '~20 min', lat: 41.494, lng: -82.028, transitMinutes: 20 },
+  { value: 'avon-point', label: 'Avon Point', distance: '7 mi E', time: '~20 min', lat: 41.506, lng: -82.032, transitMinutes: 20 },
+  { value: 'bay-village', label: 'Bay Village', distance: '14 mi E', time: '~40 min', lat: 41.494, lng: -81.922, transitMinutes: 40 },
+  { value: 'cleveland', label: 'Cleveland Harbor', distance: '25 mi E', time: '~1.5 hr', lat: 41.509, lng: -81.704, transitMinutes: 85 },
+  { value: 'edgewater', label: 'Edgewater Marina', distance: '23 mi E', time: '~1.25 hr', lat: 41.497, lng: -81.735, transitMinutes: 75 },
+  { value: 'fairport', label: 'Fairport Harbor', distance: '40 mi E', time: '~2 hr', lat: 41.762, lng: -81.281, transitMinutes: 120 },
+  { value: 'geneva', label: 'Geneva-on-the-Lake', distance: '55 mi E', time: '~3 hr', lat: 41.860, lng: -80.951, transitMinutes: 180 },
+  { value: 'huron', label: 'Huron Harbor', distance: '20 mi W', time: '~1 hr', lat: 41.405, lng: -82.555, transitMinutes: 60 },
+  { value: 'kelleys-island', label: 'Kelleys Island', distance: '35 mi NW', time: '~2 hr', lat: 41.601, lng: -82.708, transitMinutes: 120 },
+  { value: 'lakewood', label: 'Lakewood', distance: '20 mi E', time: '~1 hr', lat: 41.490, lng: -81.798, transitMinutes: 60 },
+  { value: 'mentor-headlands', label: 'Mentor Headlands', distance: '43 mi E', time: '~2.25 hr', lat: 41.770, lng: -81.228, transitMinutes: 135 },
+  { value: 'put-in-bay', label: 'Put-in-Bay', distance: '50 mi NW', time: '~2.5-3 hr', lat: 41.653, lng: -82.820, transitMinutes: 165 },
+  { value: 'rocky-river', label: 'Rocky River', distance: '18 mi E', time: '~55 min', lat: 41.483, lng: -81.841, transitMinutes: 55 },
+  { value: 'sandusky', label: 'Sandusky Bay', distance: '25 mi W', time: '~1.5 hr', lat: 41.464, lng: -82.708, transitMinutes: 90 },
+  { value: 'sheffield-lake', label: 'Sheffield Lake', distance: '3 mi E', time: '~10 min', lat: 41.484, lng: -82.101, transitMinutes: 10 },
+  { value: 'vermilion', label: 'Vermilion Harbor', distance: '8 mi W', time: '~30 min', lat: 41.424, lng: -82.365, transitMinutes: 30 },
   { value: 'open-water', label: 'Open Water / Fishing Trip', distance: 'varies', time: '—', lat: 41.55, lng: -82.18, transitMinutes: 0 },
 ];
 
@@ -113,14 +130,16 @@ function haversineNM(lat1: number, lng1: number, lat2: number, lng2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-/** Get estimated transit in minutes between any two destinations at ~18 knots */
-export function getTransitMinutes(fromId: string, toId: string): number {
+/** Get estimated transit in minutes between two destinations.
+ *  Powerboats/jet skis cruise at ~18 kts, sailboats at ~7 kts. */
+export function getTransitMinutes(fromId: string, toId: string, boatType?: BoatType): number {
   if (fromId === toId) return 0;
   const from = DESTINATIONS.find(d => d.value === fromId);
   const to = DESTINATIONS.find(d => d.value === toId);
   if (!from || !to) return 0;
   const nm = haversineNM(from.lat, from.lng, to.lat, to.lng);
-  return Math.round(nm / 18 * 60); // 18 knots cruising
+  const speed = boatType === 'sailboat' ? 7 : 18; // knots
+  return Math.round(nm / speed * 60);
 }
 
 /** Format minutes into readable transit time */
@@ -147,6 +166,12 @@ interface Thresholds {
 }
 
 const SIZE_THRESHOLDS: Record<BoatSize, Thresholds> = {
+  jetski: {
+    excellent: { wind: 12, waves: 2.5 },
+    good: { wind: 18, waves: 3.5 },
+    fair: { wind: 22, waves: 4.5 },
+    poor: { wind: 28, waves: 6 },
+  },
   small: {
     excellent: { wind: 10, waves: 2 },
     good: { wind: 15, waves: 3 },
@@ -166,6 +191,39 @@ const SIZE_THRESHOLDS: Record<BoatSize, Thresholds> = {
     poor: { wind: 40, waves: 10 },
   },
 };
+
+// Sailboat thresholds — wind has a floor (too little = bad) and ceiling
+const SAILBOAT_THRESHOLDS: Record<'small' | 'medium' | 'large', Thresholds & { minWind: number }> = {
+  small: {
+    excellent: { wind: 18, waves: 2.5 },
+    good: { wind: 22, waves: 3.5 },
+    fair: { wind: 28, waves: 5 },
+    poor: { wind: 35, waves: 7 },
+    minWind: 6,
+  },
+  medium: {
+    excellent: { wind: 20, waves: 3 },
+    good: { wind: 25, waves: 4 },
+    fair: { wind: 30, waves: 6 },
+    poor: { wind: 38, waves: 8 },
+    minWind: 5,
+  },
+  large: {
+    excellent: { wind: 22, waves: 3.5 },
+    good: { wind: 28, waves: 5 },
+    fair: { wind: 35, waves: 7 },
+    poor: { wind: 42, waves: 10 },
+    minWind: 5,
+  },
+};
+
+/** Get the effective thresholds based on boat size + type */
+function getThresholds(boatSize: BoatSize, boatType?: BoatType): Thresholds {
+  if (boatType === 'sailboat' && boatSize !== 'jetski') {
+    return SAILBOAT_THRESHOLDS[boatSize as 'small' | 'medium' | 'large'];
+  }
+  return SIZE_THRESHOLDS[boatSize];
+}
 
 // ─── Data Slicing ───────────────────────────────────────────────────────────
 
@@ -249,9 +307,11 @@ function rateConditions(
   maxWind: number,
   waveHeight: number | null,
   boatSize: BoatSize,
-  alerts: MarineAlert[]
+  alerts: MarineAlert[],
+  boatType?: BoatType,
+  activities?: BoatActivity[]
 ): BoatingRating {
-  const t = SIZE_THRESHOLDS[boatSize];
+  const t = getThresholds(boatSize, boatType);
   let rating: BoatingRating = 'Excellent';
 
   const effectiveWaves = waveHeight ?? estimateWavesFromWind(maxWind);
@@ -261,15 +321,53 @@ function rateConditions(
   else if (maxWind > t.good.wind || effectiveWaves > t.good.waves) rating = 'Fair';
   else if (maxWind > t.excellent.wind || effectiveWaves > t.excellent.waves) rating = 'Good';
 
+  // Sailboat low-wind downgrade
+  if (boatType === 'sailboat' && boatSize !== 'jetski') {
+    const minWind = SAILBOAT_THRESHOLDS[boatSize as 'small' | 'medium' | 'large'].minWind;
+    if (maxWind < minWind) {
+      rating = worseRating(rating, 'Fair'); // too little wind for sailing
+    }
+  }
+
+  // Activity-based downgrades
+  const acts = activities || ['cruising'];
+  if (acts.includes('swimming')) {
+    // Swimming needs calm water
+    if (effectiveWaves > 2) rating = worseRating(rating, 'Poor');
+    else if (effectiveWaves > 1.5 || maxWind > 15) rating = worseRating(rating, 'Fair');
+  }
+  if (acts.includes('fishing')) {
+    // Fishing is harder in chop — more sensitive than cruising
+    if (effectiveWaves > 3) rating = worseRating(rating, 'Poor');
+    else if (effectiveWaves > 2 || maxWind > 18) rating = worseRating(rating, 'Fair');
+  }
+  if (acts.includes('watersports')) {
+    // Tubing/skiing needs relatively calm water
+    if (effectiveWaves > 2.5 || maxWind > 18) rating = worseRating(rating, 'Poor');
+    else if (effectiveWaves > 1.5 || maxWind > 12) rating = worseRating(rating, 'Fair');
+  }
+  if (acts.includes('wave-jumping')) {
+    // Wave jumping wants some chop — too calm is boring, too rough is dangerous
+    if (effectiveWaves < 1) rating = worseRating(rating, 'Fair'); // not enough waves
+    // Very high waves still dangerous for PWC
+    if (effectiveWaves > 5) rating = worseRating(rating, 'Dangerous');
+    else if (effectiveWaves > 4) rating = worseRating(rating, 'Poor');
+  }
+
   // Alert-based downgrades
   const severeEvents = ['Gale Warning', 'Storm Warning', 'Hurricane Warning'];
   const moderateEvents = ['Small Craft Advisory', 'Hazardous Seas Warning'];
+  const stormEvents = ['Thunderstorm', 'Lightning'];
 
   for (const a of alerts) {
     if (severeEvents.some(e => a.event.includes(e))) {
       rating = worseRating(rating, 'Dangerous');
     } else if (moderateEvents.some(e => a.event.includes(e))) {
       rating = worseRating(rating, 'Poor');
+    }
+    // Thunderstorms are extra dangerous for jet skis (no shelter) and sailboats (mast/lightning)
+    if ((boatSize === 'jetski' || boatType === 'sailboat') && stormEvents.some(e => a.event.includes(e))) {
+      rating = worseRating(rating, 'Dangerous');
     }
   }
 
@@ -321,13 +419,22 @@ function assembleTripContext(
   });
 
   const sizeLabels: Record<BoatSize, string> = {
-    small: 'Small (<20 ft)', medium: 'Medium (20-30 ft)', large: 'Large (30+ ft)',
+    jetski: 'Jet Ski / PWC', small: 'Small (<20 ft)', medium: 'Medium (20-30 ft)', large: 'Large (30+ ft)',
   };
+  const typeLabel = trip.boatType === 'sailboat' ? ' (Sailboat)' : trip.boatSize === 'jetski' ? '' : ' (Powerboat)';
 
   const parts: string[] = [];
 
+  const activityLabels: Record<BoatActivity, string> = {
+    cruising: 'Cruising / Sightseeing', fishing: 'Fishing',
+    swimming: 'Swimming / Anchoring', watersports: 'Tubing / Water Sports',
+    'wave-jumping': 'Wave Jumping (PWC)',
+  };
+  const acts = trip.activities?.length ? trip.activities : ['cruising' as BoatActivity];
+
   parts.push('TRIP DETAILS:');
-  parts.push(`  Boat Size: ${sizeLabels[trip.boatSize]}`);
+  parts.push(`  Vessel: ${sizeLabels[trip.boatSize]}${typeLabel}`);
+  parts.push(`  Planned Activities: ${acts.map(a => activityLabels[a]).join(', ')}`);
   parts.push(`  Experience Level: ${trip.experienceLevel.charAt(0).toUpperCase() + trip.experienceLevel.slice(1)}`);
   parts.push(`  Departure: ${fmtTime(dep)} from ${trip.departurePoint}`);
   parts.push(`  Return: ${fmtTime(ret)} to ${trip.departurePoint}`);
@@ -466,10 +573,19 @@ function assembleTripContext(
 
 const TRIP_SYSTEM_PROMPT = `You are a boat trip planning advisor for Lake Erie, based out of Lorain Harbor, Ohio. Analyze the provided weather, marine, and vessel data for the specific trip window and produce a JSON response.
 
-Adjust safety thresholds based on boat size:
-- Small boats (<20ft): Conservative. Winds >15kts or waves >3ft = Fair at best.
-- Medium boats (20-30ft): Moderate tolerance. Can handle moderate chop.
-- Large boats (30ft+): More tolerant but still flag serious conditions.
+Adjust safety thresholds based on vessel type:
+- Jet Ski / PWC: Can handle moderate chop (2-3ft) but no shelter from weather. Thunderstorms = Dangerous (fully exposed rider). Flag water temp below 60°F (hypothermia risk). Flag trips over 30 miles one-way (fuel range). Always recommend life jacket + kill switch lanyard.
+- Small boats (<20ft) Powerboat: Conservative. Winds >15kts or waves >3ft = Fair at best.
+- Medium boats (20-30ft) Powerboat: Moderate tolerance. Can handle moderate chop.
+- Large boats (30ft+) Powerboat: More tolerant but still flag serious conditions.
+- Sailboats: Wind is essential — calm conditions (<5-6 kts) are Poor for sailing. Moderate wind (10-20 kts) is ideal. Higher wind tolerance than same-size powerboats, but gusty/shifting winds are dangerous (knockdown risk). Thunderstorms = Dangerous (mast = lightning target). Note wind direction relative to route when possible (headwind = slower, beam reach = fastest).
+
+Adjust for planned activities:
+- Cruising / Sightseeing: Baseline — most forgiving of conditions.
+- Fishing: Choppy water (2+ ft) makes fishing difficult. High wind causes fast drift. Note whether trolling or anchor fishing would be better given conditions.
+- Swimming / Anchoring: Needs calm water (under 1.5 ft waves). Flag water temperature below 65°F. If beach water quality advisories exist, warn about elevated bacteria levels. Wind over 15 kts creates unsafe swimming conditions.
+- Tubing / Water Sports: Needs calm water (under 1.5 ft). Wind over 12 kts makes tubing/skiing dangerous. Choppy water (2+ ft) = Poor for watersports.
+- Wave Jumping (PWC): Wants moderate chop (1-3 ft waves ideal). Calm/flat water = boring (downgrade to Fair). Waves over 4 ft = dangerous even for experienced riders. Always flag if no other boats are in the area (safety).
 
 Adjust for experience level:
 - Beginner: Be conservative. Recommend calm conditions only.
@@ -582,8 +698,8 @@ function generateFallbackAnalysis(
 
   const buoyWaves = marine.buoy && !marine.buoy.isOffline ? marine.buoy.waveHeight : null;
 
-  const depRating = rateConditions(depCond.maxWind, buoyWaves, trip.boatSize, depWindow.alerts);
-  const retRating = rateConditions(retCond.maxWind, buoyWaves, trip.boatSize, retWindow.alerts);
+  const depRating = rateConditions(depCond.maxWind, buoyWaves, trip.boatSize, depWindow.alerts, trip.boatType, trip.activities);
+  const retRating = rateConditions(retCond.maxWind, buoyWaves, trip.boatSize, retWindow.alerts, trip.boatType, trip.activities);
   const overallRating = worseRating(depRating, retRating);
 
   // Experience downgrade for beginners
@@ -615,6 +731,29 @@ function generateFallbackAnalysis(
     for (const b of beach.beaches.filter(b => b.status === 'advisory')) {
       hazards.push(`Elevated E. coli at ${b.name} — avoid swimming`);
     }
+  }
+
+  // Activity-specific hazards & recommendations
+  const acts = trip.activities || ['cruising' as BoatActivity];
+  const effectiveWaves = buoyWaves ?? estimateWavesFromWind(depCond.maxWind);
+
+  if (acts.includes('swimming')) {
+    const waterTemp = marine.buoy && !marine.buoy.isOffline ? marine.buoy.waterTemp : null;
+    if (waterTemp !== null && waterTemp < 65) {
+      hazards.push(`Water temperature ${waterTemp}°F — cold for swimming`);
+    }
+    if (effectiveWaves > 1.5) {
+      hazards.push('Waves too rough for safe swimming');
+    }
+  }
+  if (acts.includes('fishing') && effectiveWaves > 2) {
+    recommendations.push('Choppy conditions — anchor fishing may be more comfortable than trolling');
+  }
+  if (acts.includes('watersports') && (effectiveWaves > 1.5 || depCond.maxWind > 12)) {
+    hazards.push('Conditions may be too rough for tubing/water sports');
+  }
+  if (acts.includes('wave-jumping') && effectiveWaves < 1) {
+    recommendations.push('Flat conditions — not ideal for wave jumping');
   }
 
   // Recommendations
@@ -788,10 +927,19 @@ export async function generateTripAnalysis(
 
 const MULTI_STOP_SYSTEM_PROMPT = `You are a boat trip planning advisor for Lake Erie, based out of Lorain Harbor, Ohio. Analyze conditions for a MULTI-STOP trip and produce a JSON response.
 
-Adjust safety thresholds based on boat size:
-- Small boats (<20ft): Conservative. Winds >15kts or waves >3ft = Fair at best.
-- Medium boats (20-30ft): Moderate tolerance. Can handle moderate chop.
-- Large boats (30ft+): More tolerant but still flag serious conditions.
+Adjust safety thresholds based on vessel type:
+- Jet Ski / PWC: Can handle moderate chop but no shelter. Thunderstorms = Dangerous. Flag water temp <60°F. Flag legs over 30 miles (fuel). Recommend life jacket + kill switch.
+- Small boats (<20ft) Powerboat: Conservative. Winds >15kts or waves >3ft = Fair at best.
+- Medium boats (20-30ft) Powerboat: Moderate tolerance. Can handle moderate chop.
+- Large boats (30ft+) Powerboat: More tolerant but still flag serious conditions.
+- Sailboats: Calm (<5-6 kts) = Poor. Moderate wind (10-20 kts) = ideal. Higher wind tolerance than powerboats but gusty/shifting = dangerous. Thunderstorms = Dangerous (mast lightning). Note wind direction vs route.
+
+Adjust for planned activities:
+- Cruising / Sightseeing: Baseline — most forgiving.
+- Fishing: Chop (2+ ft) makes fishing difficult. Wind causes drift. Note trolling vs anchor fishing.
+- Swimming / Anchoring: Needs calm water (<1.5 ft). Flag water temp <65°F. Flag bacteria advisories.
+- Tubing / Water Sports: Needs calm water (<1.5 ft). Wind >12 kts = dangerous.
+- Wave Jumping (PWC): Wants moderate chop (1-3 ft ideal). Flat water = boring. >4 ft = dangerous.
 
 Adjust for experience level:
 - Beginner: Be conservative. Recommend calm conditions only.
@@ -877,7 +1025,7 @@ export async function generateMultiStopAnalysis(
   beach: BeachQualityResponse,
   vessels: VesselRecord[]
 ): Promise<MultiStopAnalysis> {
-  const { boatSize, experienceLevel, legs } = request;
+  const { boatSize, boatType, activities, experienceLevel, legs } = request;
   const limitations: string[] = [];
   const buoyWaves = marine.buoy && !marine.buoy.isOffline ? marine.buoy.waveHeight : null;
 
@@ -910,7 +1058,7 @@ export async function generateMultiStopAnalysis(
     // Slice conditions at departure time
     const window = sliceToWindow(depTime, marine);
     const cond = extractWindowConditions(window);
-    const rating = rateConditions(cond.maxWind, buoyWaves, boatSize, window.alerts);
+    const rating = rateConditions(cond.maxWind, buoyWaves, boatSize, window.alerts, boatType, activities);
 
     if (window.confidence !== 'high') {
       const legLabel = `Leg ${i + 1}`;
@@ -966,12 +1114,21 @@ export async function generateMultiStopAnalysis(
   });
 
   const sizeLabels: Record<BoatSize, string> = {
-    small: 'Small (<20 ft)', medium: 'Medium (20-30 ft)', large: 'Large (30+ ft)',
+    jetski: 'Jet Ski / PWC', small: 'Small (<20 ft)', medium: 'Medium (20-30 ft)', large: 'Large (30+ ft)',
   };
+  const typeLabel = boatType === 'sailboat' ? ' (Sailboat)' : boatSize === 'jetski' ? '' : ' (Powerboat)';
 
   const ctxParts: string[] = [];
+  const activityLabels: Record<BoatActivity, string> = {
+    cruising: 'Cruising / Sightseeing', fishing: 'Fishing',
+    swimming: 'Swimming / Anchoring', watersports: 'Tubing / Water Sports',
+    'wave-jumping': 'Wave Jumping (PWC)',
+  };
+  const acts = activities?.length ? activities : ['cruising' as BoatActivity];
+
   ctxParts.push('MULTI-STOP TRIP DETAILS:');
-  ctxParts.push(`  Boat Size: ${sizeLabels[boatSize]}`);
+  ctxParts.push(`  Vessel: ${sizeLabels[boatSize]}${typeLabel}`);
+  ctxParts.push(`  Planned Activities: ${acts.map(a => activityLabels[a]).join(', ')}`);
   ctxParts.push(`  Experience Level: ${experienceLevel.charAt(0).toUpperCase() + experienceLevel.slice(1)}`);
   ctxParts.push(`  Route: ${legAnalyses.map(l => l.fromLabel).join(' → ')} → ${legAnalyses[legAnalyses.length - 1].toLabel}`);
   ctxParts.push('');
