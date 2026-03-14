@@ -61,6 +61,10 @@ function formatDateTime(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
+// ─── Shared input class ─────────────────────────────────────────────────────
+
+const inputClass = 'w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 focus:outline-none focus:border-blue focus:ring-2 focus:ring-blue/10 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-colors';
+
 // ─── Empty Form State ───────────────────────────────────────────────────────
 
 const emptyLineItem: POLineItem = { description: '', qty: 1, unit_price: 0 };
@@ -108,7 +112,6 @@ export default function PurchaseOrdersPage() {
 
   useEffect(() => {
     loadData();
-    // Get current user name
     fetch('/api/admin/check')
       .then(r => r.json())
       .then(d => { if (d.user?.display_name) setUserName(d.user.display_name); })
@@ -278,7 +281,6 @@ export default function PurchaseOrdersPage() {
     const contentW = pageW - margin * 2;
     let y = margin;
 
-    // Header band
     doc.setFillColor(11, 31, 58);
     doc.rect(0, 0, pageW, 80, 'F');
     doc.setFillColor(217, 119, 6);
@@ -294,11 +296,8 @@ export default function PurchaseOrdersPage() {
     doc.setFontSize(10);
     doc.text(po.po_number, margin, 70);
 
-    // Status badge on right
     const statusText = STATUS_LABELS[po.status] || po.status;
     const statusW = doc.getTextWidth(statusText.toUpperCase()) + 16;
-    const sc = STATUS_COLORS[po.status] || STATUS_COLORS.draft;
-    // Use approved = green, pending = amber, denied = red
     if (po.status === 'approved') doc.setFillColor(22, 101, 52);
     else if (po.status === 'denied') doc.setFillColor(220, 38, 38);
     else if (po.status === 'pending_approval') doc.setFillColor(146, 64, 14);
@@ -310,8 +309,6 @@ export default function PurchaseOrdersPage() {
     doc.text(statusText.toUpperCase(), pageW - margin - statusW / 2, 40, { align: 'center' });
 
     y = 105;
-
-    // PO Info grid
     doc.setTextColor(100, 116, 139);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
@@ -355,8 +352,6 @@ export default function PurchaseOrdersPage() {
     }
 
     y += 25;
-
-    // Title
     doc.setFillColor(241, 245, 249);
     doc.roundedRect(margin, y, contentW, 30, 4, 4, 'F');
     doc.setTextColor(30, 41, 59);
@@ -365,7 +360,6 @@ export default function PurchaseOrdersPage() {
     doc.text(po.title, margin + 12, y + 19);
     y += 42;
 
-    // Line items table header
     const cols = [
       { label: 'Description', x: margin, w: 280 },
       { label: 'Qty', x: margin + 280, w: 60 },
@@ -381,19 +375,11 @@ export default function PurchaseOrdersPage() {
     cols.forEach(col => doc.text(col.label.toUpperCase(), col.x + 6, y + 15));
     y += 22;
 
-    // Line items rows
     po.line_items.forEach((item, idx) => {
-      if (y > doc.internal.pageSize.getHeight() - 100) {
-        doc.addPage();
-        y = margin;
-      }
-      if (idx % 2 === 0) {
-        doc.setFillColor(248, 250, 252);
-        doc.rect(margin, y, contentW, 22, 'F');
-      }
+      if (y > doc.internal.pageSize.getHeight() - 100) { doc.addPage(); y = margin; }
+      if (idx % 2 === 0) { doc.setFillColor(248, 250, 252); doc.rect(margin, y, contentW, 22, 'F'); }
       doc.setDrawColor(226, 232, 240);
       doc.line(margin, y + 22, margin + contentW, y + 22);
-
       doc.setTextColor(30, 41, 59);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
@@ -405,38 +391,32 @@ export default function PurchaseOrdersPage() {
       y += 22;
     });
 
-    // Totals
     y += 4;
     doc.setDrawColor(203, 213, 225);
     doc.line(margin + 340, y, margin + contentW, y);
     y += 16;
-
     doc.setTextColor(100, 116, 139);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.text('Subtotal', margin + 350, y);
     doc.setTextColor(30, 41, 59);
     doc.text(formatCurrency(po.subtotal), margin + 436, y);
-
     y += 16;
     doc.setTextColor(100, 116, 139);
     doc.text('Tax', margin + 350, y);
     doc.setTextColor(30, 41, 59);
     doc.text(formatCurrency(po.tax), margin + 436, y);
-
     y += 4;
     doc.setDrawColor(11, 31, 58);
     doc.setLineWidth(1.5);
     doc.line(margin + 340, y + 4, margin + contentW, y + 4);
     y += 20;
-
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
     doc.setTextColor(11, 31, 58);
     doc.text('TOTAL', margin + 350, y);
     doc.text(formatCurrency(po.total_amount), margin + 436, y);
 
-    // Notes
     if (po.notes) {
       y += 30;
       doc.setTextColor(100, 116, 139);
@@ -450,7 +430,6 @@ export default function PurchaseOrdersPage() {
       doc.text(noteLines, margin, y);
     }
 
-    // Submitted by
     y += 30;
     doc.setTextColor(100, 116, 139);
     doc.setFont('helvetica', 'normal');
@@ -467,7 +446,6 @@ export default function PurchaseOrdersPage() {
     doc.setTextColor(100, 116, 139);
     doc.text(formatDateTime(po.created_at), margin, y + 12);
 
-    // Approval info
     if (po.approved_by) {
       doc.setTextColor(30, 41, 59);
       doc.setFontSize(9);
@@ -490,7 +468,6 @@ export default function PurchaseOrdersPage() {
       doc.text(`Reason: ${po.denial_reason}`, margin + 250, y);
     }
 
-    // Footer
     const footerY = doc.internal.pageSize.getHeight() - 30;
     doc.setDrawColor(217, 119, 6);
     doc.setLineWidth(1);
@@ -536,32 +513,32 @@ export default function PurchaseOrdersPage() {
     const sc = STATUS_COLORS[detailPO.status] || STATUS_COLORS.draft;
     return (
       <div className="admin-page">
-        <button className="admin-btn admin-btn-secondary" onClick={() => setDetailId(null)} style={{ marginBottom: '1rem' }}>
+        <button className="admin-btn admin-btn-secondary mb-4" onClick={() => setDetailId(null)}>
           <i className="fas fa-arrow-left"></i> Back to Orders
         </button>
 
         {/* Header card */}
-        <div className="admin-card" style={{ marginBottom: '1.25rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+        <div className="admin-card mb-5">
+          <div className="flex justify-between items-start flex-wrap gap-4">
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.3rem' }}>
-                <h2 style={{ margin: 0 }}>{detailPO.po_number}</h2>
-                <span style={{ padding: '0.2rem 0.6rem', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: 600, background: sc.bg, color: sc.color }}>
+              <div className="flex items-center gap-3 mb-1">
+                <h2 className="!m-0">{detailPO.po_number}</h2>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: sc.bg, color: sc.color }}>
                   {STATUS_LABELS[detailPO.status]}
                 </span>
-                <span style={{ padding: '0.15rem 0.5rem', borderRadius: '9999px', fontSize: '0.72rem', fontWeight: 600, background: detailPO.context === 'rotr' ? '#0B1F3A' : '#1B8BEB', color: '#fff', textTransform: 'uppercase' }}>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold text-white uppercase ${detailPO.context === 'rotr' ? 'bg-navy' : 'bg-blue'}`}>
                   {detailPO.context}
                 </span>
               </div>
-              <h3 className="po-detail-subtitle">{detailPO.title}</h3>
+              <h3 className="mt-1 font-normal text-slate-500 dark:text-slate-400">{detailPO.title}</h3>
             </div>
-            <div className="po-detail-actions" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <div className="flex gap-2 flex-wrap">
               {(detailPO.status === 'pending_approval') && (
                 <>
-                  <button className="admin-btn" onClick={() => approvePO(detailPO.id)} style={{ background: '#166534', color: '#fff', border: 'none' }}>
+                  <button className="admin-btn bg-green-800 text-white border-none hover:bg-green-900" onClick={() => approvePO(detailPO.id)}>
                     <i className="fas fa-check"></i> Approve
                   </button>
-                  <button className="admin-btn" onClick={() => denyPO(detailPO.id)} style={{ background: '#DC2626', color: '#fff', border: 'none' }}>
+                  <button className="admin-btn bg-red-600 text-white border-none hover:bg-red-700" onClick={() => denyPO(detailPO.id)}>
                     <i className="fas fa-times"></i> Deny
                   </button>
                 </>
@@ -584,87 +561,82 @@ export default function PurchaseOrdersPage() {
                   <i className="fas fa-archive"></i> Archive
                 </button>
               )}
-              <button className="admin-btn admin-btn-secondary" style={{ color: '#DC2626' }} onClick={() => deletePO(detailPO.id)}>
+              <button className="admin-btn admin-btn-secondary text-red-600" onClick={() => deletePO(detailPO.id)}>
                 <i className="fas fa-trash"></i>
               </button>
             </div>
           </div>
 
           {/* Info grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '1rem', marginTop: '1.25rem' }}>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 mt-5">
             <div>
-              <strong className="po-info-label">Vendor</strong>
-              <div className="po-info-value">{detailPO.vendor_name}</div>
-              {detailPO.vendor_contact && <div className="po-info-sub">{detailPO.vendor_contact}</div>}
+              <strong className="text-xs uppercase font-semibold text-slate-500 dark:text-slate-400">Vendor</strong>
+              <div className="text-slate-800 dark:text-slate-200">{detailPO.vendor_name}</div>
+              {detailPO.vendor_contact && <div className="text-sm text-slate-500">{detailPO.vendor_contact}</div>}
             </div>
             <div>
-              <strong className="po-info-label">Category</strong>
-              <div className="po-info-value">{CATEGORIES.find(c => c.value === detailPO.category)?.label || detailPO.category}</div>
+              <strong className="text-xs uppercase font-semibold text-slate-500 dark:text-slate-400">Category</strong>
+              <div className="text-slate-800 dark:text-slate-200">{CATEGORIES.find(c => c.value === detailPO.category)?.label || detailPO.category}</div>
             </div>
             <div>
-              <strong className="po-info-label">Priority</strong>
-              <div><span style={{ padding: '0.15rem 0.45rem', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: 600, ...PRIORITY_COLORS[detailPO.priority] }}>{PRIORITY_LABELS[detailPO.priority]}</span></div>
+              <strong className="text-xs uppercase font-semibold text-slate-500 dark:text-slate-400">Priority</strong>
+              <div><span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ ...PRIORITY_COLORS[detailPO.priority] }}>{PRIORITY_LABELS[detailPO.priority]}</span></div>
             </div>
             <div>
-              <strong className="po-info-label">Requested By</strong>
-              <div className="po-info-value">{detailPO.requested_by}</div>
+              <strong className="text-xs uppercase font-semibold text-slate-500 dark:text-slate-400">Requested By</strong>
+              <div className="text-slate-800 dark:text-slate-200">{detailPO.requested_by}</div>
             </div>
             <div>
-              <strong className="po-info-label">Created</strong>
-              <div className="po-info-value">{formatDateTime(detailPO.created_at)}</div>
+              <strong className="text-xs uppercase font-semibold text-slate-500 dark:text-slate-400">Created</strong>
+              <div className="text-slate-800 dark:text-slate-200">{formatDateTime(detailPO.created_at)}</div>
             </div>
             {detailPO.needed_by && (
               <div>
-                <strong className="po-info-label">Needed By</strong>
-                <div className="po-info-value">{formatDate(detailPO.needed_by)}</div>
+                <strong className="text-xs uppercase font-semibold text-slate-500 dark:text-slate-400">Needed By</strong>
+                <div className="text-slate-800 dark:text-slate-200">{formatDate(detailPO.needed_by)}</div>
               </div>
             )}
           </div>
 
           {/* Activity Log */}
-          <div className="po-activity-section">
-            <h4 className="po-activity-title">
-              <i className="fas fa-history" style={{ marginRight: '0.3rem' }}></i> Activity
+          <div className="mt-4 border-t border-slate-200 dark:border-slate-700 pt-3">
+            <h4 className="mb-2 text-xs uppercase text-slate-500 dark:text-slate-400">
+              <i className="fas fa-history mr-1"></i> Activity
             </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {/* Submitted */}
-              <div className="po-activity-item">
-                <i className="fas fa-paper-plane" style={{ color: '#1B8BEB', width: '16px', textAlign: 'center' }}></i>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-sm dark:text-slate-300">
+                <i className="fas fa-paper-plane text-blue w-4 text-center"></i>
                 <span><strong>{detailPO.requested_by}</strong> submitted this purchase order</span>
-                <span className="po-activity-time">{formatDateTime(detailPO.created_at)}</span>
+                <span className="text-slate-400 ml-auto whitespace-nowrap text-xs">{formatDateTime(detailPO.created_at)}</span>
               </div>
-              {/* Approved / Denied */}
               {detailPO.approved_by && (
-                <div className={`po-activity-box ${detailPO.status === 'denied' ? 'denied' : detailPO.status === 'approved' || detailPO.status === 'completed' ? 'approved' : ''}`}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <i className={`fas fa-${detailPO.status === 'denied' ? 'times-circle' : 'check-circle'}`}
-                      style={{ color: detailPO.status === 'denied' ? '#DC2626' : '#166534', width: '16px', textAlign: 'center' }}></i>
+                <div className={`p-2.5 rounded-md text-sm ${detailPO.status === 'denied' ? 'bg-red-50 dark:bg-red-950/20' : detailPO.status === 'approved' || detailPO.status === 'completed' ? 'bg-green-50 dark:bg-green-950/20' : 'bg-slate-50 dark:bg-slate-800'}`}>
+                  <div className="flex items-center gap-2 dark:text-slate-300">
+                    <i className={`fas fa-${detailPO.status === 'denied' ? 'times-circle' : 'check-circle'} w-4 text-center ${detailPO.status === 'denied' ? 'text-red-600' : 'text-green-800'}`}></i>
                     <span>
                       <strong>{detailPO.approved_by}</strong> {detailPO.status === 'denied' ? 'denied' : 'approved'} this purchase order
                     </span>
                     {detailPO.approved_at && (
-                      <span className="po-activity-time">{formatDateTime(detailPO.approved_at)}</span>
+                      <span className="text-slate-400 ml-auto whitespace-nowrap text-xs">{formatDateTime(detailPO.approved_at)}</span>
                     )}
                   </div>
                   {detailPO.denial_reason && (
-                    <div style={{ color: '#DC2626', marginTop: '0.3rem', paddingLeft: '1.6rem', fontSize: '0.85rem' }}>
-                      <i className="fas fa-quote-left" style={{ marginRight: '0.3rem', fontSize: '0.7rem', opacity: 0.5 }}></i>
+                    <div className="text-red-600 mt-1 pl-6 text-sm">
+                      <i className="fas fa-quote-left mr-1 text-xs opacity-50"></i>
                       {detailPO.denial_reason}
                     </div>
                   )}
                 </div>
               )}
-              {/* Completed */}
               {detailPO.status === 'completed' && (
-                <div className="po-activity-item">
-                  <i className="fas fa-flag-checkered" style={{ color: '#1e40af', width: '16px', textAlign: 'center' }}></i>
+                <div className="flex items-center gap-2 text-sm dark:text-slate-300">
+                  <i className="fas fa-flag-checkered text-blue-800 w-4 text-center"></i>
                   <span>Purchase order marked as <strong>completed</strong></span>
                 </div>
               )}
-              {/* Archived */}
               {detailPO.status === 'archived' && (
-                <div className="po-activity-item" style={{ opacity: 0.7 }}>
-                  <i className="fas fa-archive" style={{ width: '16px', textAlign: 'center' }}></i>
+                <div className="flex items-center gap-2 text-sm opacity-70 dark:text-slate-300">
+                  <i className="fas fa-archive w-4 text-center"></i>
                   <span>Purchase order has been <strong>archived</strong></span>
                 </div>
               )}
@@ -672,45 +644,45 @@ export default function PurchaseOrdersPage() {
           </div>
 
           {detailPO.notes && (
-            <div className="po-notes-box">
+            <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-900 rounded-md text-sm text-slate-600 dark:text-slate-300">
               <strong>Notes:</strong> {detailPO.notes}
             </div>
           )}
         </div>
 
         {/* Line Items */}
-        <div className="admin-card" style={{ marginBottom: '1.25rem' }}>
-          <h4 style={{ marginBottom: '0.75rem' }}><i className="fas fa-list" style={{ marginRight: '0.4rem' }}></i> Line Items</h4>
+        <div className="admin-card mb-5">
+          <h4 className="mb-3"><i className="fas fa-list mr-1.5"></i> Line Items</h4>
           <div className="admin-table-wrap">
             <table className="admin-table">
               <thead>
                 <tr>
                   <th>Description</th>
-                  <th style={{ textAlign: 'center', width: '80px' }}>Qty</th>
-                  <th style={{ textAlign: 'right', width: '120px' }}>Unit Price</th>
-                  <th style={{ textAlign: 'right', width: '120px' }}>Total</th>
+                  <th className="text-center w-20">Qty</th>
+                  <th className="text-right w-30">Unit Price</th>
+                  <th className="text-right w-30">Total</th>
                 </tr>
               </thead>
               <tbody>
                 {detailPO.line_items.map((item, idx) => (
                   <tr key={idx}>
                     <td>{item.description}</td>
-                    <td style={{ textAlign: 'center' }}>{item.qty}</td>
-                    <td style={{ textAlign: 'right' }}>{formatCurrency(item.unit_price)}</td>
-                    <td style={{ textAlign: 'right', fontWeight: 500 }}>{formatCurrency(item.qty * item.unit_price)}</td>
+                    <td className="text-center">{item.qty}</td>
+                    <td className="text-right">{formatCurrency(item.unit_price)}</td>
+                    <td className="text-right font-medium">{formatCurrency(item.qty * item.unit_price)}</td>
                   </tr>
                 ))}
                 <tr>
-                  <td colSpan={3} style={{ textAlign: 'right', color: 'var(--gray-500)' }}>Subtotal</td>
-                  <td style={{ textAlign: 'right' }}>{formatCurrency(detailPO.subtotal)}</td>
+                  <td colSpan={3} className="text-right text-slate-500">Subtotal</td>
+                  <td className="text-right">{formatCurrency(detailPO.subtotal)}</td>
                 </tr>
                 <tr>
-                  <td colSpan={3} style={{ textAlign: 'right', color: 'var(--gray-500)' }}>Tax</td>
-                  <td style={{ textAlign: 'right' }}>{formatCurrency(detailPO.tax)}</td>
+                  <td colSpan={3} className="text-right text-slate-500">Tax</td>
+                  <td className="text-right">{formatCurrency(detailPO.tax)}</td>
                 </tr>
-                <tr style={{ fontWeight: 700, fontSize: '1.05rem' }}>
-                  <td colSpan={3} style={{ textAlign: 'right' }}>Total</td>
-                  <td style={{ textAlign: 'right' }}>{formatCurrency(detailPO.total_amount)}</td>
+                <tr className="font-bold text-base">
+                  <td colSpan={3} className="text-right">Total</td>
+                  <td className="text-right">{formatCurrency(detailPO.total_amount)}</td>
                 </tr>
               </tbody>
             </table>
@@ -720,16 +692,17 @@ export default function PurchaseOrdersPage() {
         {/* Receipts */}
         {detailPO.receipt_urls && detailPO.receipt_urls.length > 0 && (
           <div className="admin-card">
-            <h4 style={{ marginBottom: '0.75rem' }}><i className="fas fa-receipt" style={{ marginRight: '0.4rem' }}></i> Receipts ({detailPO.receipt_urls.length})</h4>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <h4 className="mb-3"><i className="fas fa-receipt mr-1.5"></i> Receipts ({detailPO.receipt_urls.length})</h4>
+            <div className="flex flex-wrap gap-3">
               {detailPO.receipt_urls.map((url, i) => {
                 const isPdf = url.toLowerCase().endsWith('.pdf');
                 return (
-                  <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="po-receipt-link">
+                  <a key={i} href={url} target="_blank" rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1.5 p-3 border border-slate-200 dark:border-slate-700 rounded-lg no-underline text-slate-600 dark:text-slate-400 text-sm min-w-24 hover:border-blue transition-colors">
                     {isPdf ? (
-                      <i className="fas fa-file-pdf" style={{ fontSize: '2rem', color: '#DC2626' }}></i>
+                      <i className="fas fa-file-pdf text-2xl text-red-600"></i>
                     ) : (
-                      <img src={url} alt={`Receipt ${i + 1}`} style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '4px' }} />
+                      <img src={url} alt={`Receipt ${i + 1}`} className="w-20 h-20 object-cover rounded" />
                     )}
                     Receipt {i + 1}
                   </a>
@@ -753,7 +726,7 @@ export default function PurchaseOrdersPage() {
 
     return (
       <div className="rotr-staff-modal-overlay" onClick={() => setShowModal(false)}>
-        <div className="rotr-staff-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '750px' }}>
+        <div className="rotr-staff-modal max-w-3xl!" onClick={e => e.stopPropagation()}>
           <h3>{editingId ? 'Edit Purchase Order' : 'New Purchase Order'}</h3>
 
           <div className="admin-form-row">
@@ -803,88 +776,85 @@ export default function PurchaseOrdersPage() {
           </div>
 
           {/* Line Items */}
-          <div className="po-section-divider">
-            <h4 className="po-section-title">
-              <i className="fas fa-list" style={{ marginRight: '0.4rem' }}></i> Line Items
+          <div className="border-t border-slate-200 dark:border-slate-700 pt-4 mt-2">
+            <h4 className="mb-3 text-base text-slate-600 dark:text-slate-400">
+              <i className="fas fa-list mr-1.5"></i> Line Items
             </h4>
             {form.line_items.map((item, idx) => (
-              <div key={idx} className="po-line-item-row" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <input type="text" className="po-line-input" placeholder="Description" value={item.description}
+              <div key={idx} className="flex gap-2 items-center mb-2 flex-wrap md:flex-nowrap">
+                <input type="text" className={`${inputClass} flex-[3] min-w-0`} placeholder="Description" value={item.description}
                   onChange={e => {
                     const items = [...form.line_items];
                     items[idx] = { ...items[idx], description: e.target.value };
                     setForm(f => ({ ...f, line_items: items }));
-                  }}
-                  style={{ flex: 3 }} />
-                <input type="number" className="po-line-input" placeholder="Qty" min="1" value={item.qty}
+                  }} />
+                <input type="number" className={`${inputClass} w-18 text-center`} placeholder="Qty" min="1" value={item.qty}
                   onChange={e => {
                     const items = [...form.line_items];
                     items[idx] = { ...items[idx], qty: parseInt(e.target.value) || 0 };
                     setForm(f => ({ ...f, line_items: items }));
-                  }}
-                  style={{ width: '70px', textAlign: 'center' }} />
-                <div style={{ position: 'relative', width: '110px' }}>
-                  <span className="po-dollar-prefix">$</span>
-                  <input type="number" className="po-line-input" step="0.01" min="0" placeholder="0.00" value={item.unit_price || ''}
+                  }} />
+                <div className="relative w-28">
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm">$</span>
+                  <input type="number" className={`${inputClass} pl-5 w-full`} step="0.01" min="0" placeholder="0.00" value={item.unit_price || ''}
                     onChange={e => {
                       const items = [...form.line_items];
                       items[idx] = { ...items[idx], unit_price: parseFloat(e.target.value) || 0 };
                       setForm(f => ({ ...f, line_items: items }));
-                    }}
-                    style={{ paddingLeft: '1.25rem', width: '100%' }} />
+                    }} />
                 </div>
-                <span className="po-line-total">
+                <span className="min-w-20 text-right font-semibold text-sm text-slate-600 dark:text-slate-300">
                   {formatCurrency(item.qty * item.unit_price)}
                 </span>
                 {form.line_items.length > 1 && (
-                  <button type="button" className="po-line-remove" onClick={() => setForm(f => ({ ...f, line_items: f.line_items.filter((_, i) => i !== idx) }))}>
+                  <button type="button" className="border-none bg-transparent cursor-pointer text-red-600 p-1 text-sm"
+                    onClick={() => setForm(f => ({ ...f, line_items: f.line_items.filter((_, i) => i !== idx) }))}>
                     <i className="fas fa-times"></i>
                   </button>
                 )}
               </div>
             ))}
-            <button type="button" className="admin-btn admin-btn-secondary" style={{ fontSize: '0.82rem', marginTop: '0.25rem' }}
+            <button type="button" className="admin-btn admin-btn-secondary text-sm mt-1"
               onClick={() => setForm(f => ({ ...f, line_items: [...f.line_items, { ...emptyLineItem }] }))}>
               <i className="fas fa-plus"></i> Add Line Item
             </button>
 
             {/* Totals */}
-            <div className="po-totals-divider" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem', marginTop: '1rem', paddingTop: '0.75rem' }}>
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <span className="po-totals-label">Subtotal:</span>
-                <span className="po-info-value" style={{ fontWeight: 500, minWidth: '90px', textAlign: 'right' }}>{formatCurrency(subtotal)}</span>
+            <div className="flex flex-col items-end gap-1.5 mt-4 pt-3 border-t border-slate-200 dark:border-slate-700">
+              <div className="flex gap-4 items-center">
+                <span className="text-slate-500 dark:text-slate-400 text-sm">Subtotal:</span>
+                <span className="font-medium min-w-24 text-right text-slate-800 dark:text-slate-200">{formatCurrency(subtotal)}</span>
               </div>
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <span className="po-totals-label">Tax:</span>
-                <div style={{ position: 'relative', width: '100px' }}>
-                  <span className="po-dollar-prefix">$</span>
-                  <input type="number" className="po-line-input" step="0.01" min="0" placeholder="0.00" value={form.tax}
-                    onChange={e => setForm(f => ({ ...f, tax: e.target.value }))}
-                    style={{ paddingLeft: '1.25rem', width: '100%', textAlign: 'right', fontSize: '0.88rem' }} />
+              <div className="flex gap-4 items-center">
+                <span className="text-slate-500 dark:text-slate-400 text-sm">Tax:</span>
+                <div className="relative w-24">
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm">$</span>
+                  <input type="number" className={`${inputClass} pl-5 w-full text-right text-sm`} step="0.01" min="0" placeholder="0.00" value={form.tax}
+                    onChange={e => setForm(f => ({ ...f, tax: e.target.value }))} />
                 </div>
               </div>
-              <div className="po-totals-grand" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div className="flex gap-4 items-center font-bold text-lg pt-1.5 border-t-2 border-slate-300 dark:border-slate-600 dark:text-slate-100">
                 <span>Total:</span>
-                <span style={{ minWidth: '90px', textAlign: 'right' }}>{formatCurrency(total)}</span>
+                <span className="min-w-24 text-right">{formatCurrency(total)}</span>
               </div>
             </div>
           </div>
 
           {/* Receipt Upload */}
-          <div className="po-section-divider" style={{ marginTop: '1rem' }}>
-            <h4 className="po-section-title">
-              <i className="fas fa-receipt" style={{ marginRight: '0.4rem' }}></i> Receipts
+          <div className="border-t border-slate-200 dark:border-slate-700 pt-4 mt-4">
+            <h4 className="mb-3 text-base text-slate-600 dark:text-slate-400">
+              <i className="fas fa-receipt mr-1.5"></i> Receipts
             </h4>
             {uploadedReceipts.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              <div className="flex flex-wrap gap-2 mb-3">
                 {uploadedReceipts.map((url, i) => {
                   const isPdf = url.toLowerCase().endsWith('.pdf');
                   return (
-                    <div key={i} className="po-receipt-chip">
-                      <i className={`fas fa-${isPdf ? 'file-pdf' : 'image'}`} style={{ color: isPdf ? '#DC2626' : '#1B8BEB' }}></i>
-                      <a href={url} target="_blank" rel="noopener noreferrer">Receipt {i + 1}</a>
-                      <button type="button" className="po-line-remove" onClick={() => setUploadedReceipts(prev => prev.filter((_, j) => j !== i))}
-                        style={{ padding: '0 0.2rem', fontSize: '0.78rem' }}>
+                    <div key={i} className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 dark:bg-slate-700 rounded-md text-sm">
+                      <i className={`fas fa-${isPdf ? 'file-pdf' : 'image'} ${isPdf ? 'text-red-600' : 'text-blue'}`}></i>
+                      <a href={url} target="_blank" rel="noopener noreferrer" className="text-slate-600 dark:text-slate-300 no-underline">Receipt {i + 1}</a>
+                      <button type="button" className="border-none bg-transparent cursor-pointer text-red-600 px-0.5 text-xs"
+                        onClick={() => setUploadedReceipts(prev => prev.filter((_, j) => j !== i))}>
                         <i className="fas fa-times"></i>
                       </button>
                     </div>
@@ -900,17 +870,17 @@ export default function PurchaseOrdersPage() {
               onClick={() => fileInputRef.current?.click()}
             >
               <i className="fas fa-cloud-upload-alt"></i>
-              <p style={{ margin: 0 }}>{uploading ? 'Uploading...' : 'Drop receipt file here or click to browse (images, PDFs)'}</p>
+              <p className="m-0">{uploading ? 'Uploading...' : 'Drop receipt file here or click to browse (images, PDFs)'}</p>
               <input type="file" hidden ref={fileInputRef} accept="image/*,.pdf" onChange={e => { if (e.target.files?.[0]) uploadReceipt(e.target.files[0]); e.target.value = ''; }} />
             </div>
           </div>
 
-          <div className="admin-form-group" style={{ marginTop: '1rem' }}>
+          <div className="admin-form-group mt-4">
             <label>Notes</label>
             <textarea rows={3} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Additional notes for the accountant..." />
           </div>
 
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+          <div className="flex gap-3 justify-end mt-6">
             <button className="admin-btn admin-btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
             <button className="admin-btn admin-btn-secondary" onClick={() => savePO('draft')} disabled={saving || !form.title.trim() || !form.vendor_name.trim()}>
               {saving ? <><i className="fas fa-spinner fa-spin"></i> Saving...</> : <><i className="fas fa-save"></i> Save Draft</>}
@@ -930,9 +900,9 @@ export default function PurchaseOrdersPage() {
     return (
       <div className="admin-page">
         <div className="admin-page-header"><h1>Purchase Orders</h1></div>
-        <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
-          <i className="fas fa-spinner fa-spin" style={{ fontSize: '1.5rem', color: 'var(--blue-accent)' }}></i>
-          <p style={{ marginTop: '0.75rem', color: 'var(--gray-500)' }}>Loading purchase orders...</p>
+        <div className="admin-card p-12 text-center">
+          <i className="fas fa-spinner fa-spin text-2xl text-blue"></i>
+          <p className="mt-3 text-slate-500 dark:text-slate-400">Loading purchase orders...</p>
         </div>
       </div>
     );
@@ -940,9 +910,9 @@ export default function PurchaseOrdersPage() {
 
   return (
     <div className="admin-page">
-      <div className="admin-page-header po-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <div className="admin-page-header flex justify-between items-start flex-wrap gap-4">
         <div>
-          <h1><i className="fas fa-file-invoice" style={{ marginRight: '0.5rem', color: '#1B8BEB' }}></i> Purchase Orders</h1>
+          <h1><i className="fas fa-file-invoice mr-2 text-blue"></i> Purchase Orders</h1>
           <p>Create, track, and approve purchase order requests.</p>
         </div>
         <button className="admin-btn admin-btn-primary" onClick={openCreateModal}>
@@ -951,33 +921,33 @@ export default function PurchaseOrdersPage() {
       </div>
 
       {/* Stats */}
-      <div className="rotr-stats-row" style={{ marginBottom: '1.25rem' }}>
+      <div className="rotr-stats-row mb-5">
         <div className="rotr-stat-card">
-          <div className="rotr-stat-icon" style={{ background: '#fef3c715', color: '#92400e' }}><i className="fas fa-clock"></i></div>
+          <div className="rotr-stat-icon bg-amber-50/10 text-amber-800"><i className="fas fa-clock"></i></div>
           <div className="rotr-stat-value">{counts.pending_approval}</div>
           <div className="rotr-stat-label">Pending Approval</div>
         </div>
         <div className="rotr-stat-card">
-          <div className="rotr-stat-icon" style={{ background: '#dcfce715', color: '#166534' }}><i className="fas fa-check-circle"></i></div>
+          <div className="rotr-stat-icon bg-green-50/10 text-green-800"><i className="fas fa-check-circle"></i></div>
           <div className="rotr-stat-value">{counts.approved}</div>
           <div className="rotr-stat-label">Approved</div>
         </div>
         <div className="rotr-stat-card">
-          <div className="rotr-stat-icon" style={{ background: '#fef3c715', color: '#92400e' }}><i className="fas fa-dollar-sign"></i></div>
+          <div className="rotr-stat-icon bg-amber-50/10 text-amber-800"><i className="fas fa-dollar-sign"></i></div>
           <div className="rotr-stat-value">{formatCurrency(totalPending)}</div>
           <div className="rotr-stat-label">Pending Total</div>
         </div>
         <div className="rotr-stat-card">
-          <div className="rotr-stat-icon" style={{ background: '#0B1F3A15', color: '#0B1F3A' }}><i className="fas fa-dollar-sign"></i></div>
+          <div className="rotr-stat-icon bg-navy/10 text-navy dark:text-slate-300"><i className="fas fa-dollar-sign"></i></div>
           <div className="rotr-stat-value">{formatCurrency(totalApproved)}</div>
           <div className="rotr-stat-label">Approved Total</div>
         </div>
       </div>
 
       {/* Filter tabs */}
-      <div className="admin-filter-tabs">
+      <div className="admin-filter-tabs overflow-x-auto">
         {(['all', 'pending_approval', 'approved', 'draft', 'denied', 'completed', 'archived'] as POStatus[]).map(s => (
-          <button key={s} className={`admin-filter-tab${filter === s ? ' active' : ''}`} onClick={() => setFilter(s)}>
+          <button key={s} className={`admin-filter-tab shrink-0${filter === s ? ' active' : ''}`} onClick={() => setFilter(s)}>
             {s === 'all' ? 'All' : STATUS_LABELS[s] || s}
             <span className="admin-filter-count">{counts[s]}</span>
           </button>
@@ -985,26 +955,26 @@ export default function PurchaseOrdersPage() {
       </div>
 
       {/* Search */}
-      <div style={{ margin: '1rem 0', maxWidth: '400px', position: 'relative' }}>
-        <i className="fas fa-search po-search-icon"></i>
-        <input type="text" className="po-search-input" placeholder="Search by PO#, title, vendor, or requester..." value={search} onChange={e => setSearch(e.target.value)} />
+      <div className="my-4 max-w-md relative">
+        <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm"></i>
+        <input type="text" className={`${inputClass} pl-8`} placeholder="Search by PO#, title, vendor, or requester..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       {/* Orders Table */}
       {filtered.length === 0 ? (
         <div className="admin-empty">
-          <i className="fas fa-file-invoice" style={{ fontSize: '2rem', opacity: 0.3, marginBottom: '0.5rem' }}></i>
+          <i className="fas fa-file-invoice text-2xl opacity-30 mb-2"></i>
           <p>{orders.length === 0 ? 'No purchase orders yet. Create your first one!' : `No ${filter === 'all' ? '' : STATUS_LABELS[filter]?.toLowerCase() + ' '}orders found.`}</p>
         </div>
       ) : (
-        <div className="admin-table-wrap" style={{ overflowX: 'auto' }}>
+        <div className="admin-table-wrap overflow-x-auto">
           <table className="admin-table">
             <thead>
               <tr>
                 <th>PO #</th>
                 <th>Title</th>
                 <th>Vendor</th>
-                <th style={{ textAlign: 'right' }}>Total</th>
+                <th className="text-right">Total</th>
                 <th>Requested By</th>
                 <th>Date</th>
                 <th>Priority</th>
@@ -1017,25 +987,25 @@ export default function PurchaseOrdersPage() {
                 const sc = STATUS_COLORS[po.status] || STATUS_COLORS.draft;
                 const pc = PRIORITY_COLORS[po.priority] || PRIORITY_COLORS.normal;
                 return (
-                  <tr key={po.id} className={po.status === 'pending_approval' ? 'po-pending-row' : ''}>
+                  <tr key={po.id} className={po.status === 'pending_approval' ? 'bg-amber-50 dark:bg-amber-900/10' : ''}>
                     <td>
-                      <button onClick={() => setDetailId(po.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1B8BEB', fontWeight: 600, padding: 0, fontSize: '0.88rem' }}>
+                      <button onClick={() => setDetailId(po.id)} className="bg-transparent border-none cursor-pointer text-blue font-semibold p-0 text-sm">
                         {po.po_number}
                       </button>
-                      <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase' }} className={`po-context-${po.context}`}>{po.context}</span>
+                      <span className={`block text-[0.7rem] font-semibold uppercase ${po.context === 'rotr' ? 'text-navy dark:text-slate-400' : 'text-blue'}`}>{po.context}</span>
                     </td>
-                    <td style={{ fontWeight: 500, maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{po.title}</td>
+                    <td className="font-medium max-w-52 overflow-hidden text-ellipsis whitespace-nowrap">{po.title}</td>
                     <td>{po.vendor_name}</td>
-                    <td style={{ textAlign: 'right', fontWeight: 600 }}>{formatCurrency(po.total_amount)}</td>
+                    <td className="text-right font-semibold">{formatCurrency(po.total_amount)}</td>
                     <td>{po.requested_by}</td>
-                    <td style={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>{formatDate(po.created_at)}</td>
+                    <td className="whitespace-nowrap text-sm">{formatDate(po.created_at)}</td>
                     <td>
-                      <span style={{ padding: '0.15rem 0.45rem', borderRadius: '9999px', fontSize: '0.72rem', fontWeight: 600, ...pc }}>
+                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ ...pc }}>
                         {PRIORITY_LABELS[po.priority]}
                       </span>
                     </td>
                     <td>
-                      <span style={{ padding: '0.2rem 0.55rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: sc.bg, color: sc.color, whiteSpace: 'nowrap' }}>
+                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap" style={{ background: sc.bg, color: sc.color }}>
                         {STATUS_LABELS[po.status]}
                       </span>
                     </td>
@@ -1046,10 +1016,10 @@ export default function PurchaseOrdersPage() {
                         </button>
                         {po.status === 'pending_approval' && (
                           <>
-                            <button className="admin-btn-icon" title="Approve" onClick={() => approvePO(po.id)} style={{ color: '#166534' }}>
+                            <button className="admin-btn-icon text-green-800" title="Approve" onClick={() => approvePO(po.id)}>
                               <i className="fas fa-check"></i>
                             </button>
-                            <button className="admin-btn-icon" title="Deny" onClick={() => denyPO(po.id)} style={{ color: '#DC2626' }}>
+                            <button className="admin-btn-icon text-red-600" title="Deny" onClick={() => denyPO(po.id)}>
                               <i className="fas fa-times"></i>
                             </button>
                           </>
