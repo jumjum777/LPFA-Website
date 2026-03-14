@@ -468,7 +468,7 @@ function ROTRContent() {
     <div className="admin-page">
       <div className="admin-page-header">
         <div>
-          <h1>{tab === 'email' ? <><i className="fas fa-envelope" style={{ marginRight: '0.5rem', color: '#1B8BEB' }}></i> Email Marketing</> : tab === 'files' ? <><i className="fas fa-folder-open" style={{ marginRight: '0.5rem', color: '#D97706' }}></i> Files</> : tab === 'staff' ? <><i className="fas fa-hard-hat" style={{ marginRight: '0.5rem', color: '#7C3AED' }}></i> Staff &amp; Contractors</> : "Rockin' on the River"}</h1>
+          <h1>{tab === 'email' ? <><i className="fas fa-envelope" style={{ marginRight: '0.5rem', color: '#1B8BEB' }}></i> Email Marketing</> : tab === 'files' ? <><i className="fas fa-folder-open" style={{ marginRight: '0.5rem', color: '#D97706' }}></i> Files</> : tab === 'staff' ? <><i className="fas fa-hard-hat" style={{ marginRight: '0.5rem', color: '#1B8BEB' }}></i> Staff &amp; Contractors</> : "Rockin' on the River"}</h1>
           <p>{tab === 'email' ? "Campaign analytics from Constant Contact" : tab === 'files' ? "Shared document and asset repository" : tab === 'staff' ? "Manage event staff, assignments, hours, and payroll exports" : "Concert series data from Wix Events"}</p>
         </div>
         {tab !== 'email' && tab !== 'files' && tab !== 'staff' && (

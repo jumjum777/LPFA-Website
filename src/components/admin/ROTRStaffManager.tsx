@@ -37,6 +37,32 @@ const ROLES = [
 
 const SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'];
 
+const SHIFT_TAGS = ['Setup Crew', 'Closer', 'Bring Radio', 'Key Holder', 'Team Lead', 'First Aid'];
+
+function parseTags(notes: string | null): { tags: string[]; text: string } {
+  if (!notes) return { tags: [], text: '' };
+  const tagPattern = /\[([^\]]+)\]/g;
+  const tags: string[] = [];
+  let match;
+  while ((match = tagPattern.exec(notes)) !== null) {
+    tags.push(match[1]);
+  }
+  const text = notes.replace(tagPattern, '').trim();
+  return { tags, text };
+}
+
+function toggleTag(notes: string | null, tag: string): string {
+  const { tags, text } = parseTags(notes);
+  const idx = tags.indexOf(tag);
+  if (idx >= 0) {
+    tags.splice(idx, 1);
+  } else {
+    tags.push(tag);
+  }
+  const tagStr = tags.map(t => `[${t}]`).join('');
+  return text ? `${tagStr} ${text}` : tagStr;
+}
+
 const STATUS_LABELS: Record<string, string> = {
   scheduled: 'Scheduled',
   confirmed: 'Confirmed',
@@ -83,6 +109,7 @@ const emptyForm = {
   preferred_end: '',
   availability_notes: '',
   blackout_dates: [] as string[],
+  priority: 'medium' as 'high' | 'medium' | 'low',
   notes: '',
   status: 'active' as 'active' | 'inactive',
 };
@@ -123,6 +150,10 @@ export default function ROTRStaffManager({ events }: Props) {
   const [editingActualIn, setEditingActualIn] = useState('');
   const [editingActualOut, setEditingActualOut] = useState('');
 
+  // Pay rate editing
+  const [editingPayId, setEditingPayId] = useState<string | null>(null);
+  const [editingPayVal, setEditingPayVal] = useState('');
+
   // File upload
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -142,8 +173,14 @@ export default function ROTRStaffManager({ events }: Props) {
   const [editingBudget, setEditingBudget] = useState(false);
   const [budgetInput, setBudgetInput] = useState('');
 
+  // Role requirements per event: { [eventId]: { gate: 3, security: 2, ... } }
+  const [eventRoleReqs, setEventRoleReqs] = useState<Record<string, Record<string, number>>>({});
+  const [showRoleReqEditor, setShowRoleReqEditor] = useState(false);
+  const [generating, setGenerating] = useState(false);
+
   // Export
-  const [exportType, setExportType] = useState<'event' | 'contractor' | 'range'>('event');
+  const [exportType, setExportType] = useState<'event' | 'contractor' | 'range' | 'schedule'>('event');
+  const [scheduleEventId, setScheduleEventId] = useState('');
   const [exportEventId, setExportEventId] = useState('');
   const [exportContractorId, setExportContractorId] = useState('');
   const [exportStart, setExportStart] = useState('');
@@ -190,6 +227,7 @@ export default function ROTRStaffManager({ events }: Props) {
       preferred_end: c.preferred_end || '',
       availability_notes: c.availability_notes || '',
       blackout_dates: c.blackout_dates ? JSON.parse(c.blackout_dates) : [],
+      priority: c.priority || 'medium',
       notes: c.notes || '',
       status: c.status === 'archived' ? 'inactive' : c.status as 'active' | 'inactive',
     });
@@ -216,6 +254,7 @@ export default function ROTRStaffManager({ events }: Props) {
       preferred_end: form.preferred_end || null,
       availability_notes: form.availability_notes.trim() || null,
       blackout_dates: form.blackout_dates.length > 0 ? JSON.stringify(form.blackout_dates) : null,
+      priority: form.priority,
       notes: form.notes.trim() || null,
       status: form.status,
       updated_at: new Date().toISOString(),
@@ -288,20 +327,41 @@ export default function ROTRStaffManager({ events }: Props) {
     const event = events.find(e => e.id === eventId);
     if (!event) return;
 
+    const evtDate = event.dateAndTimeSettings.startDate.split('T')[0];
+
+    // Check for blackout conflicts
+    const conflicts: string[] = [];
+    for (const cId of bulkSelected) {
+      const c = contractors.find(x => x.id === cId);
+      if (!c) continue;
+      if (c.blackout_dates) {
+        try {
+          const blackouts: string[] = JSON.parse(c.blackout_dates);
+          if (blackouts.includes(evtDate)) {
+            conflicts.push(`${c.first_name} ${c.last_name} has a blackout on ${evtDate}`);
+          }
+        } catch { /* ignore */ }
+      }
+    }
+
+    if (conflicts.length > 0) {
+      const proceed = confirm(`Blackout date conflicts:\n\n${conflicts.join('\n')}\n\nAssign anyway?`);
+      if (!proceed) return;
+    }
+
     const supabase = createClient();
     const newAssignments: Partial<ROTREventAssignment>[] = [];
 
     for (const cId of bulkSelected) {
       const c = contractors.find(x => x.id === cId);
       if (!c) continue;
-      // Skip if already assigned
       if (assignments.some(a => a.contractor_id === cId && a.wix_event_id === eventId)) continue;
 
       newAssignments.push({
         contractor_id: cId,
         wix_event_id: eventId,
         event_title: event.title,
-        event_date: event.dateAndTimeSettings.startDate.split('T')[0],
+        event_date: evtDate,
         role: c.primary_role.split(',')[0],
         pay_rate: c.default_pay_rate,
         pay_type: c.pay_type,
@@ -355,6 +415,195 @@ export default function ROTRStaffManager({ events }: Props) {
     const { data, error } = await supabase.from('rotr_event_assignments').insert(newAssignments).select();
     if (error) { alert('Failed to copy: ' + error.message); return; }
     setAssignments(prev => [...(data as ROTREventAssignment[]), ...prev]);
+  }
+
+  // ─── Smart Schedule Generator ──────────────────────────────────────────
+
+  const DEFAULT_SHIFTS: Record<string, { start: string; end: string; hours: number }> = {
+    gate: { start: '16:30', end: '22:00', hours: 5.5 },
+    security: { start: '16:30', end: '23:00', hours: 6.5 },
+    cleaning: { start: '17:00', end: '23:30', hours: 6.5 },
+    stage_hand: { start: '15:00', end: '23:00', hours: 8.0 },
+    sound: { start: '15:00', end: '23:00', hours: 8.0 },
+    parking: { start: '16:30', end: '21:00', hours: 4.5 },
+    vip: { start: '17:00', end: '22:30', hours: 5.5 },
+    merch: { start: '17:00', end: '22:30', hours: 5.5 },
+    bar: { start: '16:30', end: '23:00', hours: 6.5 },
+    other: { start: '17:00', end: '23:00', hours: 6.0 },
+  };
+
+  async function generateSchedule(eventId: string) {
+    const event = events.find(e => e.id === eventId);
+    const reqs = eventRoleReqs[eventId];
+    if (!event || !reqs) return;
+
+    setGenerating(true);
+    const supabase = createClient();
+    const evtDate = event.dateAndTimeSettings.startDate.split('T')[0];
+
+    // 1. Remove any over-staffed assignments for roles where filled > needed
+    const existingAssignments = assignments.filter(a => a.wix_event_id === eventId);
+    const filledByRole: Record<string, string[]> = {}; // role → assignment IDs
+    existingAssignments.forEach(a => {
+      if (!filledByRole[a.role]) filledByRole[a.role] = [];
+      filledByRole[a.role].push(a.id);
+    });
+
+    const toRemoveIds: string[] = [];
+    for (const [role, ids] of Object.entries(filledByRole)) {
+      const needed = reqs[role] || 0;
+      if (ids.length > needed && needed > 0) {
+        // Remove lowest-priority, highest-cost extras (reverse of how we pick)
+        const extras = ids
+          .map(id => existingAssignments.find(a => a.id === id)!)
+          .sort((a, b) => {
+            const cA = contractors.find(c => c.id === a.contractor_id);
+            const cB = contractors.find(c => c.id === b.contractor_id);
+            const priorityRank: Record<string, number> = { high: 0, medium: 1, low: 2 };
+            const pA = priorityRank[(cA?.priority) || 'medium'] ?? 1;
+            const pB = priorityRank[(cB?.priority) || 'medium'] ?? 1;
+            if (pA !== pB) return pB - pA; // low priority first (remove them)
+            const shift = DEFAULT_SHIFTS[role] || DEFAULT_SHIFTS.other;
+            const costA = a.pay_type === 'flat' ? a.pay_rate : a.pay_rate * shift.hours;
+            const costB = b.pay_type === 'flat' ? b.pay_rate : b.pay_rate * shift.hours;
+            return costB - costA; // highest cost first (remove them)
+          });
+        for (let i = 0; i < ids.length - needed; i++) {
+          toRemoveIds.push(extras[i].id);
+        }
+      }
+    }
+
+    if (toRemoveIds.length > 0) {
+      await supabase.from('rotr_event_assignments').delete().in('id', toRemoveIds);
+      setAssignments(prev => prev.filter(a => !toRemoveIds.includes(a.id)));
+    }
+
+    // 2. Recalculate after removals
+    const currentAssignments = assignments
+      .filter(a => a.wix_event_id === eventId && !toRemoveIds.includes(a.id));
+    const assignedIds = new Set(currentAssignments.map(a => a.contractor_id));
+    const currentFilledByRole: Record<string, number> = {};
+    currentAssignments.forEach(a => { currentFilledByRole[a.role] = (currentFilledByRole[a.role] || 0) + 1; });
+
+    // 3. Build pool of available contractors (active, not assigned, not blacked out)
+    const pool = activeContractors.filter(c => {
+      if (assignedIds.has(c.id)) return false;
+      if (c.blackout_dates) {
+        try {
+          const blackouts: string[] = JSON.parse(c.blackout_dates);
+          if (blackouts.includes(evtDate)) return false;
+        } catch { /* ignore */ }
+      }
+      return true;
+    });
+
+    // 4. Track who gets assigned during this generation
+    const usedIds = new Set<string>();
+    const newAssignments: Partial<ROTREventAssignment>[] = [];
+    const shortages: { role: string; needed: number; filled: number }[] = [];
+    const priorityRank: Record<string, number> = { high: 0, medium: 1, low: 2 };
+
+    // Process each role that still needs filling
+    const roleEntries = Object.entries(reqs)
+      .filter(([, need]) => need > 0)
+      .sort((a, b) => b[1] - a[1]);
+
+    for (const [role, needed] of roleEntries) {
+      const filled = currentFilledByRole[role] || 0;
+      const slotsToFill = needed - filled;
+      if (slotsToFill <= 0) continue;
+
+      const candidates = pool
+        .filter(c => !usedIds.has(c.id) && c.primary_role.split(',').includes(role))
+        .sort((a, b) => {
+          const pA = priorityRank[a.priority || 'medium'] ?? 1;
+          const pB = priorityRank[b.priority || 'medium'] ?? 1;
+          if (pA !== pB) return pA - pB;
+
+          const shift = DEFAULT_SHIFTS[role] || DEFAULT_SHIFTS.other;
+          const costA = a.pay_type === 'flat' ? a.default_pay_rate : a.default_pay_rate * shift.hours;
+          const costB = b.pay_type === 'flat' ? b.default_pay_rate : b.default_pay_rate * shift.hours;
+          if (costA !== costB) return costA - costB;
+
+          const prefScoreA = getPreferenceScore(a, shift);
+          const prefScoreB = getPreferenceScore(b, shift);
+          if (prefScoreA !== prefScoreB) return prefScoreA - prefScoreB;
+
+          const aCount = assignments.filter(x => x.contractor_id === a.id).length;
+          const bCount = assignments.filter(x => x.contractor_id === b.id).length;
+          return aCount - bCount;
+        });
+
+      const canFill = Math.min(slotsToFill, candidates.length);
+      if (canFill < slotsToFill) {
+        shortages.push({ role, needed, filled: filled + canFill });
+      }
+
+      for (let i = 0; i < canFill; i++) {
+        const c = candidates[i];
+        usedIds.add(c.id);
+        const shift = DEFAULT_SHIFTS[role] || DEFAULT_SHIFTS.other;
+        newAssignments.push({
+          contractor_id: c.id,
+          wix_event_id: eventId,
+          event_title: event.title,
+          event_date: evtDate,
+          role,
+          pay_rate: c.default_pay_rate,
+          pay_type: c.pay_type,
+          scheduled_start: shift.start,
+          scheduled_end: shift.end,
+          scheduled_hours: shift.hours,
+          status: 'scheduled',
+        });
+      }
+    }
+
+    // 5. Also remove assignments for roles with 0 requirement
+    const zeroRoleIds: string[] = [];
+    for (const [role, ids] of Object.entries(filledByRole)) {
+      if ((reqs[role] || 0) === 0) {
+        ids.filter(id => !toRemoveIds.includes(id)).forEach(id => zeroRoleIds.push(id));
+      }
+    }
+    if (zeroRoleIds.length > 0) {
+      await supabase.from('rotr_event_assignments').delete().in('id', zeroRoleIds);
+      setAssignments(prev => prev.filter(a => !zeroRoleIds.includes(a.id)));
+    }
+
+    if (newAssignments.length > 0) {
+      const { data, error } = await supabase.from('rotr_event_assignments').insert(newAssignments).select();
+      if (error) { alert('Failed to generate schedule: ' + error.message); setGenerating(false); return; }
+      setAssignments(prev => [...(data as ROTREventAssignment[]), ...prev]);
+    }
+
+    setGenerating(false);
+    const removed = toRemoveIds.length + zeroRoleIds.length;
+    const added = newAssignments.length;
+    if (shortages.length > 0) {
+      const shortList = shortages.map(s =>
+        `  ${roleLabel(s.role)}: ${s.filled}/${s.needed} — need ${s.needed - s.filled} more`
+      ).join('\n');
+      alert(`Schedule generated (${added} added, ${removed} removed).\n\nCouldn't fully staff these roles:\n${shortList}\n\nYou'll need to manually assign or add contractors with these roles.`);
+    } else if (removed === 0 && added === 0) {
+      alert('Schedule is already correct — no changes needed.');
+    }
+  }
+
+  // Score how well a contractor's preferred hours fit a shift (0 = perfect, higher = worse)
+  function getPreferenceScore(c: ROTRContractor, shift: { start: string; end: string }): number {
+    if (!c.preferred_start || !c.preferred_end) return 0; // No preference = flexible = good
+    const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+    const prefStart = toMin(c.preferred_start);
+    const prefEnd = toMin(c.preferred_end);
+    const shiftStart = toMin(shift.start);
+    const shiftEnd = toMin(shift.end);
+    // Penalty if shift starts before preferred start or ends after preferred end
+    let penalty = 0;
+    if (shiftStart < prefStart) penalty += prefStart - shiftStart;
+    if (shiftEnd > prefEnd) penalty += shiftEnd - prefEnd;
+    return penalty;
   }
 
   // ─── Check-in / Check-out ────────────────────────────────────────────
@@ -451,6 +700,9 @@ export default function ROTRStaffManager({ events }: Props) {
 
     const rows = ea.map(a => {
       const c = contractors.find(x => x.id === a.contractor_id);
+      const { tags, text } = parseTags(a.notes);
+      const tagHtml = tags.map(t => `<span style="display:inline-block;background:#e2e8f0;color:#0B1F3A;padding:1px 6px;border-radius:3px;font-size:0.72em;font-weight:600;margin-right:3px">${t}</span>`).join('');
+      const noteHtml = tagHtml || text ? `${tagHtml}${text ? `<span style="font-size:0.85em;color:#475569">${text}</span>` : ''}` : '';
       return `<tr>
         <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;font-weight:500">${c ? `${c.first_name} ${c.last_name}` : '?'}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0">${roleLabel(a.role)}</td>
@@ -458,7 +710,7 @@ export default function ROTRStaffManager({ events }: Props) {
         <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0">${a.scheduled_hours ? a.scheduled_hours + ' hrs' : '—'}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;width:120px"></td>
         <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;width:120px"></td>
-        <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;width:140px"></td>
+        <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;min-width:140px">${noteHtml}</td>
       </tr>`;
     }).join('');
 
@@ -470,6 +722,43 @@ export default function ROTRStaffManager({ events }: Props) {
       <table><thead><tr><th>Name</th><th>Role</th><th>Phone</th><th>Sched. Hours</th><th>Check In</th><th>Check Out</th><th>Notes</th></tr></thead>
       <tbody>${rows}</tbody></table>
       <p style="margin-top:2rem;font-size:0.8rem;color:#94a3b8">Generated ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+      </body></html>`;
+
+    const win = window.open('', '_blank');
+    if (win) { win.document.write(html); win.document.close(); win.print(); }
+  }
+
+  // ─── Printable Staff Directory ──────────────────────────────────────────
+
+  function printStaffDirectory() {
+    const staff = filteredContractors.filter(c => c.status === 'active');
+    if (staff.length === 0) return;
+
+    const rows = staff.map(c => {
+      const roles = c.primary_role.split(',').map(r => roleLabel(r)).join(', ');
+      const w9 = c.w9_status === 'received' ? 'Yes' : c.w9_status === 'expired' ? 'Expired' : 'No';
+      return `<tr>
+        <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;font-weight:500;white-space:nowrap">${c.last_name}, ${c.first_name}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0">${roles}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;white-space:nowrap">${c.phone || '—'}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;font-size:0.85em">${c.email || '—'}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;white-space:nowrap">${c.emergency_contact_name || '—'}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;white-space:nowrap">${c.emergency_contact_phone || '—'}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:center">${c.shirt_size || '—'}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:center;color:${w9 === 'Yes' ? '#1B8BEB' : w9 === 'Expired' ? '#DC2626' : '#64748b'};font-weight:600">${w9}</td>
+      </tr>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html><html><head><title>ROTR Staff Directory</title>
+      <style>body{font-family:Arial,sans-serif;margin:2rem;color:#1e293b}h1{font-size:1.4rem;margin-bottom:0.25rem}h2{font-size:1rem;color:#64748b;margin-bottom:1.5rem;font-weight:400}
+      table{width:100%;border-collapse:collapse}th{text-align:left;padding:8px 10px;background:#f1f5f9;border-bottom:2px solid #cbd5e1;font-size:0.75rem;text-transform:uppercase;color:#475569;white-space:nowrap}
+      @media print{body{margin:1rem;font-size:0.85rem}}</style></head>
+      <body>
+      <h1>Rockin' On The River — Staff Directory</h1>
+      <h2>${staff.length} Active Staff · ${new Date().getFullYear()} Season</h2>
+      <table><thead><tr><th>Name</th><th>Role(s)</th><th>Phone</th><th>Email</th><th>Emergency Contact</th><th>Emergency Phone</th><th>Shirt</th><th>W-9</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+      <p style="margin-top:2rem;font-size:0.8rem;color:#94a3b8">Generated ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} · Confidential — For Internal Use Only</p>
       </body></html>`;
 
     const win = window.open('', '_blank');
@@ -537,6 +826,186 @@ export default function ROTRStaffManager({ events }: Props) {
         ];
       });
     downloadCSV(['Name', 'Email', 'Phone', 'Role', 'Event', 'Date', 'Scheduled Hrs', 'Actual Hrs', 'Rate', 'Pay Type', 'Total Pay', 'Status'], rows, `ROTR-Staff-${start}-to-${end}.csv`);
+  }
+
+  // ─── Staff Schedule PDF ────────────────────────────────────────────────
+
+  async function exportSchedulePdf(eventId: string) {
+    const event = events.find(e => e.id === eventId);
+    const ea = assignments.filter(a => a.wix_event_id === eventId).sort((a, b) => a.role.localeCompare(b.role));
+    if (!event || ea.length === 0) return;
+
+    const { default: jsPDF } = await import('jspdf');
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const margin = 40;
+    const contentW = pageW - margin * 2;
+    let y = margin;
+
+    // ── Header band ──
+    doc.setFillColor(11, 31, 58); // Navy
+    doc.rect(0, 0, pageW, 80, 'F');
+    doc.setFillColor(217, 119, 6); // Gold accent line
+    doc.rect(0, 80, pageW, 4, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.text("ROCKIN' ON THE RIVER", margin, 35);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Staff Schedule', margin, 55);
+    doc.setFontSize(10);
+    doc.text(event.dateAndTimeSettings.formatted.startDate + '  ·  ' + event.dateAndTimeSettings.formatted.startTime, margin, 70);
+
+    y = 105;
+
+    // ── Event info bar ──
+    doc.setFillColor(241, 245, 249);
+    doc.roundedRect(margin, y, contentW, 36, 4, 4, 'F');
+    doc.setTextColor(30, 41, 59);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text(event.title, margin + 12, y + 15);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`${ea.length} Staff Assigned  ·  ${event.dateAndTimeSettings.formatted.startDate}`, margin + 12, y + 28);
+
+    // Staff count badge on right
+    const countStr = String(ea.length);
+    const countW = doc.getTextWidth(countStr) + 16;
+    doc.setFillColor(27, 139, 235);
+    doc.roundedRect(margin + contentW - countW - 12, y + 8, countW, 20, 10, 10, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text(countStr, margin + contentW - countW / 2 - 12, y + 22, { align: 'center' });
+
+    y += 50;
+
+    // ── Table header ──
+    const cols = [
+      { label: 'Name', x: margin, w: 120 },
+      { label: 'Role', x: margin + 120, w: 65 },
+      { label: 'Phone', x: margin + 185, w: 85 },
+      { label: 'Shift', x: margin + 270, w: 95 },
+      { label: 'Hrs', x: margin + 365, w: 30 },
+      { label: 'Notes', x: margin + 395, w: 100 },
+      { label: 'Check In', x: margin + 495, w: 37 },
+    ];
+
+    function drawTableHeader() {
+      doc.setFillColor(11, 31, 58);
+      doc.rect(margin, y, contentW, 22, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      cols.forEach(col => {
+        doc.text(col.label.toUpperCase(), col.x + 6, y + 15);
+      });
+      y += 22;
+    }
+
+    drawTableHeader();
+
+    // ── Table rows ──
+    let rowIdx = 0;
+    for (const a of ea) {
+      // Page break check
+      if (y > doc.internal.pageSize.getHeight() - 60) {
+        doc.addPage();
+        y = margin;
+        drawTableHeader();
+      }
+
+      const c = contractors.find(x => x.id === a.contractor_id);
+      const name = c ? `${c.first_name} ${c.last_name}` : 'Unknown';
+      const phone = c?.phone || '—';
+      const shift = a.scheduled_start && a.scheduled_end
+        ? `${formatTime(a.scheduled_start)} – ${formatTime(a.scheduled_end)}`
+        : '—';
+      const hours = a.scheduled_hours ? `${a.scheduled_hours}h` : '—';
+
+      // Alternating row bg
+      if (rowIdx % 2 === 0) {
+        doc.setFillColor(248, 250, 252);
+        doc.rect(margin, y, contentW, 24, 'F');
+      }
+
+      // Row border
+      doc.setDrawColor(226, 232, 240);
+      doc.line(margin, y + 24, margin + contentW, y + 24);
+
+      doc.setTextColor(30, 41, 59);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.text(name, cols[0].x + 6, y + 15);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+
+      // Role pill
+      const roleText = roleLabel(a.role);
+      const roleW = doc.getTextWidth(roleText) + 10;
+      doc.setFillColor(219, 234, 254);
+      doc.roundedRect(cols[1].x + 4, y + 5, roleW, 14, 3, 3, 'F');
+      doc.setTextColor(30, 64, 175);
+      doc.setFontSize(7.5);
+      doc.text(roleText, cols[1].x + 9, y + 14.5);
+
+      doc.setTextColor(71, 85, 105);
+      doc.setFontSize(9);
+      doc.text(phone, cols[2].x + 6, y + 15);
+      doc.text(shift, cols[3].x + 6, y + 15);
+      doc.text(hours, cols[4].x + 6, y + 15);
+
+      // Notes / shift tags
+      const { tags: pdfTags, text: pdfNoteText } = parseTags(a.notes);
+      const noteStr = [...pdfTags, pdfNoteText].filter(Boolean).join(', ');
+      if (noteStr) {
+        doc.setFontSize(7);
+        doc.setTextColor(71, 85, 105);
+        const truncated = noteStr.length > 28 ? noteStr.slice(0, 26) + '...' : noteStr;
+        doc.text(truncated, cols[5].x + 6, y + 15);
+      }
+
+      // Empty checkbox for check-in
+      doc.setDrawColor(203, 213, 225);
+      doc.setLineWidth(1);
+      doc.rect(cols[6].x + 10, y + 6, 12, 12);
+
+      y += 24;
+      rowIdx++;
+    }
+
+    // ── Summary bar ──
+    y += 8;
+    const totalScheduledHours = ea.reduce((s, a) => s + (a.scheduled_hours || 0), 0);
+    const totalEstCost = ea.reduce((s, a) => {
+      if (a.pay_type === 'flat') return s + a.pay_rate;
+      return s + (a.scheduled_hours || 0) * a.pay_rate;
+    }, 0);
+
+    doc.setFillColor(241, 245, 249);
+    doc.roundedRect(margin, y, contentW, 32, 4, 4, 'F');
+    doc.setTextColor(30, 41, 59);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text(`Total: ${ea.length} staff  ·  ${totalScheduledHours} scheduled hours  ·  Est. labor: ${formatCurrency(totalEstCost)}`, margin + 12, y + 20);
+
+    // ── Footer ──
+    const footerY = doc.internal.pageSize.getHeight() - 30;
+    doc.setDrawColor(217, 119, 6);
+    doc.setLineWidth(1);
+    doc.line(margin, footerY - 8, margin + contentW, footerY - 8);
+    doc.setTextColor(148, 163, 184);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.text("Rockin' On The River  ·  Lorain Port & Finance Authority  ·  319 Black River Lane, Lorain, OH 44052", margin, footerY);
+    doc.text(`Generated ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`, margin + contentW, footerY, { align: 'right' });
+
+    doc.save(`Staff-Schedule-${event.title.replace(/[^a-zA-Z0-9]/g, '-')}.pdf`);
   }
 
   // ─── Computed ───────────────────────────────────────────────────────────
@@ -633,7 +1102,7 @@ export default function ROTRStaffManager({ events }: Props) {
               <button className="admin-btn admin-btn-secondary" onClick={() => toggleStatus(detailContractor)}>
                 <i className={`fas fa-${detailContractor.status === 'active' ? 'ban' : 'check'}`}></i> {detailContractor.status === 'active' ? 'Deactivate' : 'Activate'}
               </button>
-              <button className="admin-btn admin-btn-secondary" style={{ color: '#EF4444' }} onClick={() => deleteContractor(detailContractor.id)}>
+              <button className="admin-btn admin-btn-secondary" style={{ color: '#DC2626' }} onClick={() => deleteContractor(detailContractor.id)}>
                 <i className="fas fa-trash"></i>
               </button>
             </div>
@@ -669,7 +1138,7 @@ export default function ROTRStaffManager({ events }: Props) {
                     <div style={{ marginTop: '0.4rem', display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
                       <span style={{ fontSize: '0.78rem', color: 'var(--gray-500)', marginRight: '0.2rem' }}>Blackout:</span>
                       {dates.map(d => (
-                        <span key={d} style={{ background: '#FEE2E2', color: '#991B1B', padding: '0.1rem 0.4rem', borderRadius: '3px', fontSize: '0.78rem' }}>
+                        <span key={d} style={{ background: '#FEE2E2', color: '#DC2626', padding: '0.1rem 0.4rem', borderRadius: '3px', fontSize: '0.78rem' }}>
                           {new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </span>
                       ))}
@@ -751,17 +1220,17 @@ export default function ROTRStaffManager({ events }: Props) {
             <div className="rotr-stat-label">Events</div>
           </div>
           <div className="rotr-stat-card">
-            <div className="rotr-stat-icon" style={{ background: '#10B98115', color: '#10B981' }}><i className="fas fa-clock"></i></div>
+            <div className="rotr-stat-icon" style={{ background: '#1B8BEB15', color: '#1B8BEB' }}><i className="fas fa-clock"></i></div>
             <div className="rotr-stat-value">{detailTotalHours.toFixed(1)}</div>
             <div className="rotr-stat-label">Hours Worked</div>
           </div>
           <div className="rotr-stat-card">
-            <div className="rotr-stat-icon" style={{ background: '#D9770615', color: '#D97706' }}><i className="fas fa-dollar-sign"></i></div>
+            <div className="rotr-stat-icon" style={{ background: '#0B1F3A15', color: '#0B1F3A' }}><i className="fas fa-dollar-sign"></i></div>
             <div className="rotr-stat-value">{formatCurrency(detailTotalEarned)}</div>
             <div className="rotr-stat-label">Total Earned</div>
           </div>
           <div className="rotr-stat-card">
-            <div className="rotr-stat-icon" style={{ background: noShows > 0 ? '#EF444415' : '#10B98115', color: noShows > 0 ? '#EF4444' : '#10B981' }}><i className={`fas fa-${noShows > 0 ? 'exclamation-triangle' : 'thumbs-up'}`}></i></div>
+            <div className="rotr-stat-icon" style={{ background: noShows > 0 ? '#DC262615' : '#1B8BEB15', color: noShows > 0 ? '#DC2626' : '#1B8BEB' }}><i className={`fas fa-${noShows > 0 ? 'exclamation-triangle' : 'thumbs-up'}`}></i></div>
             <div className="rotr-stat-value">{totalEvents > 0 ? Math.round(((totalEvents - noShows) / totalEvents) * 100) : 100}%</div>
             <div className="rotr-stat-label">Reliability</div>
           </div>
@@ -908,6 +1377,14 @@ export default function ROTRStaffManager({ events }: Props) {
               </select>
             </div>
             <div className="admin-form-group">
+              <label>Priority</label>
+              <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value as 'high' | 'medium' | 'low' }))}>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+            <div className="admin-form-group">
               <label>Status</label>
               <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as 'active' | 'inactive' }))}>
                 <option value="active">Active</option>
@@ -964,9 +1441,9 @@ export default function ROTRStaffManager({ events }: Props) {
               {form.blackout_dates.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
                   {form.blackout_dates.map(d => (
-                    <span key={d} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', background: '#FEE2E2', color: '#991B1B', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.82rem' }}>
+                    <span key={d} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', background: '#FEE2E2', color: '#DC2626', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.82rem' }}>
                       {new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      <button type="button" onClick={() => setForm(f => ({ ...f, blackout_dates: f.blackout_dates.filter(x => x !== d) }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#991B1B', padding: 0, fontSize: '0.78rem' }}>
+                      <button type="button" onClick={() => setForm(f => ({ ...f, blackout_dates: f.blackout_dates.filter(x => x !== d) }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626', padding: 0, fontSize: '0.78rem' }}>
                         <i className="fas fa-times"></i>
                       </button>
                     </span>
@@ -1011,7 +1488,7 @@ export default function ROTRStaffManager({ events }: Props) {
           {/* Stats */}
           <div className="rotr-stats-row">
             <div className="rotr-stat-card">
-              <div className="rotr-stat-icon" style={{ background: '#7C3AED15', color: '#7C3AED' }}><i className="fas fa-hard-hat"></i></div>
+              <div className="rotr-stat-icon" style={{ background: '#0B1F3A15', color: '#0B1F3A' }}><i className="fas fa-hard-hat"></i></div>
               <div className="rotr-stat-value">{activeContractors.length}</div>
               <div className="rotr-stat-label">Active Staff</div>
             </div>
@@ -1021,12 +1498,12 @@ export default function ROTRStaffManager({ events }: Props) {
               <div className="rotr-stat-label">{currentYear} Assignments</div>
             </div>
             <div className="rotr-stat-card">
-              <div className="rotr-stat-icon" style={{ background: '#10B98115', color: '#10B981' }}><i className="fas fa-clock"></i></div>
+              <div className="rotr-stat-icon" style={{ background: '#1B8BEB15', color: '#1B8BEB' }}><i className="fas fa-clock"></i></div>
               <div className="rotr-stat-value">{totalHours.toFixed(1)}</div>
               <div className="rotr-stat-label">Hours This Season</div>
             </div>
             <div className="rotr-stat-card">
-              <div className="rotr-stat-icon" style={{ background: '#D9770615', color: '#D97706' }}><i className="fas fa-dollar-sign"></i></div>
+              <div className="rotr-stat-icon" style={{ background: '#0B1F3A15', color: '#0B1F3A' }}><i className="fas fa-dollar-sign"></i></div>
               <div className="rotr-stat-value">{formatCurrency(totalPaid)}</div>
               <div className="rotr-stat-label">Total Paid Out</div>
             </div>
@@ -1047,6 +1524,9 @@ export default function ROTRStaffManager({ events }: Props) {
               <option value="inactive">Inactive</option>
               <option value="all">All</option>
             </select>
+            <button className="admin-btn admin-btn-secondary" onClick={printStaffDirectory} style={{ fontSize: '0.85rem' }}>
+              <i className="fas fa-print"></i> Print Roster
+            </button>
             <button className="admin-btn admin-btn-primary" onClick={openAddModal}>
               <i className="fas fa-plus"></i> Add Contractor
             </button>
@@ -1067,14 +1547,23 @@ export default function ROTRStaffManager({ events }: Props) {
                     <th>Role</th>
                     <th>Rate</th>
                     <th>W-9</th>
+                    <th>Priority</th>
                     <th style={{ textAlign: 'center' }}>Events</th>
+                    <th style={{ textAlign: 'right' }}>Hours</th>
+                    <th style={{ textAlign: 'right' }}>Pay</th>
                     <th>Status</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredContractors.map(c => {
-                    const cEvents = assignments.filter(a => a.contractor_id === c.id && a.status !== 'cancelled').length;
+                    const cAssignments = assignments.filter(a => a.contractor_id === c.id && a.status !== 'cancelled');
+                    const cEvents = cAssignments.length;
+                    const cHours = cAssignments.reduce((s, a) => s + (a.actual_hours || a.scheduled_hours || 0), 0);
+                    const cPay = cAssignments.reduce((s, a) => s + calcPay(a), 0);
+                    const prio = c.priority || 'medium';
+                    const prioColor = prio === 'high' ? '#DC2626' : prio === 'low' ? '#64748b' : '#0B1F3A';
+                    const prioBg = prio === 'high' ? '#fee2e2' : prio === 'low' ? '#f1f5f9' : '#e2e8f0';
                     return (
                       <tr key={c.id}>
                         <td>
@@ -1094,7 +1583,14 @@ export default function ROTRStaffManager({ events }: Props) {
                         <td>
                           <i className={`fas fa-${c.w9_status === 'received' ? 'check-circle rotr-w9-received' : c.w9_status === 'expired' ? 'exclamation-triangle rotr-w9-expired' : 'times-circle rotr-w9-missing'}`}></i>
                         </td>
+                        <td>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '0.15rem 0.45rem', borderRadius: '9999px', background: prioBg, color: prioColor, textTransform: 'capitalize' }}>
+                            {prio}
+                          </span>
+                        </td>
                         <td style={{ textAlign: 'center' }}>{cEvents}</td>
+                        <td style={{ textAlign: 'right', fontSize: '0.82rem' }}>{cHours > 0 ? `${cHours.toFixed(1)}` : '—'}</td>
+                        <td style={{ textAlign: 'right', fontSize: '0.82rem', fontWeight: 500 }}>{cPay > 0 ? formatCurrency(cPay) : '—'}</td>
                         <td>
                           <button className={`admin-status-badge ${c.status === 'active' ? 'published' : 'draft'}`} onClick={() => toggleStatus(c)} style={{ cursor: 'pointer', border: 'none' }}>
                             {c.status}
@@ -1143,17 +1639,17 @@ export default function ROTRStaffManager({ events }: Props) {
               {/* Event summary */}
               <div className="rotr-stats-row" style={{ marginBottom: '1.25rem' }}>
                 <div className="rotr-stat-card">
-                  <div className="rotr-stat-icon" style={{ background: '#7C3AED15', color: '#7C3AED' }}><i className="fas fa-users"></i></div>
+                  <div className="rotr-stat-icon" style={{ background: '#0B1F3A15', color: '#0B1F3A' }}><i className="fas fa-users"></i></div>
                   <div className="rotr-stat-value">{eventAssignments.length}</div>
                   <div className="rotr-stat-label">Staff Assigned</div>
                 </div>
                 <div className="rotr-stat-card">
-                  <div className="rotr-stat-icon" style={{ background: '#10B98115', color: '#10B981' }}><i className="fas fa-clock"></i></div>
+                  <div className="rotr-stat-icon" style={{ background: '#1B8BEB15', color: '#1B8BEB' }}><i className="fas fa-clock"></i></div>
                   <div className="rotr-stat-value">{eventAssignments.reduce((s, a) => s + (a.scheduled_hours || 0), 0).toFixed(1)}</div>
                   <div className="rotr-stat-label">Scheduled Hours</div>
                 </div>
                 <div className="rotr-stat-card">
-                  <div className="rotr-stat-icon" style={{ background: '#D9770615', color: '#D97706' }}><i className="fas fa-dollar-sign"></i></div>
+                  <div className="rotr-stat-icon" style={{ background: '#0B1F3A15', color: '#0B1F3A' }}><i className="fas fa-dollar-sign"></i></div>
                   <div className="rotr-stat-value">{formatCurrency(eventAssignments.reduce((s, a) => s + (a.pay_type === 'flat' ? a.pay_rate : (a.scheduled_hours || 0) * a.pay_rate), 0))}</div>
                   <div className="rotr-stat-label">Est. Labor Cost</div>
                 </div>
@@ -1186,14 +1682,148 @@ export default function ROTRStaffManager({ events }: Props) {
                     return (
                       <div style={{ width: '100%', marginTop: '0.3rem' }}>
                         <div style={{ height: '4px', background: 'var(--gray-200)', borderRadius: '2px', overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${pct}%`, background: overBudget ? '#EF4444' : pct > 80 ? '#F59E0B' : '#10B981', borderRadius: '2px', transition: 'width 0.3s' }}></div>
+                          <div style={{ height: '100%', width: `${pct}%`, background: overBudget ? '#DC2626' : '#1B8BEB', borderRadius: '2px', transition: 'width 0.3s' }}></div>
                         </div>
-                        <div style={{ fontSize: '0.7rem', color: overBudget ? '#EF4444' : 'var(--gray-500)', marginTop: '0.15rem' }}>{pct}% of budget</div>
+                        <div style={{ fontSize: '0.7rem', color: overBudget ? '#DC2626' : 'var(--gray-500)', marginTop: '0.15rem' }}>{pct}% of budget</div>
                       </div>
                     );
                   })()}
                 </div>
               </div>
+
+              {/* ── Role Requirements ── */}
+              {(() => {
+                const reqs = eventRoleReqs[selectedEventId] || {};
+                const hasReqs = Object.values(reqs).some(v => v > 0);
+                const filledByRole: Record<string, number> = {};
+                eventAssignments.forEach(a => { filledByRole[a.role] = (filledByRole[a.role] || 0) + 1; });
+                const totalNeeded = Object.values(reqs).reduce((s, v) => s + v, 0);
+                const totalFilled = Object.entries(reqs).reduce((s, [role, need]) => s + Math.min(filledByRole[role] || 0, need), 0);
+                const allFilled = hasReqs && totalFilled >= totalNeeded;
+
+                return (
+                  <div className="admin-card" style={{ marginBottom: '1.25rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showRoleReqEditor ? '0.75rem' : 0 }}>
+                      <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <i className="fas fa-clipboard-list" style={{ color: '#0B1F3A' }}></i> Role Requirements
+                        {hasReqs && (
+                          <span style={{
+                            fontSize: '0.75rem', padding: '0.15rem 0.5rem', borderRadius: '9999px', fontWeight: 600,
+                            background: allFilled ? '#e2e8f0' : '#fee2e2', color: allFilled ? '#0B1F3A' : '#DC2626',
+                          }}>
+                            {totalFilled}/{totalNeeded} filled
+                          </span>
+                        )}
+                      </h4>
+                      <button className="admin-btn admin-btn-secondary" style={{ fontSize: '0.82rem' }} onClick={() => setShowRoleReqEditor(!showRoleReqEditor)}>
+                        <i className={`fas fa-${showRoleReqEditor ? 'chevron-up' : 'cog'}`}></i> {showRoleReqEditor ? 'Close' : hasReqs ? 'Edit Roles' : 'Set Roles'}
+                      </button>
+                    </div>
+
+                    {showRoleReqEditor && (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                        {ROLES.map(r => {
+                          const need = reqs[r.value] || 0;
+                          const filled = filledByRole[r.value] || 0;
+                          return (
+                            <div key={r.value} style={{
+                              display: 'flex', alignItems: 'center', padding: '0.5rem 0.6rem',
+                              borderRadius: '8px', border: `1px solid ${need > 0 ? (filled >= need ? '#1B8BEB' : '#DC2626') : 'var(--border-color, #e2e8f0)'}`,
+                              background: need > 0 ? '#F8FAFC' : 'transparent',
+                              gap: '0.5rem', overflow: 'hidden',
+                            }}>
+                              <span className={`rotr-role-chip ${r.value}`} style={{ fontSize: '0.72rem', flexShrink: 0 }}>{r.label}</span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginLeft: 'auto', flexShrink: 0 }}>
+                                {need > 0 && (
+                                  <span style={{
+                                    fontSize: '0.75rem', fontWeight: 600, marginRight: '0.25rem',
+                                    color: filled >= need ? '#1B8BEB' : '#DC2626',
+                                  }}>
+                                    {filled}/{need}
+                                  </span>
+                                )}
+                                <button
+                                  onClick={() => setEventRoleReqs(prev => ({
+                                    ...prev,
+                                    [selectedEventId]: { ...(prev[selectedEventId] || {}), [r.value]: Math.max(0, need - 1) },
+                                  }))}
+                                  style={{
+                                    width: '26px', height: '26px', borderRadius: '6px', border: '1px solid #e2e8f0',
+                                    background: '#f3f4f6', color: '#64748b',
+                                    cursor: need > 0 ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontSize: '0.9rem', fontWeight: 700, lineHeight: 1, padding: 0,
+                                  }}
+                                  disabled={need <= 0}
+                                >−</button>
+                                <span style={{ minWidth: '18px', textAlign: 'center', fontSize: '0.9rem', fontWeight: 700, color: '#0B1F3A' }}>{need}</span>
+                                <button
+                                  onClick={() => setEventRoleReqs(prev => ({
+                                    ...prev,
+                                    [selectedEventId]: { ...(prev[selectedEventId] || {}), [r.value]: Math.min(20, need + 1) },
+                                  }))}
+                                  style={{
+                                    width: '26px', height: '26px', borderRadius: '6px', border: '1px solid #e2e8f0',
+                                    background: '#f3f4f6', color: '#64748b',
+                                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontSize: '0.9rem', fontWeight: 700, lineHeight: 1, padding: 0,
+                                  }}
+                                >+</button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Compact role status pills when editor is closed */}
+                    {!showRoleReqEditor && hasReqs && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.5rem' }}>
+                        {ROLES.filter(r => (reqs[r.value] || 0) > 0).map(r => {
+                          const need = reqs[r.value] || 0;
+                          const filled = filledByRole[r.value] || 0;
+                          const isFull = filled >= need;
+                          return (
+                            <span key={r.value} style={{
+                              display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+                              padding: '0.2rem 0.6rem', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: 500,
+                              background: isFull ? '#dbeafe' : '#fee2e2',
+                              color: isFull ? '#0B1F3A' : '#DC2626',
+                            }}>
+                              {roleLabel(r.value)}: {filled}/{need}
+                              <i className={`fas fa-${isFull ? 'check-circle' : 'exclamation-circle'}`} style={{ fontSize: '0.7rem' }}></i>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Generate Schedule button — always visible, dimmed until roles are set */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: hasReqs || showRoleReqEditor ? '0.75rem' : '0.5rem' }}>
+                      <button
+                        className="admin-btn"
+                        disabled={generating || !hasReqs}
+                        onClick={() => hasReqs && generateSchedule(selectedEventId)}
+                        style={{
+                          background: hasReqs
+                            ? (allFilled ? '#1B8BEB' : '#0B1F3A')
+                            : '#e5e7eb',
+                          color: hasReqs ? '#fff' : '#9ca3af',
+                          border: 'none',
+                          whiteSpace: 'nowrap',
+                          opacity: hasReqs ? 1 : 0.6,
+                          cursor: hasReqs ? 'pointer' : 'default',
+                          transition: 'all 0.2s ease',
+                          fontSize: '0.88rem',
+                          padding: '0.5rem 1.25rem',
+                        }}
+                      >
+                        <i className={`fas fa-${generating ? 'spinner fa-spin' : 'magic'}`}></i>{' '}
+                        {generating ? 'Generating...' : allFilled ? 'All Roles Filled' : 'Generate Schedule'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div className="rotr-staffing-grid">
                 {/* Assigned staff */}
@@ -1315,9 +1945,25 @@ export default function ROTRStaffManager({ events }: Props) {
                                   )}
                                 </td>
 
-                                {/* Pay */}
+                                {/* Pay (click to edit rate) */}
                                 <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                                  <div>{formatCurrency(a.pay_rate)}/{a.pay_type === 'hourly' ? 'hr' : 'flat'}</div>
+                                  {editingPayId === a.id ? (
+                                    <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center', justifyContent: 'flex-end' }}>
+                                      <span style={{ fontSize: '0.82rem' }}>$</span>
+                                      <input type="number" step="0.50" min="0" className="rotr-inline-edit-input" value={editingPayVal}
+                                        onChange={e => setEditingPayVal(e.target.value)}
+                                        onBlur={() => { updateAssignment(a.id, { pay_rate: parseFloat(editingPayVal) || a.pay_rate }); setEditingPayId(null); }}
+                                        onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                                        autoFocus
+                                        style={{ width: '70px' }}
+                                      />
+                                      <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>/{a.pay_type === 'hourly' ? 'hr' : 'flat'}</span>
+                                    </div>
+                                  ) : (
+                                    <span className="rotr-inline-edit" onClick={() => { setEditingPayId(a.id); setEditingPayVal(String(a.pay_rate)); }} title="Click to edit rate">
+                                      {formatCurrency(a.pay_rate)}/{a.pay_type === 'hourly' ? 'hr' : 'flat'}
+                                    </span>
+                                  )}
                                   {(a.actual_hours || a.pay_type === 'flat') && (
                                     <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)', fontWeight: 600 }}>{formatCurrency(calcPay(a))}</div>
                                   )}
@@ -1331,23 +1977,49 @@ export default function ROTRStaffManager({ events }: Props) {
                                   </select>
                                 </td>
 
-                                {/* Actions */}
+                                {/* Actions + Tags */}
                                 <td>
-                                  <div className="admin-actions">
-                                    <button className="admin-btn-icon" title={a.notes ? 'Edit note' : 'Add note'} onClick={() => { setEditingNoteId(editingNoteId === a.id ? null : a.id); setEditingNoteVal(a.notes || ''); }} style={{ fontSize: '0.8rem', color: a.notes ? '#D97706' : undefined }}>
-                                      <i className="fas fa-sticky-note"></i>
-                                    </button>
-                                    <button className="admin-btn-icon danger" title="Remove" onClick={() => removeAssignment(a.id)} style={{ fontSize: '0.8rem' }}>
-                                      <i className="fas fa-times"></i>
-                                    </button>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
+                                    {(() => {
+                                      const { tags } = parseTags(a.notes);
+                                      return tags.map(t => (
+                                        <span key={t} style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '9999px', background: '#e2e8f0', color: '#0B1F3A', fontWeight: 600, whiteSpace: 'nowrap' }}>{t}</span>
+                                      ));
+                                    })()}
+                                    <div className="admin-actions" style={{ marginLeft: 'auto', flexShrink: 0 }}>
+                                      <button className="admin-btn-icon" title={a.notes ? 'Edit note' : 'Add note'} onClick={() => { setEditingNoteId(editingNoteId === a.id ? null : a.id); setEditingNoteVal(a.notes || ''); }} style={{ fontSize: '0.8rem', color: a.notes ? '#1B8BEB' : undefined }}>
+                                        <i className="fas fa-sticky-note"></i>
+                                      </button>
+                                      <button className="admin-btn-icon danger" title="Remove" onClick={() => removeAssignment(a.id)} style={{ fontSize: '0.8rem' }}>
+                                        <i className="fas fa-times"></i>
+                                      </button>
+                                    </div>
                                   </div>
                                 </td>
                               </tr>
                               {editingNoteId === a.id && (
                                 <tr>
                                   <td colSpan={7} style={{ padding: '0.4rem 0.6rem', background: 'var(--gray-50)' }}>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginBottom: '0.4rem' }}>
+                                      {SHIFT_TAGS.map(tag => {
+                                        const { tags } = parseTags(editingNoteVal);
+                                        const active = tags.includes(tag);
+                                        return (
+                                          <button key={tag} type="button" onClick={() => setEditingNoteVal(toggleTag(editingNoteVal, tag))}
+                                            style={{
+                                              fontSize: '0.72rem', padding: '0.2rem 0.5rem', borderRadius: '9999px', border: '1px solid #e2e8f0',
+                                              background: active ? '#0B1F3A' : '#f3f4f6', color: active ? '#fff' : '#64748b',
+                                              cursor: 'pointer', fontWeight: 500, transition: 'all 0.15s',
+                                            }}>{tag}</button>
+                                        );
+                                      })}
+                                    </div>
                                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                      <input type="text" value={editingNoteVal} onChange={e => setEditingNoteVal(e.target.value)}
+                                      <input type="text" value={parseTags(editingNoteVal).text} onChange={e => {
+                                        const { tags } = parseTags(editingNoteVal);
+                                        const tagStr = tags.map(t => `[${t}]`).join('');
+                                        setEditingNoteVal(e.target.value ? `${tagStr} ${e.target.value}` : tagStr);
+                                      }}
                                         placeholder="Add a note (e.g. arrived late, covered VIP)..."
                                         style={{ flex: 1, fontSize: '0.82rem' }}
                                         onKeyDown={e => { if (e.key === 'Enter') { updateAssignment(a.id, { notes: editingNoteVal.trim() || null }); setEditingNoteId(null); } }}
@@ -1396,8 +2068,8 @@ export default function ROTRStaffManager({ events }: Props) {
                               }}
                             />
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                                <span style={{ fontWeight: 500 }}>{c.first_name} {c.last_name}</span>
+                              <div style={{ fontWeight: 500 }}>{c.first_name} {c.last_name}</div>
+                              <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap', marginTop: '0.2rem' }}>
                                 {c.primary_role.split(',').map(r => <span key={r} className={`rotr-role-chip ${r}`}>{roleLabel(r)}</span>)}
                               </div>
                               {(c.preferred_start || c.availability_notes) && (
@@ -1423,7 +2095,7 @@ export default function ROTRStaffManager({ events }: Props) {
                             <div key={c.id} className="rotr-staff-available-row" style={{ opacity: 0.5, cursor: 'default' }}>
                               <span style={{ fontWeight: 500 }}>{c.first_name} {c.last_name}</span>
                               {c.primary_role.split(',').map(r => <span key={r} className={`rotr-role-chip ${r}`}>{roleLabel(r)}</span>)}
-                              <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: '#EF4444', whiteSpace: 'nowrap' }}>
+                              <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: '#DC2626', whiteSpace: 'nowrap' }}>
                                 <i className="fas fa-ban" style={{ marginRight: '0.2rem' }}></i>{reason}
                               </span>
                             </div>
@@ -1443,6 +2115,8 @@ export default function ROTRStaffManager({ events }: Props) {
           )}
         </>
       )}
+
+
 
       {/* ═══ PAYROLL VIEW ═══ */}
       {view === 'payroll' && (
@@ -1485,22 +2159,22 @@ export default function ROTRStaffManager({ events }: Props) {
                 {/* Payroll stats */}
                 <div className="rotr-stats-row" style={{ marginBottom: '1.25rem' }}>
                   <div className="rotr-stat-card">
-                    <div className="rotr-stat-icon" style={{ background: '#7C3AED15', color: '#7C3AED' }}><i className="fas fa-users"></i></div>
+                    <div className="rotr-stat-icon" style={{ background: '#0B1F3A15', color: '#0B1F3A' }}><i className="fas fa-users"></i></div>
                     <div className="rotr-stat-value">{grouped.size}</div>
                     <div className="rotr-stat-label">Contractors</div>
                   </div>
                   <div className="rotr-stat-card">
-                    <div className="rotr-stat-icon" style={{ background: '#10B98115', color: '#10B981' }}><i className="fas fa-clock"></i></div>
+                    <div className="rotr-stat-icon" style={{ background: '#1B8BEB15', color: '#1B8BEB' }}><i className="fas fa-clock"></i></div>
                     <div className="rotr-stat-value">{grandTotalHours.toFixed(1)}</div>
                     <div className="rotr-stat-label">Total Hours</div>
                   </div>
                   <div className="rotr-stat-card">
-                    <div className="rotr-stat-icon" style={{ background: '#D9770615', color: '#D97706' }}><i className="fas fa-dollar-sign"></i></div>
+                    <div className="rotr-stat-icon" style={{ background: '#0B1F3A15', color: '#0B1F3A' }}><i className="fas fa-dollar-sign"></i></div>
                     <div className="rotr-stat-value">{formatCurrency(grandTotalPay)}</div>
                     <div className="rotr-stat-label">Total Payout</div>
                   </div>
                   <div className="rotr-stat-card">
-                    <div className="rotr-stat-icon" style={{ background: missingW9.length > 0 ? '#EF444415' : '#10B98115', color: missingW9.length > 0 ? '#EF4444' : '#10B981' }}><i className={`fas fa-${missingW9.length > 0 ? 'exclamation-triangle' : 'check-circle'}`}></i></div>
+                    <div className="rotr-stat-icon" style={{ background: missingW9.length > 0 ? '#DC262615' : '#1B8BEB15', color: missingW9.length > 0 ? '#DC2626' : '#1B8BEB' }}><i className={`fas fa-${missingW9.length > 0 ? 'exclamation-triangle' : 'check-circle'}`}></i></div>
                     <div className="rotr-stat-value">{missingW9.length}</div>
                     <div className="rotr-stat-label">Missing W-9</div>
                   </div>
@@ -1584,17 +2258,17 @@ export default function ROTRStaffManager({ events }: Props) {
                 <div className="rotr-stat-label">Upcoming Events</div>
               </div>
               <div className="rotr-stat-card">
-                <div className="rotr-stat-icon" style={{ background: '#10B98115', color: '#10B981' }}><i className="fas fa-check-circle"></i></div>
+                <div className="rotr-stat-icon" style={{ background: '#1B8BEB15', color: '#1B8BEB' }}><i className="fas fa-check-circle"></i></div>
                 <div className="rotr-stat-value">{upcoming.filter(e => e.staffCount > 0).length}</div>
                 <div className="rotr-stat-label">Staffed</div>
               </div>
               <div className="rotr-stat-card">
-                <div className="rotr-stat-icon" style={{ background: understaffed.length > 0 ? '#EF444415' : '#10B98115', color: understaffed.length > 0 ? '#EF4444' : '#10B981' }}><i className={`fas fa-${understaffed.length > 0 ? 'exclamation-triangle' : 'thumbs-up'}`}></i></div>
+                <div className="rotr-stat-icon" style={{ background: understaffed.length > 0 ? '#DC262615' : '#1B8BEB15', color: understaffed.length > 0 ? '#DC2626' : '#1B8BEB' }}><i className={`fas fa-${understaffed.length > 0 ? 'exclamation-triangle' : 'thumbs-up'}`}></i></div>
                 <div className="rotr-stat-value">{understaffed.length}</div>
                 <div className="rotr-stat-label">Need Staff</div>
               </div>
               <div className="rotr-stat-card">
-                <div className="rotr-stat-icon" style={{ background: '#7C3AED15', color: '#7C3AED' }}><i className="fas fa-history"></i></div>
+                <div className="rotr-stat-icon" style={{ background: '#0B1F3A15', color: '#0B1F3A' }}><i className="fas fa-history"></i></div>
                 <div className="rotr-stat-value">{past.length}</div>
                 <div className="rotr-stat-label">Past Events</div>
               </div>
@@ -1703,6 +2377,7 @@ export default function ROTRStaffManager({ events }: Props) {
         <>
           <div className="rotr-export-options">
             {([
+              ['schedule', 'fas fa-file-pdf', 'Staff Schedule', 'Branded PDF schedule to email to contractors before an event'] as const,
               ['event', 'fas fa-calendar-alt', 'By Event', 'Export all staff, hours, and pay for a single event'] as const,
               ['contractor', 'fas fa-user', 'By Contractor', 'Export all events and hours for a single contractor'] as const,
               ['range', 'fas fa-calendar-week', 'By Date Range', 'Export all staff across events in a date range'] as const,
@@ -1718,6 +2393,34 @@ export default function ROTRStaffManager({ events }: Props) {
           </div>
 
           <div className="admin-card" style={{ marginTop: '1.25rem' }}>
+            {exportType === 'schedule' && (
+              <>
+                <h4 style={{ marginBottom: '0.75rem' }}><i className="fas fa-file-pdf" style={{ color: '#DC2626', marginRight: '0.4rem' }}></i> Staff Schedule PDF</h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', marginBottom: '0.75rem' }}>
+                  Generate a branded, print-ready PDF with staff names, roles, shifts, and phone numbers — perfect for emailing to contractors before an event.
+                </p>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                  <select value={scheduleEventId} onChange={e => setScheduleEventId(e.target.value)} className="rotr-filter-select" style={{ flex: 1, maxWidth: '500px' }}>
+                    <option value="">Choose event...</option>
+                    {sortedEvents.map(e => <option key={e.id} value={e.id}>{e.title} — {e.dateAndTimeSettings.formatted.startDate}</option>)}
+                  </select>
+                  <button
+                    className="admin-btn admin-btn-primary"
+                    disabled={!scheduleEventId || assignments.filter(a => a.wix_event_id === scheduleEventId).length === 0}
+                    onClick={() => exportSchedulePdf(scheduleEventId)}
+                    style={{ background: '#DC2626', borderColor: '#DC2626' }}
+                  >
+                    <i className="fas fa-file-pdf"></i> Download PDF
+                  </button>
+                </div>
+                {scheduleEventId && (
+                  <p style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: 'var(--gray-500)' }}>
+                    {assignments.filter(a => a.wix_event_id === scheduleEventId).length} staff assignments found
+                  </p>
+                )}
+              </>
+            )}
+
             {exportType === 'event' && (
               <>
                 <h4 style={{ marginBottom: '0.75rem' }}>Select Event</h4>

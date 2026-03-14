@@ -184,7 +184,39 @@ export interface ROTRContractor {
   preferred_end: string | null;
   availability_notes: string | null;
   blackout_dates: string | null;
+  priority: 'high' | 'medium' | 'low';
   status: 'active' | 'inactive' | 'archived';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface POLineItem {
+  description: string;
+  qty: number;
+  unit_price: number;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  po_number: string;
+  context: 'lpfa' | 'rotr';
+  title: string;
+  vendor_name: string;
+  vendor_contact: string | null;
+  category: 'supplies' | 'equipment' | 'services' | 'catering' | 'rentals' | 'maintenance' | 'advertising' | 'other';
+  line_items: POLineItem[];
+  subtotal: number;
+  tax: number;
+  total_amount: number;
+  requested_by: string;
+  needed_by: string | null;
+  priority: 'low' | 'normal' | 'urgent';
+  status: 'draft' | 'pending_approval' | 'approved' | 'denied' | 'completed' | 'archived';
+  approved_by: string | null;
+  approved_at: string | null;
+  denial_reason: string | null;
+  receipt_urls: string[];
   notes: string | null;
   created_at: string;
   updated_at: string;
