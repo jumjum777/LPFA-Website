@@ -2,6 +2,23 @@
    LORAIN PORT & FINANCE AUTHORITY — MAIN STYLESHEET
    ========================================================= */
 
+@import "tailwindcss" layer(utilities);
+
+/* Dark mode uses data-theme attribute */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Project design tokens */
+@theme {
+  --color-navy: #0B1F3A;
+  --color-navy-mid: #1A3A5C;
+  --color-navy-light: #2A5585;
+  --color-blue: #1B8BEB;
+  --color-blue-light: #38BDF8;
+  --color-gold: #D97706;
+  --color-gold-light: #F59E0B;
+  --color-gold-muted: #FCD34D;
+}
+
 /* ---------------------------------------------------------
    1. CSS CUSTOM PROPERTIES
    --------------------------------------------------------- */
@@ -5425,149 +5442,6 @@ body:has(.admin-login-wrapper) > footer {
 /* Article preview dark mode */
 [data-theme="dark"] .article-preview-date { color: #94a3b8; }
 [data-theme="dark"] .article-preview-title { color: #f1f5f9 !important; }
-
-/* ─── Purchase Orders ─────────────────────────────────────────── */
-
-/* Pending row highlight */
-.po-pending-row { background: #fffbeb; }
-[data-theme="dark"] .po-pending-row { background: rgba(146, 64, 14, 0.1); }
-
-/* Context label in table */
-.po-context-lpfa { color: #1B8BEB; }
-.po-context-rotr { color: #0B1F3A; }
-[data-theme="dark"] .po-context-rotr { color: #94a3b8; }
-
-/* Detail subtitle */
-.po-detail-subtitle { margin: 0.25rem 0 0; font-weight: 400; color: #475569; }
-[data-theme="dark"] .po-detail-subtitle { color: #94a3b8; }
-
-/* Info grid labels */
-.po-info-label { font-size: 0.72rem; text-transform: uppercase; font-weight: 600; color: #64748B; }
-[data-theme="dark"] .po-info-label { color: #94a3b8; }
-
-/* Info grid values */
-.po-info-value { color: #334155; }
-[data-theme="dark"] .po-info-value { color: #e2e8f0; }
-
-.po-info-sub { font-size: 0.82rem; color: #64748b; }
-[data-theme="dark"] .po-info-sub { color: #64748b; }
-
-/* Activity section */
-.po-activity-section { margin-top: 1rem; border-top: 1px solid #e2e8f0; padding-top: 0.75rem; }
-[data-theme="dark"] .po-activity-section { border-top-color: #334155; }
-
-.po-activity-title { margin: 0 0 0.5rem; font-size: 0.82rem; text-transform: uppercase; color: #64748b; }
-[data-theme="dark"] .po-activity-title { color: #94a3b8; }
-
-.po-activity-time { color: #94a3b8; margin-left: auto; white-space: nowrap; font-size: 0.82rem; }
-
-.po-activity-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; }
-[data-theme="dark"] .po-activity-item { color: #cbd5e1; }
-
-.po-activity-box { padding: 0.6rem 0.75rem; border-radius: 6px; font-size: 0.88rem; }
-.po-activity-box.approved { background: #f0fdf4; }
-.po-activity-box.denied { background: #fef2f2; }
-[data-theme="dark"] .po-activity-box.approved { background: rgba(22, 101, 52, 0.15); }
-[data-theme="dark"] .po-activity-box.denied { background: rgba(220, 38, 38, 0.12); }
-[data-theme="dark"] .po-activity-box { color: #cbd5e1; }
-
-/* Notes box */
-.po-notes-box { margin-top: 0.75rem; padding: 0.75rem; background: #f8fafc; border-radius: 6px; font-size: 0.88rem; color: #475569; }
-[data-theme="dark"] .po-notes-box { background: #0f172a; color: #cbd5e1; }
-
-/* Receipt link cards */
-.po-receipt-link {
-  display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
-  padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px;
-  text-decoration: none; color: #475569; font-size: 0.82rem; min-width: 100px;
-}
-[data-theme="dark"] .po-receipt-link { border-color: #334155; color: #94a3b8; }
-
-/* Receipt chips in modal */
-.po-receipt-chip {
-  display: inline-flex; align-items: center; gap: 0.3rem;
-  padding: 0.3rem 0.6rem; background: #f1f5f9; border-radius: 6px; font-size: 0.82rem;
-}
-.po-receipt-chip a { color: #475569; text-decoration: none; }
-[data-theme="dark"] .po-receipt-chip { background: #334155; }
-[data-theme="dark"] .po-receipt-chip a { color: #cbd5e1; }
-
-/* Search input (not inside .admin-form-group) */
-.po-search-input {
-  width: 100%; padding: 0.6rem 0.85rem 0.6rem 2rem;
-  border: 1px solid #e2e8f0; border-radius: 8px;
-  font-size: 0.88rem; font-family: var(--font-body);
-  color: #334155; background: #fff;
-  transition: border-color 0.2s;
-}
-.po-search-input:focus { outline: none; border-color: #1B8BEB; box-shadow: 0 0 0 3px rgba(27,139,235,0.1); }
-.po-search-input::placeholder { color: #94a3b8; }
-[data-theme="dark"] .po-search-input { background: #0f172a; border-color: #334155; color: #e2e8f0; }
-[data-theme="dark"] .po-search-input::placeholder { color: #475569; }
-
-.po-search-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.85rem; }
-[data-theme="dark"] .po-search-icon { color: #64748b; }
-
-/* Line item inputs in modal */
-.po-line-input {
-  padding: 0.6rem 0.85rem; border: 1px solid #e2e8f0; border-radius: 8px;
-  font-size: 0.88rem; font-family: var(--font-body);
-  color: #334155; background: #fff; transition: border-color 0.2s;
-}
-.po-line-input:focus { outline: none; border-color: #1B8BEB; box-shadow: 0 0 0 3px rgba(27,139,235,0.1); }
-.po-line-input::placeholder { color: #94a3b8; }
-[data-theme="dark"] .po-line-input { background: #0f172a; border-color: #334155; color: #e2e8f0; }
-[data-theme="dark"] .po-line-input::placeholder { color: #475569; }
-
-/* Dollar sign prefix */
-.po-dollar-prefix { position: absolute; left: 0.5rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.85rem; }
-[data-theme="dark"] .po-dollar-prefix { color: #64748b; }
-
-/* Line total display */
-.po-line-total { min-width: 80px; text-align: right; font-weight: 600; font-size: 0.88rem; color: #475569; }
-[data-theme="dark"] .po-line-total { color: #cbd5e1; }
-
-/* Line item remove button */
-.po-line-remove { background: none; border: none; cursor: pointer; color: #DC2626; padding: 0.3rem; font-size: 0.85rem; }
-
-/* Totals section in modal */
-.po-totals-divider { border-top: 1px solid #e2e8f0; }
-[data-theme="dark"] .po-totals-divider { border-top-color: #334155; }
-
-.po-totals-label { color: #64748b; font-size: 0.88rem; }
-[data-theme="dark"] .po-totals-label { color: #94a3b8; }
-
-.po-totals-grand { font-weight: 700; font-size: 1.1rem; padding-top: 0.4rem; border-top: 2px solid #cbd5e1; }
-[data-theme="dark"] .po-totals-grand { border-top-color: #475569; color: #f1f5f9; }
-
-/* Section dividers in modal */
-.po-section-divider { border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-top: 0.5rem; }
-[data-theme="dark"] .po-section-divider { border-top-color: #334155; }
-
-.po-section-title { margin: 0 0 0.75rem; font-size: 0.95rem; color: #475569; }
-[data-theme="dark"] .po-section-title { color: #94a3b8; }
-
-/* ─── Purchase Orders Mobile ──────────────────────────────────── */
-
-@media (max-width: 768px) {
-  .po-header { flex-direction: column; align-items: stretch !important; }
-  .po-header .admin-btn-primary { align-self: flex-start; }
-
-  .po-detail-actions { justify-content: flex-start !important; }
-  .po-detail-actions .admin-btn { font-size: 0.78rem; padding: 0.45rem 0.75rem; }
-
-  .admin-filter-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
-  .admin-filter-tab { white-space: nowrap; flex-shrink: 0; padding: 0.5rem 0.7rem; font-size: 0.82rem; }
-
-  .po-line-item-row { flex-wrap: wrap !important; }
-  .po-line-item-row input[style*="flex: 3"] { flex: 1 1 100% !important; }
-}
-
-@media (max-width: 480px) {
-  .po-detail-actions { gap: 0.35rem !important; }
-  .po-detail-actions .admin-btn { font-size: 0.75rem; padding: 0.4rem 0.6rem; gap: 0.3rem; }
-}
-
 /* Admin theme toggle button (nav item style) */
 button.admin-theme-btn {
   width: 100%;
