@@ -628,106 +628,89 @@ export default function TripPlannerTab() {
           </>
         ) : (
           <>
-            {/* Route chain visual */}
+            {/* Stop-based route builder */}
             <div className="trip-route-chain">
 
-              {/* Leg 1: Lorain → Stop 1 */}
-              <div className="trip-chain-leg">
-                <div className="trip-chain-leg-header">
-                  <span className="trip-chain-leg-num">Leg 1</span>
-                  <span className="trip-chain-from">Lorain Harbor</span>
-                  <i className="fas fa-long-arrow-alt-right trip-chain-arrow"></i>
-                  <span className="trip-chain-to">
-                    {stops.length > 0 ? getDestLabel(stops[0].destination) : '...'}
-                  </span>
-                </div>
-                <div className="trip-chain-fields">
-                  <div className="trip-chain-field-label">
-                    <i className="fas fa-clock" style={{ marginRight: '0.25rem', fontSize: '0.65rem' }}></i>
-                    Leave Lorain Harbor
+              {/* Departure from Lorain */}
+              <div className="trip-stop-card trip-stop-origin">
+                <div className="trip-stop-header">
+                  <div className="trip-stop-marker origin">
+                    <i className="fas fa-anchor"></i>
                   </div>
-                  <div className="trip-datetime-grid">
-                    <div className="trip-datetime-col">
-                      <div className="trip-form-group">
-                        <label>Date</label>
-                        <input type="date" value={depDate} onChange={e => setDepDate(e.target.value)} min={getTodayStr()} />
-                      </div>
+                  <div className="trip-stop-title">Depart Lorain Harbor</div>
+                </div>
+                <div className="trip-datetime-grid">
+                  <div className="trip-datetime-col">
+                    <div className="trip-form-group">
+                      <label>Date</label>
+                      <input type="date" value={depDate} onChange={e => setDepDate(e.target.value)} min={getTodayStr()} />
                     </div>
-                    <div className="trip-datetime-col">
-                      <div className="trip-form-group">
-                        <label>Time</label>
-                        <input type="time" value={depTime} onChange={e => setDepTime(e.target.value)} />
-                      </div>
+                  </div>
+                  <div className="trip-datetime-col">
+                    <div className="trip-form-group">
+                      <label>Time</label>
+                      <input type="time" value={depTime} onChange={e => setDepTime(e.target.value)} />
                     </div>
                   </div>
                 </div>
-                {stops.length > 0 && (
-                  <div className="trip-chain-transit-hint">
-                    <i className="fas fa-ship" style={{ marginRight: '0.3rem', fontSize: '0.7rem' }}></i>
-                    {formatTransitTime(getTransitMinutes('lorain', stops[0].destination))} estimated transit
-                  </div>
-                )}
+                <div className="trip-chain-transit-hint">
+                  <i className="fas fa-ship" style={{ marginRight: '0.3rem', fontSize: '0.7rem' }}></i>
+                  {formatTransitTime(getTransitMinutes('lorain', stops[0].destination))} to {getDestLabel(stops[0].destination)}
+                </div>
               </div>
 
-              {/* Stops — each shows incoming destination + where you're going next */}
+              {/* Stops */}
               {stops.map((stop, i) => {
-                const prevId = getPrevDest(i);
-                const prevLabel = getDestLabel(prevId);
                 const nextDest = i < stops.length - 1 ? stops[i + 1].destination : 'lorain';
                 const nextLabel = i < stops.length - 1 ? getDestLabel(nextDest) : 'Lorain Harbor';
                 const transitOut = getTransitMinutes(stop.destination, nextDest);
 
                 return (
-                  <Fragment key={i}>
-                    <div className="trip-chain-leg">
-                      <div className="trip-chain-leg-header">
-                        <span className="trip-chain-leg-num">Leg {i + 2}</span>
-                        <span className="trip-chain-from">{getDestLabel(stop.destination)}</span>
-                        <i className="fas fa-long-arrow-alt-right trip-chain-arrow"></i>
-                        <span className="trip-chain-to">{nextLabel}</span>
-                        {stops.length > 1 && (
-                          <button className="trip-stop-remove" onClick={() => removeStop(i)} type="button" title="Remove stop">
-                            <i className="fas fa-times"></i>
-                          </button>
-                        )}
+                  <div key={i} className="trip-stop-card">
+                    <div className="trip-stop-header">
+                      <div className="trip-stop-marker stop">
+                        <span>{i + 1}</span>
                       </div>
+                      <div className="trip-stop-title">Stop {i + 1}</div>
+                      {stops.length > 1 && (
+                        <button className="trip-stop-remove" onClick={() => removeStop(i)} type="button" title="Remove stop">
+                          <i className="fas fa-times"></i>
+                        </button>
+                      )}
+                    </div>
 
-                      <div className="trip-chain-fields">
+                    <div className="trip-form-group">
+                      <label>Where are you stopping?</label>
+                      <select value={stop.destination} onChange={e => updateStop(i, 'destination', e.target.value)}>
+                        {multiStopDests.map(d => (
+                          <option key={d.value} value={d.value}>{d.label} — {d.distance}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="trip-stop-depart-label">
+                      When are you leaving {getDestLabel(stop.destination)}?
+                    </div>
+                    <div className="trip-datetime-grid">
+                      <div className="trip-datetime-col">
                         <div className="trip-form-group">
-                          <label>Destination</label>
-                          <select value={stop.destination} onChange={e => updateStop(i, 'destination', e.target.value)}>
-                            {multiStopDests.map(d => (
-                              <option key={d.value} value={d.value}>{d.label}</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="trip-chain-field-label">
-                          <i className="fas fa-clock" style={{ marginRight: '0.25rem', fontSize: '0.65rem' }}></i>
-                          Leave {getDestLabel(stop.destination)}
-                        </div>
-                        <div className="trip-datetime-grid">
-                          <div className="trip-datetime-col">
-                            <div className="trip-form-group">
-                              <label>Date</label>
-                              <input type="date" value={stop.departureDate} onChange={e => updateStop(i, 'departureDate', e.target.value)} min={depDate} />
-                            </div>
-                          </div>
-                          <div className="trip-datetime-col">
-                            <div className="trip-form-group">
-                              <label>Time</label>
-                              <input type="time" value={stop.departureTime} onChange={e => updateStop(i, 'departureTime', e.target.value)} />
-                            </div>
-                          </div>
+                          <label>Date</label>
+                          <input type="date" value={stop.departureDate} onChange={e => updateStop(i, 'departureDate', e.target.value)} min={depDate} />
                         </div>
                       </div>
-
-                      <div className="trip-chain-transit-hint">
-                        <i className="fas fa-ship" style={{ marginRight: '0.3rem', fontSize: '0.7rem' }}></i>
-                        {formatTransitTime(transitOut)} to {nextLabel}
+                      <div className="trip-datetime-col">
+                        <div className="trip-form-group">
+                          <label>Time</label>
+                          <input type="time" value={stop.departureTime} onChange={e => updateStop(i, 'departureTime', e.target.value)} />
+                        </div>
                       </div>
                     </div>
-                  </Fragment>
+
+                    <div className="trip-chain-transit-hint">
+                      <i className="fas fa-ship" style={{ marginRight: '0.3rem', fontSize: '0.7rem' }}></i>
+                      {formatTransitTime(transitOut)} to {nextLabel}
+                    </div>
+                  </div>
                 );
               })}
 
@@ -738,10 +721,14 @@ export default function TripPlannerTab() {
                 </button>
               )}
 
-              {/* Return to Lorain summary */}
-              <div className="trip-chain-return">
-                <i className="fas fa-flag-checkered" style={{ color: '#059669', marginRight: '0.35rem' }}></i>
-                Arrive back at Lorain Harbor
+              {/* Return to Lorain */}
+              <div className="trip-stop-card trip-stop-return">
+                <div className="trip-stop-header">
+                  <div className="trip-stop-marker origin">
+                    <i className="fas fa-flag-checkered"></i>
+                  </div>
+                  <div className="trip-stop-title">Return to Lorain Harbor</div>
+                </div>
               </div>
             </div>
           </>

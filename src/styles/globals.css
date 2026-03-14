@@ -5227,7 +5227,7 @@ p { line-height: 1.7; color: var(--gray-600); }
   gap: 0;
   position: relative;
 }
-.trip-chain-leg {
+.trip-stop-card {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
@@ -5235,46 +5235,58 @@ p { line-height: 1.7; color: var(--gray-600); }
   margin-bottom: 0.5rem;
   position: relative;
 }
-.trip-chain-leg-header {
+.trip-stop-card.trip-stop-origin,
+.trip-stop-card.trip-stop-return {
+  background: rgba(27,139,235,0.04);
+  border-color: rgba(27,139,235,0.15);
+}
+.trip-stop-card.trip-stop-return {
+  background: rgba(5,150,105,0.04);
+  border-color: rgba(5,150,105,0.2);
+  border-style: dashed;
+}
+.trip-stop-header {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.5rem;
   margin-bottom: 0.75rem;
-  flex-wrap: wrap;
 }
-.trip-chain-leg-num {
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: #fff;
-  background: #1B8BEB;
-  padding: 0.15rem 0.5rem;
-  border-radius: 4px;
+.trip-stop-card.trip-stop-return .trip-stop-header {
+  margin-bottom: 0;
+}
+.trip-stop-marker {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  margin-right: 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 700;
 }
-.trip-chain-from {
+.trip-stop-marker.origin {
+  background: #1B8BEB;
+  color: #fff;
+}
+.trip-stop-marker.stop {
+  background: #D97706;
+  color: #fff;
+}
+.trip-stop-card.trip-stop-return .trip-stop-marker.origin {
+  background: #059669;
+}
+.trip-stop-title {
   font-weight: 600;
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   color: #334155;
 }
-.trip-chain-arrow {
-  color: #94a3b8;
-  font-size: 0.85rem;
-  margin: 0 0.1rem;
-}
-.trip-chain-to {
+.trip-stop-depart-label {
+  font-size: 0.82rem;
+  color: #334155;
   font-weight: 600;
-  font-size: 0.88rem;
-  color: #1B8BEB;
-}
-.trip-chain-fields {
-  padding-left: 0.15rem;
-}
-.trip-chain-field-label {
-  font-size: 0.78rem;
-  color: #64748b;
-  font-weight: 500;
   margin-bottom: 0.35rem;
+  margin-top: 0.25rem;
 }
 .trip-chain-transit-hint {
   display: flex;
@@ -5446,12 +5458,12 @@ p { line-height: 1.7; color: var(--gray-600); }
 [data-theme="dark"] .trip-alt-reason { color: #94a3b8; }
 [data-theme="dark"] .trip-disclaimer { border-top-color: rgba(255,255,255,0.08); color: #64748b; }
 [data-theme="dark"] .trip-travel-warning { background: rgba(217,119,6,0.08); border-color: rgba(217,119,6,0.2); color: #fbbf24; }
-[data-theme="dark"] .trip-chain-leg { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); }
-[data-theme="dark"] .trip-chain-from { color: #e2e8f0; }
-[data-theme="dark"] .trip-chain-to { color: #60a5fa; }
-[data-theme="dark"] .trip-chain-field-label { color: #94a3b8; }
+[data-theme="dark"] .trip-stop-card { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .trip-stop-card.trip-stop-origin { background: rgba(27,139,235,0.06); border-color: rgba(27,139,235,0.15); }
+[data-theme="dark"] .trip-stop-card.trip-stop-return { background: rgba(5,150,105,0.06); border-color: rgba(5,150,105,0.15); }
+[data-theme="dark"] .trip-stop-title { color: #e2e8f0; }
+[data-theme="dark"] .trip-stop-depart-label { color: #e2e8f0; }
 [data-theme="dark"] .trip-chain-transit-hint { color: #64748b; background: rgba(27,139,235,0.06); }
-[data-theme="dark"] .trip-chain-return { color: #34d399; background: rgba(5,150,105,0.08); border-color: rgba(5,150,105,0.2); }
 [data-theme="dark"] .trip-add-stop-btn { border-color: rgba(255,255,255,0.12); color: #94a3b8; }
 [data-theme="dark"] .trip-add-stop-btn:hover { border-color: #1B8BEB; color: #1B8BEB; background: rgba(27,139,235,0.08); }
 [data-theme="dark"] .trip-leg-card { background: #1e293b; border-color: rgba(255,255,255,0.08); }
@@ -5468,8 +5480,7 @@ p { line-height: 1.7; color: var(--gray-600); }
   .trip-segment-btn { font-size: 0.78rem; padding: 0.45rem 0.3rem; }
   .trip-alt-grid { grid-template-columns: 1fr; }
   .trip-leg-times { flex-direction: column; gap: 0.15rem; }
-  .trip-chain-leg-header { font-size: 0.82rem; }
-  .trip-chain-from, .trip-chain-to { font-size: 0.82rem; }
+  .trip-stop-title { font-size: 0.85rem; }
   .trip-leg-times span[style] { display: none; } /* hide middot separators */
   .trip-leg-route { font-size: 0.82rem; flex-wrap: wrap; }
 }
@@ -8063,6 +8074,7 @@ button.admin-theme-btn:hover { color: #D97706; }
   opacity: 0.75;
   font-size: 0.82em;
   font-weight: 400;
+  margin-left: 0.5rem;
 }
 .marine-alert-counter {
   flex-shrink: 0;
