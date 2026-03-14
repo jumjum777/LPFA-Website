@@ -1257,40 +1257,6 @@ function YouTubeSection({ data, periodMetrics: pm }: { data: YouTubeData; period
         ]} />
       </SubSection>
 
-      {/* Playlists */}
-      {data.playlists && data.playlists.length > 0 && (
-        <SubSection title={`Playlists (${data.playlists.length})`} icon="fas fa-list">
-          <div className="admin-table-wrap">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Playlist</th>
-                  <th style={{ textAlign: 'right' }}>Views</th>
-                  <th style={{ textAlign: 'right' }}>Watch Time</th>
-                  <th style={{ textAlign: 'right' }}>Starts</th>
-                  <th style={{ textAlign: 'right' }}>Avg Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.playlists.map(pl => (
-                  <tr key={pl.id}>
-                    <td>
-                      <a href={pl.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--blue-accent)', textDecoration: 'none' }}>
-                        {pl.title}
-                      </a>
-                    </td>
-                    <td style={{ textAlign: 'right' }}>{formatNumber(pl.views ?? 0)}</td>
-                    <td style={{ textAlign: 'right' }}>{formatWatchTime(pl.estimatedMinutesWatched ?? 0)}</td>
-                    <td style={{ textAlign: 'right' }}>{pl.playlistStarts !== undefined ? formatNumber(pl.playlistStarts) : '—'}</td>
-                    <td style={{ textAlign: 'right' }}>{pl.averageTimeInPlaylist !== undefined ? formatDuration(pl.averageTimeInPlaylist) : '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </SubSection>
-      )}
-
       {data.handle && (
         <div className="sm-page-info" style={{ marginTop: '0.75rem' }}>
           <span><i className="fab fa-youtube" style={{ color: '#FF0000' }}></i> {data.handle}</span>

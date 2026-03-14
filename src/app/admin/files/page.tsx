@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 interface FileItem {
   id: string;
   name: string;
@@ -21,6 +23,8 @@ interface FolderNode {
   count: number;
   children: FolderNode[];
 }
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getFileIcon(mime: string | null, name: string): { icon: string; color: string } {
   if (!mime) {
@@ -63,7 +67,6 @@ function buildFolderTree(files: FileItem[]): FolderNode[] {
     folderCounts[f.folder] = (folderCounts[f.folder] || 0) + 1;
   });
 
-  // Ensure parent folders exist
   const allPaths = new Set(Object.keys(folderCounts));
   Object.keys(folderCounts).forEach(p => {
     const parts = p.split('/').filter(Boolean);
@@ -76,7 +79,6 @@ function buildFolderTree(files: FileItem[]): FolderNode[] {
   const root: FolderNode[] = [];
   const nodeMap: Record<string, FolderNode> = {};
 
-  // Sort paths so parents come first
   const sorted = Array.from(allPaths).sort();
   sorted.forEach(path => {
     const parts = path.split('/').filter(Boolean);
@@ -99,6 +101,16 @@ function buildFolderTree(files: FileItem[]): FolderNode[] {
   return root;
 }
 
+function getTotalSize(files: FileItem[]): string {
+  const total = files.reduce((sum, f) => sum + (f.file_size || 0), 0);
+  if (total < 1024) return total + ' B';
+  if (total < 1024 * 1024) return (total / 1024).toFixed(1) + ' KB';
+  if (total < 1024 * 1024 * 1024) return (total / (1024 * 1024)).toFixed(1) + ' MB';
+  return (total / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export default function AdminFilesPage() {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -118,23 +130,22 @@ export default function AdminFilesPage() {
   const [copied, setCopied] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    loadFiles();
-  }, []);
+  useEffect(() => { loadFiles(); }, []);
 
   async function loadFiles() {
     const supabase = createClient();
-    const { data } = await supabase
-      .from('files')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const { data } = await supabase.from('files').select('*').order('created_at', { ascending: false });
     setFiles(data || []);
     setLoading(false);
   }
 
+  // ─── Computed ─────────────────────────────────────────────────────────
+
+  const realFiles = files.filter(f => f.mime_type !== 'application/x-folder');
   const folderTree = buildFolderTree(files);
   const allFolders = Array.from(new Set(files.map(f => f.folder))).sort();
-
+  const folderCount = allFolders.length;
+  const imageCount = realFiles.filter(f => isImage(f.mime_type, f.file_name)).length;
   const filteredFiles = files.filter(f => {
     if (search) return f.name.toLowerCase().includes(search.toLowerCase());
     if (currentFolder === null) return true;
@@ -142,6 +153,8 @@ export default function AdminFilesPage() {
   });
 
   const breadcrumbs = currentFolder ? currentFolder.split('/').filter(Boolean) : [];
+
+  // ─── Actions ──────────────────────────────────────────────────────────
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const fileList = e.target.files;
@@ -160,10 +173,7 @@ export default function AdminFilesPage() {
       const path = `files/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
 
       const { error } = await supabase.storage.from('new-images').upload(path, file);
-      if (error) {
-        alert(`Failed to upload ${file.name}: ${error.message}`);
-        continue;
-      }
+      if (error) { alert(`Failed to upload ${file.name}: ${error.message}`); continue; }
 
       const { data: urlData } = supabase.storage.from('new-images').getPublicUrl(path);
 
@@ -187,15 +197,10 @@ export default function AdminFilesPage() {
     if (!newFolderName.trim()) return;
     const parent = currentFolder || '';
     const folderPath = parent + '/' + newFolderName.trim();
-    // Create a placeholder file to register the folder
     const supabase = createClient();
     await supabase.from('files').insert({
-      name: '.folder',
-      folder: folderPath,
-      file_url: '',
-      file_name: '.folder',
-      file_size: 0,
-      mime_type: 'application/x-folder',
+      name: '.folder', folder: folderPath, file_url: '', file_name: '.folder',
+      file_size: 0, mime_type: 'application/x-folder',
     });
     setNewFolderName('');
     setShowNewFolder(false);
@@ -207,12 +212,8 @@ export default function AdminFilesPage() {
     const folderPath = parentPath + '/' + subfolderName.trim();
     const supabase = createClient();
     await supabase.from('files').insert({
-      name: '.folder',
-      folder: folderPath,
-      file_url: '',
-      file_name: '.folder',
-      file_size: 0,
-      mime_type: 'application/x-folder',
+      name: '.folder', folder: folderPath, file_url: '', file_name: '.folder',
+      file_size: 0, mime_type: 'application/x-folder',
     });
     setSubfolderName('');
     setAddingSubfolder(null);
@@ -253,37 +254,29 @@ export default function AdminFilesPage() {
   }
 
   async function handleDeleteFolder(folderPath: string) {
-    // Count all files in this folder and subfolders
-    const folderFiles = files.filter(f =>
-      f.folder === folderPath || f.folder.startsWith(folderPath + '/')
-    );
-    const realFiles = folderFiles.filter(f => f.mime_type !== 'application/x-folder');
-    const msg = realFiles.length > 0
-      ? `Delete folder "${folderPath}" and ${realFiles.length} file${realFiles.length !== 1 ? 's' : ''} inside it?`
+    const folderFiles = files.filter(f => f.folder === folderPath || f.folder.startsWith(folderPath + '/'));
+    const realInFolder = folderFiles.filter(f => f.mime_type !== 'application/x-folder');
+    const msg = realInFolder.length > 0
+      ? `Delete folder "${folderPath}" and ${realInFolder.length} file${realInFolder.length !== 1 ? 's' : ''} inside it?`
       : `Delete empty folder "${folderPath}"?`;
     if (!confirm(msg)) return;
 
     const supabase = createClient();
-
-    // Delete files from storage
-    for (const file of realFiles) {
+    for (const file of realInFolder) {
       const storagePath = file.file_url.split('/new-images/')[1];
-      if (storagePath) {
-        await supabase.storage.from('new-images').remove([storagePath]);
-      }
+      if (storagePath) await supabase.storage.from('new-images').remove([storagePath]);
     }
 
-    // Delete all DB records in this folder and subfolders
     const ids = folderFiles.map(f => f.id);
-    if (ids.length > 0) {
-      await supabase.from('files').delete().in('id', ids);
-    }
+    if (ids.length > 0) await supabase.from('files').delete().in('id', ids);
 
     if (currentFolder === folderPath || currentFolder?.startsWith(folderPath + '/')) {
       setCurrentFolder(null);
     }
     loadFiles();
   }
+
+  // ─── Folder Tree Item ────────────────────────────────────────────────
 
   function FolderTreeItem({ node, depth = 0 }: { node: FolderNode; depth?: number }) {
     const isActive = currentFolder === node.path;
@@ -297,40 +290,28 @@ export default function AdminFilesPage() {
           onClick={() => setCurrentFolder(isActive ? null : node.path)}
         >
           {node.children.length > 0 && (
-            <i
-              className={`fas fa-chevron-${expanded ? 'down' : 'right'} fr-folder-chevron`}
-              onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-            ></i>
+            <i className={`fas fa-chevron-${expanded ? 'down' : 'right'} fr-folder-chevron`}
+              onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}></i>
           )}
           <i className={`fas ${isActive ? 'fa-folder-open' : 'fa-folder'} fr-folder-icon`}></i>
           <span className="fr-folder-name">{node.name}</span>
           {node.count > 0 && <span className="fr-folder-count">{node.count}</span>}
-          <button
-            className="fr-folder-add"
-            title="Add subfolder"
-            onClick={(e) => { e.stopPropagation(); setAddingSubfolder(addingSubfolder === node.path ? null : node.path); setSubfolderName(''); }}
-          >
+          <button className="fr-folder-add" title="Add subfolder"
+            onClick={(e) => { e.stopPropagation(); setAddingSubfolder(addingSubfolder === node.path ? null : node.path); setSubfolderName(''); }}>
             <i className="fas fa-plus"></i>
           </button>
-          <button
-            className="fr-folder-delete"
-            title="Delete folder"
-            onClick={(e) => { e.stopPropagation(); handleDeleteFolder(node.path); }}
-          >
+          <button className="fr-folder-delete" title="Delete folder"
+            onClick={(e) => { e.stopPropagation(); handleDeleteFolder(node.path); }}>
             <i className="fas fa-trash"></i>
           </button>
         </div>
         {addingSubfolder === node.path && (
           <div className="fr-subfolder-input" style={{ paddingLeft: `${0.75 + (depth + 1) * 1}rem` }}>
             <i className="fas fa-folder-plus" style={{ color: '#D97706', fontSize: '0.8rem' }}></i>
-            <input
-              type="text"
-              placeholder="Subfolder name..."
-              value={subfolderName}
+            <input type="text" placeholder="Subfolder name..." value={subfolderName}
               onChange={e => setSubfolderName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleCreateSubfolder(node.path); if (e.key === 'Escape') setAddingSubfolder(null); }}
-              autoFocus
-            />
+              autoFocus />
             <button onClick={() => handleCreateSubfolder(node.path)} title="Create"><i className="fas fa-check"></i></button>
             <button onClick={() => setAddingSubfolder(null)} title="Cancel"><i className="fas fa-times"></i></button>
           </div>
@@ -342,21 +323,28 @@ export default function AdminFilesPage() {
     );
   }
 
+  // ─── Loading ──────────────────────────────────────────────────────────
+
   if (loading) {
     return (
       <div className="admin-page">
-        <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
-          <i className="fas fa-spinner fa-spin" style={{ fontSize: '2rem', color: 'var(--blue-accent)' }}></i>
+        <div className="admin-page-header"><h1>Files</h1></div>
+        <div className="admin-card p-12 text-center">
+          <i className="fas fa-spinner fa-spin text-2xl text-blue"></i>
+          <p className="mt-3 text-slate-500 dark:text-slate-400">Loading files...</p>
         </div>
       </div>
     );
   }
 
+  // ─── Render ───────────────────────────────────────────────────────────
+
   return (
     <div className="admin-page">
-      <div className="admin-page-header">
+      {/* Header */}
+      <div className="admin-page-header flex justify-between items-start flex-wrap gap-4">
         <div>
-          <h1><i className="fas fa-folder-open" style={{ marginRight: '0.5rem', color: '#D97706' }}></i> Files</h1>
+          <h1><i className="fas fa-folder-open mr-2" style={{ color: '#D97706' }}></i> Files</h1>
           <p>Shared file repository for LPFA and ROTR documents, logos, and assets.</p>
         </div>
         <div className="admin-header-actions">
@@ -366,57 +354,73 @@ export default function AdminFilesPage() {
           <button className="admin-btn admin-btn-primary" onClick={() => fileInputRef.current?.click()}>
             <i className="fas fa-upload"></i> Upload Files
           </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            style={{ display: 'none' }}
-            onChange={handleUpload}
-          />
+          <input ref={fileInputRef} type="file" multiple style={{ display: 'none' }} onChange={handleUpload} />
         </div>
       </div>
 
+      {/* Stats Row */}
+      <div className="rotr-stats-row" style={{ marginBottom: '2rem' }}>
+        <div className="rotr-stat-card">
+          <div className="rotr-stat-icon bg-blue/10 text-blue"><i className="fas fa-file"></i></div>
+          <div className="rotr-stat-value">{realFiles.length}</div>
+          <div className="rotr-stat-label">Total Files</div>
+        </div>
+        <div className="rotr-stat-card">
+          <div className="rotr-stat-icon bg-amber-50/10 text-amber-800"><i className="fas fa-folder"></i></div>
+          <div className="rotr-stat-value">{folderCount}</div>
+          <div className="rotr-stat-label">Folders</div>
+        </div>
+        <div className="rotr-stat-card">
+          <div className="rotr-stat-icon bg-purple-50/10 text-purple-800"><i className="fas fa-image"></i></div>
+          <div className="rotr-stat-value">{imageCount}</div>
+          <div className="rotr-stat-label">Images</div>
+        </div>
+        <div className="rotr-stat-card">
+          <div className="rotr-stat-icon bg-green-50/10 text-green-800"><i className="fas fa-hard-drive"></i></div>
+          <div className="rotr-stat-value">{getTotalSize(realFiles)}</div>
+          <div className="rotr-stat-label">Storage Used</div>
+        </div>
+      </div>
+
+      {/* Upload Progress */}
       {uploading && (
         <div className="fr-upload-bar">
           <i className="fas fa-spinner fa-spin"></i> {uploadProgress}
         </div>
       )}
 
+      {/* New Folder Bar */}
       {showNewFolder && (
         <div className="fr-new-folder-bar">
-          <input
-            type="text"
-            placeholder="Folder name..."
-            value={newFolderName}
+          <input type="text" placeholder="Folder name..." value={newFolderName}
             onChange={e => setNewFolderName(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleCreateFolder()}
-            autoFocus
-          />
+            autoFocus />
           <button className="admin-btn admin-btn-primary" onClick={handleCreateFolder}>Create</button>
           <button className="admin-btn admin-btn-secondary" onClick={() => { setShowNewFolder(false); setNewFolderName(''); }}>Cancel</button>
         </div>
       )}
 
+      {/* File Manager Layout */}
       <div className="fr-layout">
-        {/* Folder Tree */}
+        {/* Folder Tree Sidebar */}
         <div className="fr-sidebar">
-          <div className="fr-sidebar-header">Folders</div>
-          <button
-            className={`fr-folder-item ${currentFolder === null ? 'active' : ''}`}
-            onClick={() => setCurrentFolder(null)}
-          >
+          <div className="fr-sidebar-header">
+            <i className="fas fa-sitemap" style={{ marginRight: '0.4rem', fontSize: '0.75rem', color: '#94a3b8' }}></i> Folders
+          </div>
+          <button className={`fr-folder-item ${currentFolder === null ? 'active' : ''}`} onClick={() => setCurrentFolder(null)}>
             <i className="fas fa-home fr-folder-icon"></i>
             <span className="fr-folder-name">All Files</span>
-            <span className="fr-folder-count">{files.filter(f => f.mime_type !== 'application/x-folder').length}</span>
+            <span className="fr-folder-count">{realFiles.length}</span>
           </button>
           {folderTree.map(node => (
             <FolderTreeItem key={node.path} node={node} />
           ))}
         </div>
 
-        {/* File Grid */}
+        {/* File Grid Main */}
         <div className="fr-main">
-          {/* Breadcrumb + Search */}
+          {/* Breadcrumb + Search Toolbar */}
           <div className="fr-toolbar">
             <div className="fr-breadcrumb">
               <button onClick={() => setCurrentFolder(null)} className="fr-crumb">
@@ -431,15 +435,16 @@ export default function AdminFilesPage() {
                   </span>
                 );
               })}
+              {currentFolder && (
+                <span style={{ marginLeft: 'auto', fontSize: '0.78rem', color: '#94a3b8' }}>
+                  {filteredFiles.filter(f => f.mime_type !== 'application/x-folder').length} file{filteredFiles.filter(f => f.mime_type !== 'application/x-folder').length !== 1 ? 's' : ''}
+                </span>
+              )}
             </div>
             <div className="fr-search">
               <i className="fas fa-search"></i>
-              <input
-                type="text"
-                placeholder="Search files..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
+              <input type="text" placeholder="Search files..." value={search}
+                onChange={e => setSearch(e.target.value)} />
               {search && (
                 <button className="fr-search-clear" onClick={() => setSearch('')}>
                   <i className="fas fa-times"></i>
@@ -448,12 +453,12 @@ export default function AdminFilesPage() {
             </div>
           </div>
 
-          {/* Files */}
+          {/* Files Grid */}
           {filteredFiles.filter(f => f.mime_type !== 'application/x-folder').length === 0 ? (
             <div className="fr-empty">
               <i className="fas fa-folder-open"></i>
               <p>{search ? 'No files match your search.' : 'No files in this folder.'}</p>
-              <button className="admin-btn admin-btn-primary" onClick={() => fileInputRef.current?.click()}>
+              <button className="admin-btn admin-btn-primary" onClick={() => fileInputRef.current?.click()} style={{ marginTop: '0.75rem' }}>
                 <i className="fas fa-upload"></i> Upload Files
               </button>
             </div>
@@ -476,13 +481,10 @@ export default function AdminFilesPage() {
                     <div className="fr-file-info">
                       {renaming === file.id ? (
                         <div className="fr-rename-row">
-                          <input
-                            type="text"
-                            value={renameValue}
+                          <input type="text" value={renameValue}
                             onChange={e => setRenameValue(e.target.value)}
                             onKeyDown={e => { if (e.key === 'Enter') handleRename(file); if (e.key === 'Escape') setRenaming(null); }}
-                            autoFocus
-                          />
+                            autoFocus />
                           <button onClick={() => handleRename(file)}><i className="fas fa-check"></i></button>
                         </div>
                       ) : (
@@ -495,10 +497,8 @@ export default function AdminFilesPage() {
                     </div>
 
                     <div className="fr-file-actions">
-                      <button
-                        className="fr-action-btn"
-                        onClick={() => setActionMenu(actionMenu === file.id ? null : file.id)}
-                      >
+                      <button className="fr-action-btn"
+                        onClick={() => setActionMenu(actionMenu === file.id ? null : file.id)}>
                         <i className="fas fa-ellipsis-v"></i>
                       </button>
 

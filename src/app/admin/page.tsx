@@ -47,11 +47,11 @@ const PO_COLORS: Record<string, string> = {
 
 const STAT_CARDS = [
   { title: 'News Articles', key: 'news', href: '/admin/news', icon: 'fas fa-newspaper', color: '#1B8BEB' },
-  { title: 'Events', key: 'events', href: '/admin/events', icon: 'fas fa-calendar-alt', color: '#D97706' },
-  { title: 'Boat Tours', key: 'tours', href: '/admin/tours', icon: 'fas fa-ship', color: '#059669' },
-  { title: 'Staff', key: 'staff', href: '/admin/staff', icon: 'fas fa-id-badge', color: '#EC4899' },
-  { title: 'Meeting Minutes', key: 'documents', href: '/admin/documents', icon: 'fas fa-file-pdf', color: '#7C3AED' },
-  { title: 'Photos', key: 'photos', href: '/admin/photos', icon: 'fas fa-images', color: '#06B6D4' },
+  { title: 'Upcoming Events', key: 'upcomingEvents', href: '/admin/events', icon: 'fas fa-calendar-alt', color: '#D97706', subtitle: 'Next 7 days' },
+  { title: 'Upcoming Tours', key: 'upcomingTours', href: '/admin/tours', icon: 'fas fa-ship', color: '#059669', subtitle: 'Next 7 days' },
+  { title: 'Unread Messages', key: 'unread', href: '/admin/leads', icon: 'fas fa-envelope', color: '#DC2626' },
+  { title: 'Pending POs', key: 'pendingPOs', href: '/admin/purchase-orders', icon: 'fas fa-file-invoice', color: '#7C3AED' },
+  { title: 'Active Alerts', key: 'activeAlerts', href: '/marine', icon: 'fas fa-exclamation-triangle', color: '#EF4444' },
   { title: 'Files', key: 'files', href: '/admin/files', icon: 'fas fa-folder-open', color: '#8B5CF6' },
   { title: 'Vessel Traffic', key: 'vessels', href: '/admin/vessels', icon: 'fas fa-anchor', color: '#0B1F3A' },
 ];
@@ -121,22 +121,13 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="admin-page" style={{ maxWidth: '1400px' }}>
-        <div className="admin-page-header"><h1><i className="fas fa-gauge-high mr-2 text-blue"></i> Dashboard</h1></div>
-        <div className="admin-stats-grid" style={{ marginBottom: '1.5rem' }}>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="admin-stat-card" style={{ minHeight: 90, opacity: 0.5 }}>
-              <div className="admin-stat-icon" style={{ background: '#f1f5f9' }}><i className="fas fa-spinner fa-spin"></i></div>
-              <div className="admin-stat-info"><span className="admin-stat-count">--</span><span className="admin-stat-label">Loading...</span></div>
-            </div>
-          ))}
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem' }}>
-          <div className="admin-card" style={{ height: 340, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <i className="fas fa-spinner fa-spin text-2xl text-blue"></i>
-          </div>
-          <div className="admin-card" style={{ height: 340, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <i className="fas fa-spinner fa-spin text-2xl text-blue"></i>
-          </div>
+        <div className="admin-page-header"><h1><i className="fas fa-gauge-high" style={{ marginRight: '0.5rem', color: '#1B8BEB' }}></i> Dashboard</h1></div>
+        <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
+          <i className="fas fa-spinner fa-spin" style={{ fontSize: '2rem', color: 'var(--blue-accent)' }}></i>
+          <p style={{ marginTop: '1rem', color: '#64748B', fontWeight: 500 }}>Building your command center...</p>
+          <p style={{ marginTop: '0.4rem', color: '#94a3b8', fontSize: '0.82rem', maxWidth: '420px', margin: '0.4rem auto 0' }}>
+            This may take a moment. We&apos;re pulling in data from analytics, inbox messages, purchase orders, social media, and more to build your dashboard.
+          </p>
         </div>
       </div>
     );
@@ -214,6 +205,24 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* Stat Cards */}
+      <div className="admin-stats-grid dash-compact" style={{ marginBottom: '1.5rem' }}>
+        {STAT_CARDS.map(card => (
+          <Link key={card.key} href={card.href} className="admin-stat-card dash-compact-card">
+            <div className="admin-stat-icon" style={{ background: `${card.color}15`, color: card.color, width: 36, height: 36, borderRadius: 8, fontSize: '0.95rem' }}>
+              <i className={card.icon}></i>
+            </div>
+            <div className="admin-stat-info">
+              <span className="admin-stat-count" style={{ fontSize: '1.35rem' }}>{data.stats[card.key] ?? 0}</span>
+              <span className="admin-stat-label">{card.title}</span>
+              {'subtitle' in card && card.subtitle && (
+                <span style={{ fontSize: '0.6rem', color: '#94a3b8', fontWeight: 500, marginTop: '0.1rem', display: 'block' }}>{card.subtitle}</span>
+              )}
+            </div>
+          </Link>
+        ))}
+      </div>
+
       {/* Needs Attention */}
       {hasAttention && (
         <div className="admin-card" style={{ borderLeft: '4px solid #D97706', marginBottom: '1.5rem' }}>
@@ -225,7 +234,7 @@ export default function AdminDashboard() {
             {data.attention.pendingPOs.length > 0 && (
               <div>
                 <h4 style={{ fontSize: '0.82rem', textTransform: 'uppercase', fontWeight: 600, color: '#64748b', margin: '0 0 0.5rem' }}>
-                  <i className="fas fa-file-invoice mr-1"></i> Pending POs ({data.attention.pendingPOs.length})
+                  <i className="fas fa-file-invoice" style={{ marginRight: '0.25rem' }}></i> Pending POs ({data.attention.pendingPOs.length})
                 </h4>
                 {data.attention.pendingPOs.map(po => (
                   <Link key={po.id} href="/admin/purchase-orders" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: `1px solid ${isDark ? '#334155' : '#f1f5f9'}`, textDecoration: 'none', color: 'inherit', gap: '0.5rem' }}>
@@ -242,7 +251,7 @@ export default function AdminDashboard() {
             {data.attention.unreadInbox.length > 0 && (
               <div>
                 <h4 style={{ fontSize: '0.82rem', textTransform: 'uppercase', fontWeight: 600, color: '#64748b', margin: '0 0 0.5rem' }}>
-                  <i className="fas fa-envelope mr-1"></i> Unread Messages ({data.attention.unreadInbox.length})
+                  <i className="fas fa-envelope" style={{ marginRight: '0.25rem' }}></i> Unread Messages ({data.attention.unreadInbox.length})
                 </h4>
                 {data.attention.unreadInbox.map(msg => (
                   <Link key={msg.id} href="/admin/leads" style={{ display: 'block', padding: '0.5rem 0', borderBottom: `1px solid ${isDark ? '#334155' : '#f1f5f9'}`, textDecoration: 'none', color: 'inherit' }}>
@@ -256,7 +265,7 @@ export default function AdminDashboard() {
             {data.attention.activeRFPs.length > 0 && (
               <div>
                 <h4 style={{ fontSize: '0.82rem', textTransform: 'uppercase', fontWeight: 600, color: '#64748b', margin: '0 0 0.5rem' }}>
-                  <i className="fas fa-file-contract mr-1"></i> Active RFPs ({data.attention.activeRFPs.length})
+                  <i className="fas fa-file-contract" style={{ marginRight: '0.25rem' }}></i> Active RFPs ({data.attention.activeRFPs.length})
                 </h4>
                 {data.attention.activeRFPs.map(rfp => (
                   <Link key={rfp.id} href="/admin/rfps" style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: `1px solid ${isDark ? '#334155' : '#f1f5f9'}`, textDecoration: 'none', color: 'inherit' }}>
@@ -269,21 +278,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-
-      {/* Stat Cards */}
-      <div className="admin-stats-grid" style={{ marginBottom: '1.5rem' }}>
-        {STAT_CARDS.map(card => (
-          <Link key={card.href} href={card.href} className="admin-stat-card">
-            <div className="admin-stat-icon" style={{ background: `${card.color}15`, color: card.color }}>
-              <i className={card.icon}></i>
-            </div>
-            <div className="admin-stat-info">
-              <span className="admin-stat-count">{data.stats[card.key] ?? 0}</span>
-              <span className="admin-stat-label">{card.title}</span>
-            </div>
-          </Link>
-        ))}
-      </div>
 
       {/* Charts Row: Traffic + PO Donut */}
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>

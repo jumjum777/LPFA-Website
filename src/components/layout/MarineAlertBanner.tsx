@@ -9,6 +9,7 @@ interface Alert {
   event: string;
   headline: string;
   severity: string;
+  areaDesc?: string;
 }
 
 function getSeverityClass(severity: string) {
@@ -21,9 +22,9 @@ function getSeverityClass(severity: string) {
 }
 
 const MOCK_ALERTS: Alert[] = [
-  { id: 'mock-1', event: 'Severe Thunderstorm Warning', headline: 'Severe Thunderstorm Warning in effect for Lorain County until 8:00 PM EDT', severity: 'Severe' },
-  { id: 'mock-2', event: 'Small Craft Advisory', headline: 'Small Craft Advisory in effect for Vermilion to Avon Point OH nearshore waters', severity: 'Moderate' },
-  { id: 'mock-3', event: 'Gale Warning', headline: 'Gale Warning in effect for Lorain and surrounding Lake Erie nearshore waters', severity: 'Severe' },
+  { id: 'mock-1', event: 'Severe Thunderstorm Warning', headline: 'Severe Thunderstorm Warning in effect for Lorain County until 8:00 PM EDT', severity: 'Severe', areaDesc: 'Vermilion to Avon Point OH' },
+  { id: 'mock-2', event: 'Small Craft Advisory', headline: 'Small Craft Advisory in effect for nearshore waters', severity: 'Moderate', areaDesc: 'Avon Point to Willowick OH' },
+  { id: 'mock-3', event: 'Gale Warning', headline: 'Gale Warning in effect for Lake Erie nearshore waters', severity: 'Severe', areaDesc: 'The Islands to Vermilion OH' },
 ];
 
 function MarineAlertBannerInner() {
@@ -113,7 +114,7 @@ function MarineAlertBannerInner() {
           <i className="fas fa-exclamation-triangle marine-alert-icon"></i>
           <div className={`marine-alert-text${fading ? ' marine-alert-fade' : ''}`}>
             <strong>{current.event}</strong>
-            <span className="marine-alert-headline">{current.headline}</span>
+            {current.areaDesc && <span className="marine-alert-zone">{current.areaDesc}</span>}
           </div>
           {active.length > 1 && (
             <span className="marine-alert-counter">{currentIndex + 1}/{active.length}</span>

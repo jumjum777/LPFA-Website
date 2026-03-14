@@ -16,6 +16,7 @@ export interface MarineAlert {
   urgency: string;
   onset: string;
   expires: string;
+  areaDesc: string;
 }
 
 export interface ForecastPeriod {
@@ -60,6 +61,13 @@ export interface MarineTextPeriod {
   body: string;
 }
 
+export interface NearshoreTemp {
+  value: number | null;       // degrees F
+  source: 'coops' | 'nws-text' | null;
+  station: string;
+  timestamp: string;
+}
+
 export interface MarineData {
   alerts: MarineAlert[];
   forecast: ForecastPeriod[];
@@ -67,6 +75,7 @@ export interface MarineData {
   marineText: string | null;
   marineTextPeriods: MarineTextPeriod[];
   buoy: BuoyData | null;
+  nearshoreTemp: NearshoreTemp;
   fetchedAt: string;
 }
 
@@ -105,6 +114,7 @@ function parseAlerts(json: unknown): MarineAlert[] {
     urgency: f.properties.urgency || '',
     onset: f.properties.onset || '',
     expires: f.properties.expires || '',
+    areaDesc: f.properties.areaDesc || '',
   }));
 }
 
@@ -176,6 +186,39 @@ function parseBuoy(text: string): BuoyData {
   };
 }
 
+// --- Nearshore water temperature parsers ---
+
+function parseCoOpsWaterTemp(json: unknown): NearshoreTemp {
+  const data = json as { metadata?: { id?: string }; data?: { t?: string; v?: string }[] };
+  if (!data?.data?.[0]?.v) {
+    return { value: null, source: null, station: '9063063', timestamp: '' };
+  }
+  const val = parseFloat(data.data[0].v);
+  if (isNaN(val)) {
+    return { value: null, source: null, station: '9063063', timestamp: '' };
+  }
+  return {
+    value: Math.round(val * 10) / 10,
+    source: 'coops',
+    station: 'Cleveland (9063063)',
+    timestamp: data.data[0].t || '',
+  };
+}
+
+function parseNwsTextWaterTemp(text: string): NearshoreTemp {
+  // NWS nearshore text contains: "off Cleveland 37 degrees"
+  const match = text.match(/off Cleveland\s+(\d+)\s+degrees/i);
+  if (!match) {
+    return { value: null, source: null, station: '', timestamp: '' };
+  }
+  return {
+    value: parseInt(match[1], 10),
+    source: 'nws-text',
+    station: 'NWS Nearshore Forecast',
+    timestamp: '',
+  };
+}
+
 // --- Marine text parser ---
 
 function parseMarineText(raw: string): MarineTextPeriod[] {
@@ -199,14 +242,14 @@ function parseMarineText(raw: string): MarineTextPeriod[] {
 export async function fetchMarineData(): Promise<MarineData> {
   const headers = { 'User-Agent': NWS_UA };
 
-  const [alertsRes, marineAlertsRes, forecastRes, hourlyRes, marineTextRes, buoyRes] = await Promise.allSettled([
+  const [alertsRes, marineAlertsRes, forecastRes, hourlyRes, marineTextRes, buoyRes, coopsRes] = await Promise.allSettled([
     fetch('https://api.weather.gov/alerts/active?point=41.4528,-82.1824', {
       headers,
       next: { revalidate: 900 },
     }),
-    // Marine zone alerts (Small Craft Advisory, Gale Warning, etc.) are issued
-    // for offshore zones, not land points — query LEZ145 (Lorain nearshore) separately
-    fetch('https://api.weather.gov/alerts/active?zone=LEZ145', {
+    // Marine zone alerts — LEZ144 (Islands–Vermilion), LEZ145 (Vermilion–Avon Point),
+    // LEZ146 (Avon Point–Willowick) — three nearshore zones covering Lorain area
+    fetch('https://api.weather.gov/alerts/active?zone=LEZ144,LEZ145,LEZ146', {
       headers,
       next: { revalidate: 900 },
     }),
@@ -222,6 +265,10 @@ export async function fetchMarineData(): Promise<MarineData> {
       next: { revalidate: 1800 },
     }),
     fetch('https://www.ndbc.noaa.gov/data/realtime2/45005.txt', {
+      next: { revalidate: 1800 },
+    }),
+    // NOAA CO-OPS Cleveland station — year-round nearshore water temp
+    fetch('https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?date=latest&station=9063063&product=water_temperature&units=english&time_zone=lst_ldt&format=json', {
       next: { revalidate: 1800 },
     }),
   ]);
@@ -279,6 +326,19 @@ export async function fetchMarineData(): Promise<MarineData> {
     buoy = { timestamp: '', windSpeed: null, windGust: null, windDirection: null, waveHeight: null, wavePeriod: null, waterTemp: null, airTemp: null, pressure: null, isOffline: true };
   }
 
+  // Nearshore water temp: CO-OPS primary, NWS text fallback
+  let nearshoreTemp: NearshoreTemp = { value: null, source: null, station: '', timestamp: '' };
+  try {
+    if (coopsRes.status === 'fulfilled' && coopsRes.value.ok) {
+      nearshoreTemp = parseCoOpsWaterTemp(await coopsRes.value.json());
+    }
+  } catch { /* ignore */ }
+
+  // Fallback to NWS marine text if CO-OPS failed
+  if (nearshoreTemp.value === null && marineText) {
+    nearshoreTemp = parseNwsTextWaterTemp(marineText);
+  }
+
   return {
     alerts,
     forecast,
@@ -286,6 +346,7 @@ export async function fetchMarineData(): Promise<MarineData> {
     marineText,
     marineTextPeriods: marineText ? parseMarineText(marineText) : [],
     buoy,
+    nearshoreTemp,
     fetchedAt: new Date().toISOString(),
   };
 }

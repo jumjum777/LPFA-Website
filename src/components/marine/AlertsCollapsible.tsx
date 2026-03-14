@@ -10,6 +10,7 @@ interface Alert {
   severity: string;
   onset: string;
   expires: string;
+  areaDesc?: string;
 }
 
 function getSeverityColor(severity: string) {
@@ -59,6 +60,11 @@ export default function AlertsCollapsible({ alerts }: { alerts: Alert[] }) {
             <i className={`fas fa-chevron-down maa-icon${openIndex === i ? ' rotated' : ''}`}></i>
           </button>
           <div className={`maa-body${openIndex === i ? ' open' : ''}`}>
+            {alert.areaDesc && (
+              <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '0 0 0.5rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <i className="fas fa-map-marker-alt" style={{ fontSize: '0.75rem' }}></i> {alert.areaDesc}
+              </p>
+            )}
             <p className="maa-headline">{alert.headline}</p>
             <p className="maa-description">{alert.description}</p>
             <div className="maa-meta">

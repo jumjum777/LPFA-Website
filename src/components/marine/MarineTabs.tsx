@@ -5,6 +5,7 @@ import Link from 'next/link';
 import MarineZoneAccordion from './MarineZoneAccordion';
 import HourlyForecastTable from './HourlyForecastTable';
 import AlertsCollapsible from './AlertsCollapsible';
+import TripPlannerTab from './TripPlannerTab';
 
 interface Alert { id: string; event: string; headline: string; description: string; severity: string; onset: string; expires: string; }
 interface MarineTextPeriod { title: string; body: string; }
@@ -13,7 +14,7 @@ interface ForecastPeriod { number: number; name: string; temperature: number; te
 interface BuoyData { windSpeed: number | null; windGust: number | null; windDirection: number | null; waveHeight: number | null; wavePeriod: number | null; waterTemp: number | null; airTemp: number | null; pressure: number | null; isOffline: boolean; }
 interface VesselRecord { mmsi: string; vessel_name: string | null; destination: string | null; vessel_type: number | null; latitude: number | null; longitude: number | null; speed: number | null; heading: number | null; eta: string | null; status: string; first_detected_at?: string; last_seen_at?: string; is_active: boolean; }
 
-type TabId = 'alerts' | 'wind' | 'vessels' | 'forecast' | 'conditions' | 'hourly' | '7day' | 'resources' | 'beach';
+type TabId = 'alerts' | 'wind' | 'vessels' | 'forecast' | 'conditions' | 'hourly' | '7day' | 'resources' | 'beach' | 'trip';
 
 interface BeachReading { date: string; value: number | null; }
 interface BeachData {
@@ -104,13 +105,14 @@ export default function MarineTabs({
 
   // Check URL hash for direct tab navigation (e.g., /marine#beach)
   const hashTab = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : '';
-  const validHashTab = ['alerts', 'wind', 'vessels', 'forecast', 'conditions', 'hourly', '7day', 'resources', 'beach'].includes(hashTab) ? hashTab as TabId : null;
+  const validHashTab = ['alerts', 'wind', 'vessels', 'forecast', 'conditions', 'hourly', '7day', 'resources', 'beach', 'trip'].includes(hashTab) ? hashTab as TabId : null;
   const defaultTab: TabId = validHashTab || (hasAlerts ? 'alerts' : 'forecast');
   const [active, setActive] = useState<TabId>(defaultTab);
 
   const tabs: { id: TabId; label: string; icon: string }[] = [
     ...(hasAlerts ? [{ id: 'alerts' as TabId, label: 'Alerts', icon: 'fa-exclamation-triangle' }] : []),
     { id: 'forecast', label: 'Marine Forecast', icon: 'fa-anchor' },
+    { id: 'trip', label: 'Plan Your Trip', icon: 'fa-route' },
     { id: 'wind', label: 'Wind & Radar', icon: 'fa-wind' },
     { id: 'conditions', label: 'Offshore Conditions', icon: 'fa-water' },
     { id: 'vessels', label: 'Vessel Traffic', icon: 'fa-ship' },
@@ -479,6 +481,18 @@ export default function MarineTabs({
               <div style={{ textAlign: 'center', fontSize: '0.82rem', color: 'var(--gray-400)', maxWidth: '600px', margin: '2rem auto 0' }}>
                 <p>Data provided by the <a href="https://www.weather.gov" target="_blank" rel="noopener" style={{ color: 'var(--blue-accent)' }}>National Weather Service</a> and <a href="https://www.ndbc.noaa.gov" target="_blank" rel="noopener" style={{ color: 'var(--blue-accent)' }}>NOAA National Data Buoy Center</a>. Forecasts update approximately every 30 minutes. Always check official sources before heading out on the water.</p>
               </div>
+            </div>
+          )}
+
+          {/* TRIP PLANNER */}
+          {active === 'trip' && (
+            <div>
+              <div className="section-header center">
+                <div className="section-label">Trip Planning</div>
+                <h2 className="section-title"><i className="fas fa-route" style={{ color: 'var(--gold)', marginRight: '0.5rem' }}></i> Plan Your Boat Trip</h2>
+                <p className="section-desc">Enter your trip details and we&apos;ll cross-reference weather forecasts, marine conditions, alerts, and vessel traffic for your specific trip window.</p>
+              </div>
+              <TripPlannerTab />
             </div>
           )}
 

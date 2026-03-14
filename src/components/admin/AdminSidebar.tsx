@@ -11,21 +11,28 @@ interface AdminSidebarProps {
 
 type SidebarContext = 'lpfa' | 'rotr';
 
-const lpfaItems = [
+const lpfaMainItems = [
   { href: '/admin', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
+  { href: '/admin/leads', label: 'Inbox', icon: 'fas fa-inbox' },
+  { href: '/admin/analytics', label: 'Analytics', icon: 'fas fa-chart-line' },
+];
+
+const lpfaContentItems = [
   { href: '/admin/news', label: 'News', icon: 'fas fa-newspaper' },
   { href: '/admin/events', label: 'Events', icon: 'fas fa-calendar-alt' },
   { href: '/admin/tours', label: 'Tours', icon: 'fas fa-ship' },
-  { href: '/admin/documents', label: 'Meeting Minutes', icon: 'fas fa-file-pdf' },
   { href: '/admin/photos', label: 'Photos', icon: 'fas fa-images' },
+  { href: '/admin/documents', label: 'Meeting Minutes', icon: 'fas fa-file-pdf' },
+  { href: '/admin/vessels', label: 'Vessel Traffic', icon: 'fas fa-anchor' },
+  { href: '/admin/fishing', label: 'Fishing Catches', icon: 'fas fa-fish' },
+];
+
+const lpfaOrgItems = [
   { href: '/admin/staff', label: 'Staff', icon: 'fas fa-id-badge' },
   { href: '/admin/board', label: 'Board', icon: 'fas fa-users' },
-  { href: '/admin/vessels', label: 'Vessel Traffic', icon: 'fas fa-anchor' },
   { href: '/admin/rfps', label: 'RFPs & Bids', icon: 'fas fa-file-contract' },
-  { href: '/admin/files', label: 'Files', icon: 'fas fa-folder-open' },
   { href: '/admin/purchase-orders', label: 'Purchase Orders', icon: 'fas fa-file-invoice' },
-  { href: '/admin/analytics', label: 'Analytics', icon: 'fas fa-chart-line' },
-  { href: '/admin/leads', label: 'Inbox', icon: 'fas fa-inbox' },
+  { href: '/admin/files', label: 'Files', icon: 'fas fa-folder-open' },
 ];
 
 const rotrItems = [
@@ -45,6 +52,10 @@ const superAdminItems = [
   { href: '/admin/users', label: 'Admin Users', icon: 'fas fa-users-cog' },
 ];
 
+function getInitials(name: string) {
+  return name.split(' ').map(n => n.charAt(0)).join('').toUpperCase().slice(0, 2);
+}
+
 export default function AdminSidebar({ user }: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -52,11 +63,9 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
   const [isDark, setIsDark] = useState(false);
   const [inboxCounts, setInboxCounts] = useState<{ lpfa: number; rotr: number }>({ lpfa: 0, rotr: 0 });
 
-  // Determine context based on current path
   const isOnRotr = pathname.startsWith('/admin/rotr');
   const [context, setContext] = useState<SidebarContext>(isOnRotr ? 'rotr' : 'lpfa');
 
-  // Sync context when navigating
   useEffect(() => {
     if (pathname.startsWith('/admin/rotr')) {
       setContext('rotr');
@@ -71,12 +80,10 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
     setIsDark(document.documentElement.getAttribute('data-theme') === 'dark');
   }, []);
 
-  // Fetch unread inbox counts
   useEffect(() => {
     fetch('/api/admin/inbox-counts')
       .then(res => res.json())
       .then(data => {
-        // Filter out ROTR conversations marked as read locally
         let rotrCount = data.rotr ?? 0;
         try {
           const stored = localStorage.getItem('rotr-read-convos');
@@ -110,22 +117,39 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
 
   const switchContext = (ctx: SidebarContext) => {
     setContext(ctx);
-    if (ctx === 'rotr') {
-      router.push('/admin/rotr');
-    } else {
-      router.push('/admin');
-    }
+    router.push(ctx === 'rotr' ? '/admin/rotr' : '/admin');
   };
 
-  const navItems = context === 'rotr' ? rotrItems : [
-    ...lpfaItems,
-    ...(user.role === 'super_admin' ? superAdminItems : []),
-  ];
+  function isItemActive(item: { href: string; label: string }) {
+    if (item.href.includes('?tab=')) {
+      const itemTab = item.href.split('?tab=')[1];
+      return pathname === '/admin/rotr' && searchParams.get('tab') === itemTab;
+    }
+    if (item.href === '/admin/rotr') {
+      return pathname === '/admin/rotr' && !searchParams.get('tab');
+    }
+    return pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
+  }
+
+  function renderNavItem(item: { href: string; label: string; icon: string }) {
+    const active = isItemActive(item);
+    const badgeCount = item.label === 'Inbox' && context === 'lpfa' ? inboxCounts.lpfa : 0;
+
+    return (
+      <Link key={item.href} href={item.href} className={`admin-nav-item ${active ? 'active' : ''}`}>
+        <i className={item.icon}></i>
+        <span>{item.label}</span>
+        {badgeCount > 0 && <span className="admin-inbox-badge">{badgeCount}</span>}
+      </Link>
+    );
+  }
 
   const viewSiteUrl = context === 'rotr' ? 'https://www.rockinontheriver.com' : '/';
+  const isSuperAdmin = user.role === 'super_admin';
 
   return (
     <aside className="admin-sidebar">
+      {/* Brand */}
       <div className="admin-sidebar-brand">
         <Link href={context === 'rotr' ? '/admin/rotr' : '/admin'}>
           <img
@@ -138,80 +162,72 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
 
       {/* Context Switcher */}
       <div className="admin-context-switcher">
-        <button
-          className={`admin-context-btn ${context === 'lpfa' ? 'active' : ''}`}
-          onClick={() => switchContext('lpfa')}
-        >
-          LPFA
+        <button className={`admin-context-btn ${context === 'lpfa' ? 'active' : ''}`} onClick={() => switchContext('lpfa')}>
+          <i className="fas fa-anchor" style={{ fontSize: '0.65rem', marginRight: '0.3rem' }}></i> LPFA
         </button>
-        <button
-          className={`admin-context-btn ${context === 'rotr' ? 'active' : ''}`}
-          onClick={() => switchContext('rotr')}
-        >
-          ROTR
+        <button className={`admin-context-btn ${context === 'rotr' ? 'active' : ''}`} onClick={() => switchContext('rotr')}>
+          <i className="fas fa-music" style={{ fontSize: '0.65rem', marginRight: '0.3rem' }}></i> ROTR
         </button>
       </div>
 
+      {/* Navigation */}
       <nav className="admin-sidebar-nav">
+        {context === 'lpfa' ? (
+          <>
+            {/* Main */}
+            {lpfaMainItems.map(renderNavItem)}
+
+            {/* Content section */}
+            <div className="admin-nav-section-label">Content</div>
+            {lpfaContentItems.map(renderNavItem)}
+
+            {/* Organization section */}
+            <div className="admin-nav-section-label">Organization</div>
+            {lpfaOrgItems.map(renderNavItem)}
+
+            {/* Super Admin section */}
+            {isSuperAdmin && (
+              <>
+                <div className="admin-nav-section-label">System</div>
+                {superAdminItems.map(renderNavItem)}
+              </>
+            )}
+          </>
+        ) : (
+          rotrItems.map(renderNavItem)
+        )}
+
+        {/* View Site */}
+        <a href={viewSiteUrl} target="_blank" rel="noopener noreferrer" className="admin-nav-item admin-nav-view-site">
+          <i className="fas fa-external-link-alt"></i>
+          <span>View Site</span>
+        </a>
+
+        {/* Theme Toggle */}
         <button onClick={toggleTheme} className="admin-nav-item admin-theme-btn" title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}>
           <i className={isDark ? 'fas fa-sun' : 'fas fa-moon'}></i>
           <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
         </button>
-        {navItems.map((item) => {
-          let isActive: boolean;
-          if (item.href.includes('?tab=')) {
-            // ROTR sub-nav: match by tab search param
-            const itemTab = item.href.split('?tab=')[1];
-            isActive = pathname === '/admin/rotr' && searchParams.get('tab') === itemTab;
-          } else if (item.href === '/admin/rotr') {
-            // ROTR overview: active when no tab param
-            isActive = pathname === '/admin/rotr' && !searchParams.get('tab');
-          } else {
-            // Default: existing logic
-            isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
-          }
-          // Determine inbox badge count
-          const badgeCount = item.label === 'Inbox' && context === 'lpfa'
-            ? inboxCounts.lpfa
-            : 0;
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`admin-nav-item ${isActive ? 'active' : ''}`}
-            >
-              <i className={item.icon}></i>
-              <span>{item.label}</span>
-              {badgeCount > 0 && (
-                <span className="admin-inbox-badge">{badgeCount}</span>
-              )}
-            </Link>
-          );
-        })}
-        <a
-          href={viewSiteUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="admin-nav-item admin-nav-view-site"
-        >
-          <i className="fas fa-external-link-alt"></i>
-          <span>View Site</span>
-        </a>
       </nav>
 
+      {/* Footer */}
       <div className="admin-sidebar-footer">
         <div className="admin-powered-by">
           <img src="/images/pulse-logo-white.png" alt="Pulse" className="admin-powered-logo" />
           <span className="admin-powered-sub">by Crow&apos;s Nest Digital Media</span>
         </div>
-        <div className="admin-user-info">
-          <span className="admin-user-name">{user.display_name}</span>
-          <span className="admin-user-role">{user.role === 'super_admin' ? 'Super Admin' : 'Admin'}</span>
+        <div className="admin-user-card">
+          <div className="admin-user-avatar" style={{ background: isSuperAdmin ? '#dbeafe' : '#f1f5f9', color: isSuperAdmin ? '#1e40af' : '#64748b' }}>
+            {getInitials(user.display_name)}
+          </div>
+          <div className="admin-user-info">
+            <span className="admin-user-name">{user.display_name}</span>
+            <span className="admin-user-role">{isSuperAdmin ? 'Super Admin' : 'Admin'}</span>
+          </div>
+          <button onClick={handleLogout} className="admin-logout-btn" title="Logout">
+            <i className="fas fa-sign-out-alt"></i>
+          </button>
         </div>
-        <button onClick={handleLogout} className="admin-logout-btn">
-          <i className="fas fa-sign-out-alt"></i> Logout
-        </button>
       </div>
     </aside>
   );

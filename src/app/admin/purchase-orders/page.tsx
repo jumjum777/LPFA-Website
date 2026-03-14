@@ -513,16 +513,17 @@ export default function PurchaseOrdersPage() {
     const sc = STATUS_COLORS[detailPO.status] || STATUS_COLORS.draft;
     return (
       <div className="admin-page">
-        <button className="admin-btn admin-btn-secondary mb-4" onClick={() => setDetailId(null)}>
-          <i className="fas fa-arrow-left"></i> Back to Orders
+        <button className="text-sm text-slate-400 dark:text-slate-500 hover:text-blue bg-transparent border-none cursor-pointer p-0" onClick={() => setDetailId(null)}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.75rem' }}>
+          <i className="fas fa-arrow-left" style={{ fontSize: '0.7rem' }}></i> Back to Orders
         </button>
 
         {/* Header card */}
-        <div className="admin-card mb-5">
+        <div className="admin-card" style={{ marginBottom: '1.25rem' }}>
           <div className="flex justify-between items-start flex-wrap gap-4">
             <div>
               <div className="flex items-center gap-3 mb-1">
-                <h2 className="!m-0">{detailPO.po_number}</h2>
+                <h2 className="!m-0"><i className="fas fa-file-invoice mr-2 text-blue"></i>{detailPO.po_number}</h2>
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: sc.bg, color: sc.color }}>
                   {STATUS_LABELS[detailPO.status]}
                 </span>
@@ -651,7 +652,7 @@ export default function PurchaseOrdersPage() {
         </div>
 
         {/* Line Items */}
-        <div className="admin-card mb-5">
+        <div className="admin-card" style={{ marginBottom: '1.25rem' }}>
           <h4 className="mb-3"><i className="fas fa-list mr-1.5"></i> Line Items</h4>
           <div className="admin-table-wrap">
             <table className="admin-table">
@@ -931,7 +932,7 @@ export default function PurchaseOrdersPage() {
       </div>
 
       {/* Stats */}
-      <div className="rotr-stats-row mb-5">
+      <div className="rotr-stats-row" style={{ marginBottom: '2rem' }}>
         <div className="rotr-stat-card">
           <div className="rotr-stat-icon bg-amber-50/10 text-amber-800"><i className="fas fa-clock"></i></div>
           <div className="rotr-stat-value">{counts.pending_approval}</div>
@@ -965,7 +966,7 @@ export default function PurchaseOrdersPage() {
       </div>
 
       {/* Search */}
-      <div className="my-4 max-w-md relative">
+      <div className="max-w-md relative" style={{ marginTop: '1rem', marginBottom: '2rem' }}>
         <i className="fas fa-search absolute top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm pointer-events-none" style={{ left: '0.85rem' }}></i>
         <input type="text"
           className="w-full py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 focus:outline-none focus:border-blue focus:ring-2 focus:ring-blue/10 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-colors"
