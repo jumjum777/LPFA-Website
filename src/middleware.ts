@@ -57,6 +57,16 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Protect /account routes (any authenticated user)
+  if (request.nextUrl.pathname.startsWith('/account')) {
+    if (!user) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/login';
+      url.searchParams.set('redirect', request.nextUrl.pathname);
+      return NextResponse.redirect(url);
+    }
+  }
+
   // Redirect logged-in admins away from login page
   if (request.nextUrl.pathname === '/admin/login' && user) {
     const { data: adminUser } = await adminClient
@@ -76,5 +86,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/account/:path*'],
 };

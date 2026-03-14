@@ -1,5 +1,6 @@
 import HeaderClient from './HeaderClient';
 import ThemeToggle from '../ui/ThemeToggle';
+import NavAuthButton from '../auth/NavAuthButton';
 import MarineAlertBanner from './MarineAlertBanner';
 import VesselBanner from './VesselBanner';
 import Link from 'next/link';
@@ -39,6 +40,7 @@ export default function Header() {
             <ul className="nav-menu" id="nav-menu" role="menubar">
               <li role="none"><Link href="/" role="menuitem">Home</Link></li>
               <li role="none"><Link href="/marine" role="menuitem">Marine &amp; Alerts</Link></li>
+              <li role="none"><Link href="/fishing" role="menuitem">Fishing</Link></li>
               <li role="none"><Link href="/news" role="menuitem">News</Link></li>
               <li role="none"><Link href="/live-cams" role="menuitem">Live Cams</Link></li>
               <li role="none"><Link href="/donate" role="menuitem">Stage Project</Link></li>
@@ -70,6 +72,7 @@ export default function Header() {
                   <li role="none"><Link href="/facilities" role="menuitem">Facilities</Link></li>
                 </ul>
               </li>
+              <NavAuthButton />
               <li role="none"><Link href="/contact" className="nav-cta" role="menuitem">Contact Us</Link></li>
             </ul>
             <ThemeToggle />

@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import type { TourSchedule } from '@/lib/types';
 import RichTextEditor from '@/components/admin/RichTextEditor';
+
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const tourCategories = ['History Excursion', 'Lighthouse Tour', 'Lighthouse Dinner', 'River Nature', 'Sunset Cruise', "Sip N' Sway", 'Water Taxi'];
 
@@ -67,6 +70,8 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 const MONTH_ORDER: Record<string, number> = Object.fromEntries(MONTHS.map((m, i) => [m, i + 1]));
 const MONTH_ABBR_TO_IDX: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 function slugify(text: string) {
   return text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').trim();
 }
@@ -119,6 +124,8 @@ function parseDateString(display: string, year: number): { date: string; time: s
     time: `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`,
   };
 }
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function TourEditorPage() {
   const router = useRouter();
@@ -254,11 +261,9 @@ export default function TourEditorPage() {
     } else {
       const { error } = await supabase.from('tours').update(tourData).eq('id', id);
       if (error) { alert('Error: ' + error.message); setSaving(false); return; }
-      // Delete existing manual schedules to re-insert
       await supabase.from('tour_schedules').delete().eq('tour_id', id).eq('source', 'manual');
     }
 
-    // Insert schedules with formatted dates from monthDates
     const manualSchedules = schedules
       .map((s, i) => ({ ...s, dates: (monthDates[i] || []).filter(e => e.date).map(e => formatDateEntry(e.date, e.time)).filter(Boolean) }))
       .filter(s => s.source === 'manual' && s.month);
@@ -276,44 +281,68 @@ export default function TourEditorPage() {
     router.push('/admin/tours');
   }
 
-  if (loading) return <div className="admin-page"><p>Loading...</p></div>;
+  // ─── Loading ──────────────────────────────────────────────────────────
+
+  if (loading) {
+    return (
+      <div className="admin-page">
+        <div className="admin-page-header"><h1>Edit Tour</h1></div>
+        <div className="admin-card p-12 text-center">
+          <i className="fas fa-spinner fa-spin text-2xl text-blue"></i>
+          <p className="mt-3 text-slate-500 dark:text-slate-400">Loading tour...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Render ───────────────────────────────────────────────────────────
 
   return (
     <div className="admin-page">
-      <div className="admin-page-header">
-        <h1>{isNew ? 'New Tour' : 'Edit Tour'}</h1>
+      {/* Header */}
+      <div className="admin-page-header flex justify-between items-start flex-wrap gap-4">
+        <div>
+          <Link href="/admin/tours" className="text-sm text-slate-400 dark:text-slate-500 hover:text-blue" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.5rem' }}>
+            <i className="fas fa-arrow-left" style={{ fontSize: '0.7rem' }}></i> Back to Tours
+          </Link>
+          <h1><i className="fas fa-ship mr-2 text-blue"></i> {isNew ? 'New Tour' : 'Edit Tour'}</h1>
+        </div>
         <div className="admin-header-actions">
           <button onClick={() => router.push('/admin/tours')} className="admin-btn admin-btn-secondary">Cancel</button>
           <button onClick={handleSave} className="admin-btn admin-btn-primary" disabled={saving}>
-            {saving ? <><i className="fas fa-spinner fa-spin"></i> Saving...</> : 'Save Tour'}
+            {saving ? <><i className="fas fa-spinner fa-spin"></i> Saving...</> : <><i className="fas fa-save"></i> Save Tour</>}
           </button>
         </div>
       </div>
 
       <div className="admin-form-layout">
+        {/* Main Form */}
         <div className="admin-form-main">
           <div className="admin-card">
+            <h3 className="mb-4 text-base">
+              <i className="fas fa-info-circle mr-1.5 text-blue"></i> Tour Details
+            </h3>
             <div className="admin-form-group">
               <label>Tour Name</label>
-              <input type="text" value={form.name} onChange={e => { update('name', e.target.value); if (isNew) update('slug', slugify(e.target.value)); }} />
+              <input type="text" value={form.name} onChange={e => { update('name', e.target.value); if (isNew) update('slug', slugify(e.target.value)); }} placeholder="e.g. History Excursion" />
             </div>
             <div className="admin-form-group">
               <label>Description</label>
               <RichTextEditor content={form.description} onChange={(val) => update('description', val)} />
             </div>
-            <div className="admin-form-group">
-              <label>Price</label>
-              <input type="text" value={form.price} onChange={e => update('price', e.target.value)} placeholder="$25" />
-            </div>
             <div className="admin-form-row">
+              <div className="admin-form-group">
+                <label>Price</label>
+                <input type="text" value={form.price} onChange={e => update('price', e.target.value)} placeholder="$25" />
+              </div>
               <div className="admin-form-group">
                 <label>Duration</label>
                 <input type="text" value={form.duration || ''} onChange={e => update('duration', e.target.value)} placeholder="2 hours" />
               </div>
-              <div className="admin-form-group">
-                <label>Departure Location</label>
-                <input type="text" value={form.departure_location || ''} onChange={e => update('departure_location', e.target.value)} />
-              </div>
+            </div>
+            <div className="admin-form-group">
+              <label>Departure Location</label>
+              <input type="text" value={form.departure_location || ''} onChange={e => update('departure_location', e.target.value)} placeholder="Alliance Marine at Port Lorain Dock A" />
             </div>
             <div className="admin-form-group">
               <label>Tour Policy</label>
@@ -323,13 +352,15 @@ export default function TourEditorPage() {
 
           {/* Schedule Section */}
           <div className="admin-card" style={{ marginTop: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3>Schedule</h3>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button onClick={addSeasonMonths} className="admin-btn admin-btn-secondary" type="button">
+            <div className="flex justify-between items-center flex-wrap gap-3 mb-4">
+              <h3 className="!m-0 text-base">
+                <i className="fas fa-calendar-alt mr-1.5 text-blue"></i> Schedule
+              </h3>
+              <div className="flex gap-2">
+                <button onClick={addSeasonMonths} className="admin-btn admin-btn-secondary" type="button" style={{ fontSize: '0.85rem' }}>
                   <i className="fas fa-sun"></i> Add Season
                 </button>
-                <button onClick={addScheduleMonth} className="admin-btn admin-btn-secondary" type="button">
+                <button onClick={addScheduleMonth} className="admin-btn admin-btn-secondary" type="button" style={{ fontSize: '0.85rem' }}>
                   <i className="fas fa-plus"></i> Add Month
                 </button>
               </div>
@@ -341,7 +372,10 @@ export default function TourEditorPage() {
             </div>
 
             {schedules.length === 0 ? (
-              <p style={{ color: '#64748B', fontSize: '0.9rem' }}>No schedule entries yet. Use &ldquo;Add Season&rdquo; to quickly add June&ndash;September, or &ldquo;Add Month&rdquo; for individual months.</p>
+              <div className="text-center p-6" style={{ color: '#94a3b8', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #e2e8f0' }}>
+                <i className="fas fa-calendar-plus" style={{ fontSize: '1.5rem', display: 'block', marginBottom: '0.5rem' }}></i>
+                <p className="m-0" style={{ fontSize: '0.88rem' }}>No schedule entries yet. Use &ldquo;Add Season&rdquo; to quickly add June&ndash;September, or &ldquo;Add Month&rdquo; for individual months.</p>
+              </div>
             ) : (
               schedules.map((sched, i) => (
                 <div key={i} className="admin-schedule-row">
@@ -437,9 +471,12 @@ export default function TourEditorPage() {
           </div>
         </div>
 
+        {/* Sidebar */}
         <div className="admin-form-sidebar">
           <div className="admin-card">
-            <h3>Settings</h3>
+            <h3 className="mb-4 text-base">
+              <i className="fas fa-cog mr-1.5 text-slate-400"></i> Settings
+            </h3>
             <div className="admin-form-group">
               <label>Category</label>
               <select value={form.section} onChange={e => handleCategoryChange(e.target.value)}>

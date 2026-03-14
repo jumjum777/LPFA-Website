@@ -14,17 +14,32 @@ export default function HeaderClient({ children }: { children: React.ReactNode }
 
     const nav = header.querySelector('#main-nav');
     let lastY = window.scrollY;
+    let lastDirection = 0; // 1 = down, -1 = up
+    let scrollAccum = 0;
     let ticking = false;
+    const THRESHOLD = 10; // px of scroll before toggling
 
     const onScroll = () => {
       if (!ticking) {
         requestAnimationFrame(() => {
           const currentY = window.scrollY;
+          const delta = currentY - lastY;
           if (nav) nav.classList.toggle('scrolled', currentY > 40);
+
           if (currentY > 200) {
-            header.classList.toggle('hidden', currentY > lastY);
+            const direction = delta > 0 ? 1 : -1;
+            if (direction === lastDirection) {
+              scrollAccum += Math.abs(delta);
+            } else {
+              scrollAccum = Math.abs(delta);
+              lastDirection = direction;
+            }
+            if (scrollAccum > THRESHOLD) {
+              header.classList.toggle('hidden', direction > 0);
+            }
           } else {
             header.classList.remove('hidden');
+            scrollAccum = 0;
           }
           lastY = currentY;
           ticking = false;
@@ -133,9 +148,15 @@ export default function HeaderClient({ children }: { children: React.ReactNode }
       '/public-records': '/about',
       '/didyouknow': '/about',
       '/marine': '/marine',
+      '/fishing': '/fishing',
       '/live-cams': '/live-cams',
       '/donate': '/donate',
       '/contact': '/contact',
+      '/login': '/login',
+      '/signup': '/signup',
+      '/account': '/account',
+      '/forgot-password': '/forgot-password',
+      '/reset-password': '/reset-password',
     };
 
     const activeBase = pathMap[pathname] || pathname;
