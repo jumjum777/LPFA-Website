@@ -23,6 +23,7 @@ const lpfaItems = [
   { href: '/admin/vessels', label: 'Vessel Traffic', icon: 'fas fa-anchor' },
   { href: '/admin/rfps', label: 'RFPs & Bids', icon: 'fas fa-file-contract' },
   { href: '/admin/files', label: 'Files', icon: 'fas fa-folder-open' },
+  { href: '/admin/purchase-orders', label: 'Purchase Orders', icon: 'fas fa-file-invoice' },
   { href: '/admin/analytics', label: 'Analytics', icon: 'fas fa-chart-line' },
   { href: '/admin/leads', label: 'Inbox', icon: 'fas fa-inbox' },
 ];
@@ -34,7 +35,8 @@ const rotrItems = [
   { href: '/admin/rotr?tab=customers', label: 'Customers', icon: 'fas fa-users' },
   { href: '/admin/rotr?tab=inbox', label: 'Inbox', icon: 'fas fa-inbox' },
   { href: '/admin/rotr?tab=finances', label: 'Finances', icon: 'fas fa-file-invoice-dollar' },
-  { href: '/admin/rotr?tab=staff', label: 'Staff', icon: 'fas fa-hard-hat' },
+  { href: '/admin/rotr?tab=staff', label: 'Staff & Contractors', icon: 'fas fa-hard-hat' },
+  { href: '/admin/purchase-orders', label: 'Purchase Orders', icon: 'fas fa-file-invoice' },
   { href: '/admin/analytics?profile=rotr', label: 'Analytics', icon: 'fas fa-chart-bar' },
   { href: '/admin/rotr?tab=files', label: 'Files', icon: 'fas fa-folder-open' },
 ];
