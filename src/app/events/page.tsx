@@ -106,7 +106,7 @@ export default async function EventsPage() {
             <p className="section-desc">A free water taxi service available during Rockin&apos; on the River concerts and other festivals and events. A convenient way to travel between waterfront destinations.</p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', alignItems: 'start', marginBottom: '3rem' }} data-animate="fade-up">
+          <div className="water-taxi-grid" data-animate="fade-up">
             <div>
               <h3 style={{ marginBottom: '1rem' }}>Route &amp; Stops</h3>
               <p style={{ marginBottom: '1.5rem', fontSize: '0.92rem' }}>The water taxi follows a fixed route connecting three main waterfront locations, running continuously throughout the evening on event nights.</p>
@@ -233,7 +233,7 @@ export default async function EventsPage() {
                   <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', margin: 0 }}>Everything you need to know about booking</p>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
+              <div className="charter-pricing-grid">
                 <div style={{ background: 'var(--gray-50)', borderRadius: 'var(--radius)', padding: '1.25rem', textAlign: 'center' }}>
                   <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.5rem', color: 'var(--navy)' }}>$300</div>
                   <div style={{ fontSize: '0.78rem', color: 'var(--gray-500)', marginTop: '0.25rem' }}>for 2 hours</div>

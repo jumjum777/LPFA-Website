@@ -371,7 +371,7 @@ export default function AdminPhotosPage() {
       {/* Category Filter Tabs */}
       {photos.length > 0 && (
         <>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1rem' }}>
+          <div className="admin-photo-filter-tabs" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1rem' }}>
             <button onClick={() => { setFilterCategory('All'); setSearch(''); }}
               className={`admin-year-tab${filterCategory === 'All' ? ' active' : ''}`}>
               All
@@ -444,7 +444,7 @@ export default function AdminPhotosPage() {
             <div className="photo-modal-body">
               <h3 className="photo-modal-title">{selectedPhoto.title}</h3>
               {selectedPhoto.description && (
-                <p style={{ fontSize: '0.88rem', color: '#64748B', marginBottom: '0.75rem' }}>
+                <p style={{ fontSize: '0.88rem', color: 'var(--gray-500)', marginBottom: '0.75rem' }}>
                   {selectedPhoto.description}
                 </p>
               )}

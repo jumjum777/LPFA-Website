@@ -17,15 +17,6 @@ const STATUS_LABELS: Record<string, string> = {
   archived: 'Archived',
 };
 
-const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
-  draft: { bg: '#f1f5f9', color: '#64748b' },
-  pending_approval: { bg: '#fef3c7', color: '#92400e' },
-  approved: { bg: '#dcfce7', color: '#166534' },
-  denied: { bg: '#fee2e2', color: '#DC2626' },
-  completed: { bg: '#dbeafe', color: '#1e40af' },
-  archived: { bg: '#f1f5f9', color: '#94a3b8' },
-};
-
 const CATEGORIES = [
   { value: 'supplies', label: 'Supplies' },
   { value: 'equipment', label: 'Equipment' },
@@ -529,7 +520,6 @@ export default function PurchaseOrdersPage() {
   const detailPO = detailId ? orders.find(o => o.id === detailId) : null;
 
   if (detailPO) {
-    const sc = STATUS_COLORS[detailPO.status] || STATUS_COLORS.draft;
     return (
       <div className="admin-page">
         <button className="text-sm text-slate-400 dark:text-slate-500 hover:text-blue bg-transparent border-none cursor-pointer p-0" onClick={() => setDetailId(null)}
@@ -543,7 +533,7 @@ export default function PurchaseOrdersPage() {
             <div>
               <div className="flex items-center gap-3 mb-1">
                 <h2 className="!m-0"><i className="fas fa-file-invoice mr-2 text-blue"></i>{detailPO.po_number}</h2>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: sc.bg, color: sc.color }}>
+                <span className={`admin-po-status-pill status-${detailPO.status}`}>
                   {STATUS_LABELS[detailPO.status]}
                 </span>
                 <span className="rounded-full text-white uppercase" style={{ padding: '0.2rem 0.6rem', fontSize: '0.7rem', fontWeight: 600, background: detailPO.context === 'rotr' ? '#0B1F3A' : '#1B8BEB', letterSpacing: '0.03em' }}>
@@ -1038,7 +1028,6 @@ export default function PurchaseOrdersPage() {
             </thead>
             <tbody>
               {filtered.map(po => {
-                const sc = STATUS_COLORS[po.status] || STATUS_COLORS.draft;
                 const pc = PRIORITY_COLORS[po.priority] || PRIORITY_COLORS.normal;
                 return (
                   <tr key={po.id} className={po.status === 'pending_approval' ? 'bg-amber-50 dark:bg-amber-900/10' : ''}>
@@ -1059,7 +1048,7 @@ export default function PurchaseOrdersPage() {
                       </span>
                     </td>
                     <td>
-                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap" style={{ background: sc.bg, color: sc.color }}>
+                      <span className={`admin-po-status-pill status-${po.status}`}>
                         {STATUS_LABELS[po.status]}
                       </span>
                     </td>

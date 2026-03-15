@@ -255,7 +255,7 @@ export default function AdminToursPage() {
                   <tr key={tour.id} style={dimmed ? { opacity: 0.55 } : undefined}>
                     <td>
                       <div className="flex items-center gap-3">
-                        <div style={{ width: '44px', height: '44px', borderRadius: '8px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#eff6ff', color: '#1B8BEB', fontSize: '1rem' }}>
+                        <div className="admin-tour-icon">
                           <i className="fas fa-anchor"></i>
                         </div>
                         <div style={{ minWidth: 0 }}>

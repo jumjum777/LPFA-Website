@@ -224,7 +224,7 @@ export default function AdminEventsPage() {
 
       {/* Sync error banner */}
       {syncError && (
-        <div style={{ marginBottom: '1rem', background: '#7f1d1d', color: '#fecaca', border: '1px solid #991b1b', borderRadius: '0.5rem', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div className="admin-sync-error-banner">
           <i className="fas fa-exclamation-triangle"></i>
           <span>{syncError}</span>
           <button onClick={() => setSyncError(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: '1rem' }}>
@@ -376,16 +376,16 @@ export default function AdminEventsPage() {
                                       style={{ width: '44px', height: '44px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }}
                                     />
                                   ) : (
-                                    <div style={{ width: '44px', height: '44px', borderRadius: '8px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9', color: '#94a3b8', fontSize: '0.9rem' }}>
+                                    <div className="admin-event-placeholder" style={{ width: '44px', height: '44px', borderRadius: '8px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9', color: '#94a3b8', fontSize: '0.9rem' }}>
                                       <i className="fas fa-calendar-day"></i>
                                     </div>
                                   )}
                                   <div style={{ minWidth: 0 }}>
-                                    <Link href={`/admin/events/${event.id}`} className="font-medium" style={dimmed ? { color: '#94a3b8', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '250px' } : { display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '250px' }}>
+                                    <Link href={`/admin/events/${event.id}`} className="font-medium" style={dimmed ? { color: '#94a3b8', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '300px' } : { display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '300px' }}>
                                       {title}
                                     </Link>
                                     {event.location && (
-                                      <span className="text-xs text-slate-400 dark:text-slate-500" style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '250px' }}>
+                                      <span className="text-xs text-slate-400 dark:text-slate-500" style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '300px' }}>
                                         <i className="fas fa-map-marker-alt" style={{ marginRight: '0.25rem', fontSize: '0.65rem' }}></i>
                                         {event.location}
                                       </span>

@@ -350,11 +350,7 @@ export default function AdminDocumentsPage() {
       ) : (
         dates.map(date => (
           <div key={date} style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{
-              fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.75rem',
-              paddingBottom: '0.5rem', borderBottom: '1px solid #e2e8f0',
-              display: 'flex', alignItems: 'center', gap: '0.5rem',
-            }}>
+            <h3 className="admin-doc-date-heading">
               <i className="fas fa-calendar-day text-blue" style={{ fontSize: '0.85rem' }}></i>
               {new Date(date + 'T12:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
               <span style={{ fontSize: '0.75rem', fontWeight: 400, color: '#94a3b8', marginLeft: '0.25rem' }}>
@@ -396,7 +392,7 @@ export default function AdminDocumentsPage() {
                           {typeLabel(doc.document_type)}
                         </span>
                       </td>
-                      <td style={{ whiteSpace: 'nowrap', fontSize: '0.82rem', color: '#64748B' }}>
+                      <td style={{ whiteSpace: 'nowrap', fontSize: '0.82rem', color: 'var(--gray-500)' }}>
                         {formatFileSize(doc.file_size ?? undefined)}
                       </td>
                       <td>

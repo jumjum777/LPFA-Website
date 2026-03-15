@@ -249,12 +249,7 @@ export default function AdminVesselsPage() {
                   <tr key={vessel.id} style={dimmed ? { opacity: 0.55 } : undefined}>
                     <td>
                       <div className="flex items-center gap-3">
-                        <div style={{
-                          width: '44px', height: '44px', borderRadius: '10px', flexShrink: 0,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          background: vessel.status === 'in_port' ? '#dcfce7' : vessel.status === 'en_route' ? '#dbeafe' : '#f1f5f9',
-                          color: vessel.status === 'in_port' ? '#16a34a' : vessel.status === 'en_route' ? '#1B8BEB' : '#94a3b8',
-                        }}>
+                        <div className={`admin-vessel-icon ${vessel.status === 'in_port' ? 'in-port' : vessel.status === 'en_route' ? 'en-route' : 'default'}`}>
                           <i className={`fas ${getStatusIcon(vessel.status)}`} style={{ fontSize: '1.1rem' }}></i>
                         </div>
                         <div style={{ minWidth: 0 }}>

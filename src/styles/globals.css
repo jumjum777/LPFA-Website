@@ -15021,3 +15021,328 @@ a.lead-detail-value:hover { text-decoration: underline; }
     height: 34px;
   }
 }
+
+/* ---------------------------------------------------------
+   WATER TAXI & CHARTER PRICING GRIDS
+   --------------------------------------------------------- */
+.water-taxi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: start;
+  margin-bottom: 3rem;
+}
+
+.charter-pricing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .water-taxi-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .charter-pricing-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   ADMIN — Mobile Spacing & Dark Mode Fixes
+   ========================================================= */
+
+/* 1. Dashboard two-column grid → stacks on mobile */
+.admin-dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .admin-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 2. Sync error banner */
+.admin-sync-error-banner {
+  margin-bottom: 1rem;
+  background: #7f1d1d;
+  color: #fecaca;
+  border: 1px solid #991b1b;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+[data-theme="dark"] .admin-sync-error-banner {
+  background: #450a0a;
+  color: #fca5a5;
+  border-color: #7f1d1d;
+}
+
+/* 3. Lead avatar backgrounds */
+.admin-lead-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.admin-lead-avatar.is-new {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.admin-lead-avatar.is-read {
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .admin-lead-avatar.is-new {
+  background: rgba(30, 64, 175, 0.25);
+  color: #93c5fd;
+}
+
+[data-theme="dark"] .admin-lead-avatar.is-read {
+  background: #1e293b;
+  color: #64748b;
+}
+
+/* 4. Tour icon background */
+.admin-tour-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eff6ff;
+  color: #1B8BEB;
+  font-size: 1rem;
+}
+
+[data-theme="dark"] .admin-tour-icon {
+  background: rgba(27, 139, 235, 0.15);
+  color: #60a5fa;
+}
+
+/* 5. Vessel status icon backgrounds */
+.admin-vessel-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-vessel-icon.in-port {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.admin-vessel-icon.en-route {
+  background: #dbeafe;
+  color: #1B8BEB;
+}
+
+.admin-vessel-icon.default {
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .admin-vessel-icon.in-port {
+  background: rgba(22, 163, 106, 0.15);
+  color: #4ade80;
+}
+
+[data-theme="dark"] .admin-vessel-icon.en-route {
+  background: rgba(27, 139, 235, 0.15);
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .admin-vessel-icon.default {
+  background: #1e293b;
+  color: #64748b;
+}
+
+/* 6. User avatar backgrounds */
+.admin-user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.admin-user-avatar.super-admin {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.admin-user-avatar.admin {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+[data-theme="dark"] .admin-user-avatar.super-admin {
+  background: rgba(30, 64, 175, 0.25);
+  color: #93c5fd;
+}
+
+[data-theme="dark"] .admin-user-avatar.admin {
+  background: #1e293b;
+  color: #64748b;
+}
+
+/* User role badge dark mode */
+.admin-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.admin-role-badge.super-admin {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.admin-role-badge.admin {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+[data-theme="dark"] .admin-role-badge.super-admin {
+  background: rgba(30, 64, 175, 0.25);
+  color: #93c5fd;
+}
+
+[data-theme="dark"] .admin-role-badge.admin {
+  background: #1e293b;
+  color: #94a3b8;
+}
+
+/* 7. Documents date heading border */
+.admin-doc-date-heading {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--gray-200);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* 8. Documents upload form row mobile wrap */
+@media (max-width: 768px) {
+  .admin-form-row {
+    flex-wrap: wrap;
+  }
+  .admin-form-row > .admin-form-group {
+    flex: 1 1 100% !important;
+  }
+}
+
+/* 9. Photos category filter tabs gap on mobile */
+@media (max-width: 640px) {
+  .admin-photo-filter-tabs {
+    gap: 0.3rem;
+  }
+  .admin-photo-filter-tabs .admin-year-tab {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.6rem;
+  }
+}
+
+/* 10. Admin table scrollbar styling for dark mode */
+.admin-table-wrap.overflow-x-auto::-webkit-scrollbar,
+.admin-table-wrap[style*="overflow"]::-webkit-scrollbar {
+  height: 8px;
+}
+
+.admin-table-wrap.overflow-x-auto::-webkit-scrollbar-track,
+.admin-table-wrap[style*="overflow"]::-webkit-scrollbar-track {
+  background: var(--gray-100);
+  border-radius: 4px;
+}
+
+.admin-table-wrap.overflow-x-auto::-webkit-scrollbar-thumb,
+.admin-table-wrap[style*="overflow"]::-webkit-scrollbar-thumb {
+  background: var(--gray-300);
+  border-radius: 4px;
+}
+
+.admin-table-wrap.overflow-x-auto::-webkit-scrollbar-thumb:hover,
+.admin-table-wrap[style*="overflow"]::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-500);
+}
+
+/* Lead status badge dark mode */
+.admin-status-pill {
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.admin-status-pill.status-new { background: #dbeafe; color: #1e40af; }
+.admin-status-pill.status-read { background: #f1f5f9; color: #64748b; }
+.admin-status-pill.status-replied { background: #dcfce7; color: #166534; }
+.admin-status-pill.status-archived { background: #f1f5f9; color: #94a3b8; }
+
+[data-theme="dark"] .admin-status-pill.status-new { background: rgba(30, 64, 175, 0.25); color: #93c5fd; }
+[data-theme="dark"] .admin-status-pill.status-read { background: #1e293b; color: #94a3b8; }
+[data-theme="dark"] .admin-status-pill.status-replied { background: rgba(22, 101, 52, 0.25); color: #86efac; }
+[data-theme="dark"] .admin-status-pill.status-archived { background: #1e293b; color: #64748b; }
+
+/* PO status badge dark mode */
+.admin-po-status-pill {
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.admin-po-status-pill.status-draft { background: #f1f5f9; color: #64748b; }
+.admin-po-status-pill.status-pending_approval { background: #fef3c7; color: #92400e; }
+.admin-po-status-pill.status-approved { background: #dcfce7; color: #166534; }
+.admin-po-status-pill.status-denied { background: #fee2e2; color: #DC2626; }
+.admin-po-status-pill.status-completed { background: #dbeafe; color: #1e40af; }
+.admin-po-status-pill.status-archived { background: #f1f5f9; color: #94a3b8; }
+
+[data-theme="dark"] .admin-po-status-pill.status-draft { background: #1e293b; color: #94a3b8; }
+[data-theme="dark"] .admin-po-status-pill.status-pending_approval { background: rgba(146, 64, 14, 0.25); color: #fcd34d; }
+[data-theme="dark"] .admin-po-status-pill.status-approved { background: rgba(22, 101, 52, 0.25); color: #86efac; }
+[data-theme="dark"] .admin-po-status-pill.status-denied { background: rgba(220, 38, 38, 0.2); color: #fca5a5; }
+[data-theme="dark"] .admin-po-status-pill.status-completed { background: rgba(30, 64, 175, 0.25); color: #93c5fd; }
+[data-theme="dark"] .admin-po-status-pill.status-archived { background: #1e293b; color: #64748b; }
+
+/* Event placeholder image dark mode */
+[data-theme="dark"] .admin-event-placeholder {
+  background: #1e293b !important;
+  color: #64748b !important;
+}

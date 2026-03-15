@@ -35,7 +35,7 @@ export default function BoatingSummaryCard() {
               <h2>Today&apos;s Boating Conditions</h2>
             </div>
           </div>
-          <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0.5rem 0 0' }}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', margin: '0.5rem 0 0' }}>
             <i className="fas fa-spinner fa-spin" style={{ marginRight: '0.4rem' }}></i>
             Generating conditions report...
           </p>
@@ -54,7 +54,7 @@ export default function BoatingSummaryCard() {
               <h2>Today&apos;s Boating Conditions</h2>
             </div>
           </div>
-          <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '0.5rem 0 0' }}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', margin: '0.5rem 0 0' }}>
             Unable to load conditions report.
           </p>
         </div>

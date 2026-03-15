@@ -45,13 +45,6 @@ const SUBJECT_ICONS: Record<string, { icon: string; color: string }> = {
   general: { icon: 'fa-envelope', color: '#64748B' },
 };
 
-const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
-  new: { bg: '#dbeafe', color: '#1e40af' },
-  read: { bg: '#f1f5f9', color: '#64748b' },
-  replied: { bg: '#dcfce7', color: '#166534' },
-  archived: { bg: '#f1f5f9', color: '#94a3b8' },
-};
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatDate(iso: string) {
@@ -254,19 +247,12 @@ export default function AdminInboxPage() {
             <tbody>
               {filtered.map(lead => {
                 const subj = SUBJECT_ICONS[lead.subject] || SUBJECT_ICONS.general;
-                const sc = STATUS_COLORS[lead.status] || STATUS_COLORS.read;
                 const isNew = lead.status === 'new';
                 return (
                   <tr key={lead.id} style={isNew ? { background: 'rgba(27, 139, 235, 0.04)' } : lead.status === 'archived' ? { opacity: 0.55 } : undefined}>
                     <td>
                       <div className="flex items-center gap-3">
-                        <div style={{
-                          width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          background: isNew ? '#dbeafe' : '#f1f5f9',
-                          color: isNew ? '#1e40af' : '#94a3b8',
-                          fontWeight: 700, fontSize: '0.85rem',
-                        }}>
+                        <div className={`admin-lead-avatar ${isNew ? 'is-new' : 'is-read'}`}>
                           {lead.first_name.charAt(0)}{lead.last_name.charAt(0)}
                         </div>
                         <div style={{ minWidth: 0 }}>
@@ -301,7 +287,7 @@ export default function AdminInboxPage() {
                       {timeAgo(lead.created_at)}
                     </td>
                     <td>
-                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap" style={{ background: sc.bg, color: sc.color }}>
+                      <span className={`admin-status-pill status-${lead.status}`}>
                         {isNew && <i className="fas fa-circle mr-1" style={{ fontSize: '0.45rem', verticalAlign: 'middle' }}></i>}
                         {lead.status.charAt(0).toUpperCase() + lead.status.slice(1)}
                       </span>

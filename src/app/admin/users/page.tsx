@@ -204,13 +204,7 @@ export default function AdminUsersPage() {
                   <tr key={user.id}>
                     <td>
                       <div className="flex items-center gap-3">
-                        <div style={{
-                          width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          background: isSuperAdmin ? '#dbeafe' : '#f1f5f9',
-                          color: isSuperAdmin ? '#1e40af' : '#64748b',
-                          fontWeight: 700, fontSize: '0.8rem',
-                        }}>
+                        <div className={`admin-user-avatar ${isSuperAdmin ? 'super-admin' : 'admin'}`}>
                           {getInitials(user.display_name)}
                         </div>
                         <div style={{ minWidth: 0 }}>
@@ -220,12 +214,7 @@ export default function AdminUsersPage() {
                       </div>
                     </td>
                     <td>
-                      <span style={{
-                        display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-                        padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600,
-                        background: isSuperAdmin ? '#dbeafe' : '#f1f5f9',
-                        color: isSuperAdmin ? '#1e40af' : '#64748b',
-                      }}>
+                      <span className={`admin-role-badge ${isSuperAdmin ? 'super-admin' : 'admin'}`}>
                         <i className={`fas fa-${isSuperAdmin ? 'crown' : 'user-shield'}`} style={{ fontSize: '0.65rem' }}></i>
                         {isSuperAdmin ? 'Super Admin' : 'Admin'}
                       </span>

@@ -158,7 +158,7 @@ export default function AdminDashboard() {
       <div className="admin-page">
         <div className="admin-card" style={{ textAlign: 'center', padding: '3rem' }}>
           <i className="fas fa-exclamation-triangle" style={{ fontSize: '2rem', color: '#D97706', marginBottom: '0.75rem' }}></i>
-          <p style={{ color: '#64748b' }}>Failed to load dashboard data</p>
+          <p style={{ color: 'var(--gray-500)' }}>Failed to load dashboard data</p>
           <button className="admin-btn admin-btn-primary" style={{ marginTop: '1rem' }} onClick={loadData}>
             <i className="fas fa-redo"></i> Retry
           </button>
@@ -251,7 +251,7 @@ export default function AdminDashboard() {
             {/* Pending POs */}
             {data.attention.pendingPOs.length > 0 && (
               <div>
-                <h4 style={{ fontSize: '0.82rem', textTransform: 'uppercase', fontWeight: 600, color: '#64748b', margin: '0 0 0.5rem' }}>
+                <h4 style={{ fontSize: '0.82rem', textTransform: 'uppercase', fontWeight: 600, color: 'var(--gray-500)', margin: '0 0 0.5rem' }}>
                   <i className="fas fa-file-invoice" style={{ marginRight: '0.25rem' }}></i> Pending POs ({data.attention.pendingPOs.length})
                 </h4>
                 {data.attention.pendingPOs.map(po => (
@@ -268,7 +268,7 @@ export default function AdminDashboard() {
             {/* Unread Inbox */}
             {data.attention.unreadInbox.length > 0 && (
               <div>
-                <h4 style={{ fontSize: '0.82rem', textTransform: 'uppercase', fontWeight: 600, color: '#64748b', margin: '0 0 0.5rem' }}>
+                <h4 style={{ fontSize: '0.82rem', textTransform: 'uppercase', fontWeight: 600, color: 'var(--gray-500)', margin: '0 0 0.5rem' }}>
                   <i className="fas fa-envelope" style={{ marginRight: '0.25rem' }}></i> Unread Messages ({data.attention.unreadInbox.length})
                 </h4>
                 {data.attention.unreadInbox.map(msg => (
@@ -282,7 +282,7 @@ export default function AdminDashboard() {
             {/* Active RFPs */}
             {data.attention.activeRFPs.length > 0 && (
               <div>
-                <h4 style={{ fontSize: '0.82rem', textTransform: 'uppercase', fontWeight: 600, color: '#64748b', margin: '0 0 0.5rem' }}>
+                <h4 style={{ fontSize: '0.82rem', textTransform: 'uppercase', fontWeight: 600, color: 'var(--gray-500)', margin: '0 0 0.5rem' }}>
                   <i className="fas fa-file-contract" style={{ marginRight: '0.25rem' }}></i> Active RFPs ({data.attention.activeRFPs.length})
                 </h4>
                 {data.attention.activeRFPs.map(rfp => (
@@ -298,7 +298,7 @@ export default function AdminDashboard() {
       )}
 
       {/* Charts Row: Traffic + PO Donut */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+      <div className="admin-dashboard-grid" style={{ marginBottom: '1.25rem' }}>
 
         {/* Website Traffic */}
         <div className="admin-card">
@@ -414,7 +414,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Bottom Row: Inbox Activity + Social Media */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem' }}>
+      <div className="admin-dashboard-grid">
 
         {/* Inbox Activity */}
         <div className="admin-card">
