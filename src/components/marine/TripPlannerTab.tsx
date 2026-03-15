@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, Fragment } from 'react';
+import { useState, useRef, useEffect, Fragment } from 'react';
 import { DESTINATIONS, getTransitMinutes, formatTransitTime, getDestLabel } from '@/lib/trip-planner';
 import type { TripAnalysis, MultiStopAnalysis, BoatingRating, BoatSize, BoatType, BoatActivity } from '@/lib/trip-planner';
 
@@ -93,25 +93,73 @@ export default function TripPlannerTab() {
 
   // Results state
   const [loading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
   const [result, setResult] = useState<TripAnalysis | null>(null);
   const [msResult, setMsResult] = useState<MultiStopAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const dest = DESTINATIONS.find(d => d.value === destination);
 
+  // Loading step animation
+  const LOADING_STEPS = [
+    { icon: 'fa-wind', text: 'Checking wind forecasts...' },
+    { icon: 'fa-water', text: 'Analyzing wave conditions...' },
+    { icon: 'fa-thermometer-half', text: 'Reading water temperatures...' },
+    { icon: 'fa-cloud-rain', text: 'Checking precipitation outlook...' },
+    { icon: 'fa-ship', text: 'Scanning vessel traffic...' },
+    { icon: 'fa-exclamation-triangle', text: 'Reviewing active marine alerts...' },
+    { icon: 'fa-route', text: 'Calculating your itinerary...' },
+    { icon: 'fa-compass', text: 'Generating safety analysis...' },
+  ];
+
+  useEffect(() => {
+    if (!loading) { setLoadingStep(0); return; }
+    const interval = setInterval(() => {
+      setLoadingStep(prev => (prev + 1) % LOADING_STEPS.length);
+    }, 2200);
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
+
   // ─── Multi-stop helpers ──────────────────────────────────────────────
 
   function updateStop(index: number, field: keyof StopEntry, value: string) {
-    setStops(prev => prev.map((s, i) => i === index ? { ...s, [field]: value } : s));
+    setStops(prev => {
+      const updated = prev.map((s, i) => i === index ? { ...s, [field]: value } : s);
+      // Cascade: if date changed, push later stops forward if they're before this one
+      if (field === 'departureDate') {
+        for (let i = index + 1; i < updated.length; i++) {
+          if (updated[i].departureDate < value) {
+            updated[i] = { ...updated[i], departureDate: value };
+          }
+        }
+      }
+      // Cascade: if time changed on same date, push later same-date stops forward
+      if (field === 'departureTime') {
+        for (let i = index + 1; i < updated.length; i++) {
+          if (updated[i].departureDate === updated[index].departureDate && updated[i].departureTime < value) {
+            updated[i] = { ...updated[i], departureTime: value };
+          }
+        }
+      }
+      return updated;
+    });
   }
 
   function addStop() {
     if (stops.length >= 4) return;
     const lastStop = stops[stops.length - 1];
+    const lastHour = parseInt(lastStop.departureTime.split(':')[0]);
+    const newHour = lastHour + 3;
+    const newDate = newHour >= 24 ? (() => {
+      const d = new Date(lastStop.departureDate + 'T00:00:00');
+      d.setDate(d.getDate() + 1);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    })() : lastStop.departureDate;
     setStops(prev => [...prev, {
       destination: 'huron',
-      departureDate: lastStop.departureDate,
-      departureTime: getDefaultTime(parseInt(lastStop.departureTime.split(':')[0]) + 3),
+      departureDate: newDate,
+      departureTime: `${String(newHour % 24).padStart(2, '0')}:00`,
     }]);
   }
 
@@ -143,6 +191,15 @@ export default function TripPlannerTab() {
     setError(null);
     setResult(null);
     setMsResult(null);
+
+    // Scroll up to show loading animation
+    setTimeout(() => {
+      const tabContent = document.querySelector('.marine-tab-content');
+      if (tabContent) {
+        const top = tabContent.getBoundingClientRect().top + window.scrollY - 80;
+        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+      }
+    }, 50);
 
     try {
       if (multiStop) {
@@ -235,7 +292,11 @@ export default function TripPlannerTab() {
     }
     setLoading(false);
     setTimeout(() => {
-      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const el = resultsRef.current;
+      if (el) {
+        const top = el.getBoundingClientRect().top + window.scrollY - 160;
+        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+      }
     }, 50);
   }
 
@@ -260,12 +321,17 @@ export default function TripPlannerTab() {
           <i className="fas fa-arrow-left" style={{ marginRight: '0.35rem', fontSize: '0.75rem' }}></i> Plan Another Trip
         </button>
 
+        <div className="trip-disclaimer-banner">
+          <i className="fas fa-exclamation-triangle"></i>
+          <span><strong>For informational purposes only.</strong> Lake Erie conditions can change rapidly. Always check official forecasts, monitor VHF Ch. 16, and use your own judgment.</span>
+        </div>
+
         {/* Trip Overview */}
         <div className="trip-overview-card">
           <div className="trip-overview-header">
             <div>
               <div className="trip-overview-route">
-                <i className="fas fa-route" style={{ color: 'rgba(255,255,255,0.45)', marginRight: '0.4rem' }}></i>
+                <i className="fas fa-route" style={{ color: '#1B8BEB', marginRight: '0.4rem' }}></i>
                 {routeStr}
               </div>
               <div className="trip-overview-meta">
@@ -464,14 +530,19 @@ export default function TripPlannerTab() {
           <i className="fas fa-arrow-left" style={{ marginRight: '0.35rem', fontSize: '0.75rem' }}></i> Plan Another Trip
         </button>
 
+        <div className="trip-disclaimer-banner">
+          <i className="fas fa-exclamation-triangle"></i>
+          <span><strong>For informational purposes only.</strong> Lake Erie conditions can change rapidly. Always check official forecasts, monitor VHF Ch. 16, and use your own judgment.</span>
+        </div>
+
         {/* Trip Overview */}
         <div className="trip-overview-card">
           <div className="trip-overview-header">
             <div>
               <div className="trip-overview-route">
-                <i className="fas fa-anchor" style={{ color: 'rgba(255,255,255,0.45)', marginRight: '0.4rem' }}></i>
+                <i className="fas fa-anchor" style={{ color: '#1B8BEB', marginRight: '0.4rem' }}></i>
                 Lorain Harbor
-                <i className="fas fa-long-arrow-alt-right" style={{ margin: '0 0.5rem', color: 'rgba(255,255,255,0.3)' }}></i>
+                <i className="fas fa-long-arrow-alt-right" style={{ margin: '0 0.5rem', color: '#94a3b8' }}></i>
                 {dest?.label || destination}
               </div>
               <div className="trip-overview-meta">
@@ -639,6 +710,55 @@ export default function TripPlannerTab() {
     );
   }
 
+  // ─── Loading Screen ────────────────────────────────────────────────────
+
+  if (loading) {
+    const progress = Math.min(((loadingStep + 1) / LOADING_STEPS.length) * 100, 95);
+    return (
+      <div className="trip-loading-screen" style={{ maxWidth: 700, margin: '0 auto' }}>
+        <div className="trip-loading-card">
+          {/* Boat animation */}
+          <div className="trip-loading-boat-wrapper">
+            <div className="trip-loading-waves">
+              <div className="trip-loading-wave trip-loading-wave-1"></div>
+              <div className="trip-loading-wave trip-loading-wave-2"></div>
+              <div className="trip-loading-wave trip-loading-wave-3"></div>
+            </div>
+            <div className="trip-loading-boat">
+              <i className="fas fa-ship"></i>
+            </div>
+          </div>
+
+          <h3 className="trip-loading-title">Planning Your Trip</h3>
+          <p className="trip-loading-subtitle">
+            Cross-referencing multiple data sources for your route
+          </p>
+
+          {/* Progress bar */}
+          <div className="trip-loading-progress-track">
+            <div className="trip-loading-progress-fill" style={{ width: `${progress}%` }}></div>
+          </div>
+
+          {/* Current step */}
+          <div className="trip-loading-step" key={loadingStep}>
+            <i className={`fas ${LOADING_STEPS[loadingStep].icon}`}></i>
+            <span>{LOADING_STEPS[loadingStep].text}</span>
+          </div>
+
+          {/* Completed steps */}
+          <div className="trip-loading-steps-done">
+            {LOADING_STEPS.slice(0, loadingStep).map((step, i) => (
+              <div key={i} className="trip-loading-step-done">
+                <i className="fas fa-check-circle"></i>
+                <span>{step.text.replace('...', '')}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ─── Form View ─────────────────────────────────────────────────────────
 
   // Filter destinations for multi-stop (exclude open-water and current stop from options)
@@ -790,7 +910,7 @@ export default function TripPlannerTab() {
               {dest && dest.value !== 'open-water' && (
                 <div className="trip-field-hint">
                   <i className="fas fa-info-circle" style={{ marginRight: '0.3rem' }}></i>
-                  ~{formatTransitTime(getTransitMinutes('lorain', dest.value, boatType))} transit at cruising speed
+                  {formatTransitTime(getTransitMinutes('lorain', dest.value, boatType))} transit at cruising speed ({boatType === 'sailboat' ? '~7 kts' : '~18 kts'})
                 </div>
               )}
             </div>
@@ -803,11 +923,19 @@ export default function TripPlannerTab() {
                 </div>
                 <div className="trip-form-group">
                   <label htmlFor="trip-dep-date">Date</label>
-                  <input type="date" id="trip-dep-date" value={depDate} onChange={e => setDepDate(e.target.value)} min={getTodayStr()} />
+                  <input type="date" id="trip-dep-date" value={depDate} onChange={e => {
+                    const v = e.target.value;
+                    setDepDate(v);
+                    if (retDate < v) setRetDate(v);
+                  }} min={getTodayStr()} />
                 </div>
                 <div className="trip-form-group">
                   <label htmlFor="trip-dep-time">Time</label>
-                  <input type="time" id="trip-dep-time" value={depTime} onChange={e => setDepTime(e.target.value)} />
+                  <input type="time" id="trip-dep-time" value={depTime} onChange={e => {
+                    const v = e.target.value;
+                    setDepTime(v);
+                    if (retDate === depDate && retTime <= v) setRetTime(v);
+                  }} />
                 </div>
               </div>
               <div className="trip-datetime-col">
@@ -842,13 +970,21 @@ export default function TripPlannerTab() {
                   <div className="trip-datetime-col">
                     <div className="trip-form-group">
                       <label>Date</label>
-                      <input type="date" value={depDate} onChange={e => setDepDate(e.target.value)} min={getTodayStr()} />
+                      <input type="date" value={depDate} onChange={e => {
+                        const v = e.target.value;
+                        setDepDate(v);
+                        setStops(prev => prev.map(s => s.departureDate < v ? { ...s, departureDate: v } : s));
+                      }} min={getTodayStr()} />
                     </div>
                   </div>
                   <div className="trip-datetime-col">
                     <div className="trip-form-group">
                       <label>Time</label>
-                      <input type="time" value={depTime} onChange={e => setDepTime(e.target.value)} />
+                      <input type="time" value={depTime} onChange={e => {
+                        const v = e.target.value;
+                        setDepTime(v);
+                        setStops(prev => prev.map(s => s.departureDate === depDate && s.departureTime < v ? { ...s, departureTime: v } : s));
+                      }} />
                     </div>
                   </div>
                 </div>
@@ -894,7 +1030,7 @@ export default function TripPlannerTab() {
                       <div className="trip-datetime-col">
                         <div className="trip-form-group">
                           <label>Date</label>
-                          <input type="date" value={stop.departureDate} onChange={e => updateStop(i, 'departureDate', e.target.value)} min={depDate} />
+                          <input type="date" value={stop.departureDate} onChange={e => updateStop(i, 'departureDate', e.target.value)} min={i === 0 ? depDate : stops[i - 1].departureDate} />
                         </div>
                       </div>
                       <div className="trip-datetime-col">

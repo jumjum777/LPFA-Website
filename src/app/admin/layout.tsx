@@ -20,7 +20,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     async function checkAuth() {
       try {
-        const session = await supabase.auth.getSession();
+        // Timeout the session check in case Supabase locks hang (browser extension issue)
+        const session = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000)),
+        ]);
+
+        if (!session) {
+          console.warn('Supabase getSession timed out');
+          router.push('/admin/login');
+          return;
+        }
+
         const token = session.data.session?.access_token;
 
         if (!token) {
@@ -29,9 +40,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
 
         // Use API route to check admin access and get user info (bypasses RLS)
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
         const res = await fetch('/api/admin/check', {
           headers: { 'Authorization': `Bearer ${token}` },
+          signal: controller.signal,
         });
+        clearTimeout(timeout);
+
+        if (!res.ok) {
+          router.push('/admin/login');
+          return;
+        }
+
         const result = await res.json();
 
         if (!result.isAdmin) {
