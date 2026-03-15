@@ -14,7 +14,7 @@ interface ForecastPeriod { number: number; name: string; temperature: number; te
 interface BuoyData { windSpeed: number | null; windGust: number | null; windDirection: number | null; waveHeight: number | null; wavePeriod: number | null; waterTemp: number | null; airTemp: number | null; pressure: number | null; isOffline: boolean; }
 interface VesselRecord { mmsi: string; vessel_name: string | null; destination: string | null; vessel_type: number | null; latitude: number | null; longitude: number | null; speed: number | null; heading: number | null; eta: string | null; status: string; first_detected_at?: string; last_seen_at?: string; is_active: boolean; }
 
-type TabId = 'alerts' | 'wind' | 'vessels' | 'forecast' | 'conditions' | 'hourly' | '7day' | 'resources' | 'beach' | 'trip';
+type TabId = 'alerts' | 'wind' | 'vessels' | 'forecast' | 'conditions' | 'weather' | 'resources' | 'beach' | 'trip';
 
 interface BeachReading { date: string; value: number | null; }
 interface BeachData {
@@ -104,21 +104,33 @@ export default function MarineTabs({
   }, []);
 
   // Check URL hash for direct tab navigation (e.g., /marine#beach)
-  const hashTab = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : '';
-  const validHashTab = ['alerts', 'wind', 'vessels', 'forecast', 'conditions', 'hourly', '7day', 'resources', 'beach', 'trip'].includes(hashTab) ? hashTab as TabId : null;
-  const defaultTab: TabId = validHashTab || (hasAlerts ? 'alerts' : 'forecast');
-  const [active, setActive] = useState<TabId>(defaultTab);
+  const validTabs = ['alerts', 'wind', 'vessels', 'forecast', 'conditions', 'weather', 'resources', 'beach', 'trip'];
+  const [active, setActive] = useState<TabId>(hasAlerts ? 'alerts' : 'trip');
+
+  // Read hash after mount (window not available during SSR) + listen for changes
+  useEffect(() => {
+    function readHash() {
+      const hash = window.location.hash.replace('#', '');
+      if (validTabs.includes(hash)) {
+        setActive(hash as TabId);
+      }
+    }
+    // Check on mount
+    readHash();
+    // Listen for hash changes
+    window.addEventListener('hashchange', readHash);
+    return () => window.removeEventListener('hashchange', readHash);
+  }, []);
 
   const tabs: { id: TabId; label: string; icon: string }[] = [
     ...(hasAlerts ? [{ id: 'alerts' as TabId, label: 'Alerts', icon: 'fa-exclamation-triangle' }] : []),
+    { id: 'trip', label: 'Plan Your Boat Trip', icon: 'fa-route' },
     { id: 'forecast', label: 'Marine Forecast', icon: 'fa-anchor' },
-    { id: 'trip', label: 'Plan Your Trip', icon: 'fa-route' },
     { id: 'wind', label: 'Wind & Radar', icon: 'fa-wind' },
     { id: 'conditions', label: 'Offshore Conditions', icon: 'fa-water' },
     { id: 'vessels', label: 'Vessel Traffic', icon: 'fa-ship' },
     { id: 'beach', label: 'Beach Water Quality', icon: 'fa-umbrella-beach' },
-    { id: 'hourly', label: 'Hourly Weather', icon: 'fa-clock' },
-    { id: '7day', label: '7-Day Weather', icon: 'fa-calendar-week' },
+    { id: 'weather', label: 'Weather Forecast', icon: 'fa-cloud-sun' },
     { id: 'resources', label: 'Boater Resources', icon: 'fa-life-ring' },
   ];
 
@@ -409,31 +421,21 @@ export default function MarineTabs({
             </div>
           )}
 
-          {/* HOURLY */}
-          {active === 'hourly' && (
+          {/* WEATHER (Hourly + 7-Day combined) */}
+          {active === 'weather' && (
             <div>
               <div className="section-header center">
-                <div className="section-label">Hour by Hour</div>
-                <h2 className="section-title">Weather Forecast</h2>
-                <p className="section-desc">Hourly weather data from the <a href="https://www.weather.gov/cle/" target="_blank" rel="noopener" style={{ color: 'var(--blue-accent)' }}>National Weather Service — Cleveland, OH</a>. This is a land-based forecast for the Lorain area and may differ from open-water conditions.</p>
+                <div className="section-label">Weather Forecast</div>
+                <h2 className="section-title">Hourly &amp; Extended Outlook</h2>
+                <p className="section-desc">Weather data from the <a href="https://www.weather.gov/cle/" target="_blank" rel="noopener" style={{ color: 'var(--blue-accent)' }}>National Weather Service — Cleveland, OH</a>. Land-based forecast for the Lorain area — open-water conditions may differ.</p>
               </div>
-              {hourly.length > 0 ? (
-                <HourlyForecastTable hourly={hourly} />
-              ) : (
-                <p style={{ textAlign: 'center', color: 'var(--gray-400)' }}>No hourly data available at this time.</p>
-              )}
-            </div>
-          )}
 
-          {/* 7-DAY */}
-          {active === '7day' && (
-            <div>
-              <div className="section-header center">
-                <div className="section-label">7-Day Outlook</div>
-                <h2 className="section-title">Extended Forecast</h2>
-              </div>
+              {/* 7-Day Cards */}
+              <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--navy)', marginBottom: '0.75rem', fontFamily: 'var(--font-heading)' }}>
+                <i className="fas fa-calendar-week" style={{ marginRight: '0.4rem', color: 'var(--blue-accent)' }}></i> 7-Day Outlook
+              </h3>
               {forecast.length > 0 ? (
-                <div className="marine-forecast-strip">
+                <div className="marine-forecast-strip" style={{ marginBottom: '2.5rem' }}>
                   {forecast.map(p => (
                     <div key={p.number} className={`marine-forecast-card${!p.isDaytime ? ' night' : ''}`}>
                       <div className="fc-name">{p.name}</div>
@@ -444,7 +446,17 @@ export default function MarineTabs({
                   ))}
                 </div>
               ) : (
-                <p style={{ textAlign: 'center', color: 'var(--gray-400)' }}>No forecast data available at this time.</p>
+                <p style={{ textAlign: 'center', color: 'var(--gray-400)', marginBottom: '2.5rem' }}>No forecast data available at this time.</p>
+              )}
+
+              {/* Hourly Table */}
+              <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--navy)', marginBottom: '0.75rem', fontFamily: 'var(--font-heading)' }}>
+                <i className="fas fa-clock" style={{ marginRight: '0.4rem', color: 'var(--blue-accent)' }}></i> Hour by Hour
+              </h3>
+              {hourly.length > 0 ? (
+                <HourlyForecastTable hourly={hourly} />
+              ) : (
+                <p style={{ textAlign: 'center', color: 'var(--gray-400)' }}>No hourly data available at this time.</p>
               )}
             </div>
           )}

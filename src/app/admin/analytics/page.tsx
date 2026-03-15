@@ -241,6 +241,35 @@ export default function UnifiedAnalyticsPage() {
   const [pdfLoading, setPdfLoading] = useState(false);
 
   const loading = webLoading || socialEmailLoading;
+  const [loadingStep, setLoadingStep] = useState(0);
+
+  const LPFA_LOADING_STEPS = [
+    'Scanning website traffic...',
+    'Measuring visitor engagement...',
+    'Counting page sessions...',
+    'Pulling social media metrics...',
+    'Analyzing email campaigns...',
+    'Reviewing trip planner usage...',
+    'Compiling your insights...',
+  ];
+  const ROTR_LOADING_STEPS = [
+    'Tuning into ticket sales...',
+    'Counting the crowd...',
+    'Checking the setlist stats...',
+    'Scanning merch numbers...',
+    'Reading the fan reviews...',
+    'Mixing down the data...',
+    'Dropping the final beat...',
+  ];
+  const LOADING_STEPS = profile === 'rotr' ? ROTR_LOADING_STEPS : LPFA_LOADING_STEPS;
+
+  useEffect(() => {
+    if (!loading) { setLoadingStep(0); return; }
+    const interval = setInterval(() => {
+      setLoadingStep(prev => (prev + 1) % LOADING_STEPS.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [loading, profile]);
 
   // Convert period to days for web analytics API
   const now = new Date();
@@ -485,13 +514,55 @@ export default function UnifiedAnalyticsPage() {
         <div className="admin-page-header">
           <h1><i className="fas fa-chart-line" style={{ marginRight: '0.5rem', color: '#1B8BEB' }}></i> Analytics</h1>
         </div>
-        <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
-          <i className="fas fa-spinner fa-spin" style={{ fontSize: '2rem', color: 'var(--blue-accent)' }}></i>
-          <p style={{ marginTop: '1rem', color: '#64748B', fontWeight: 500 }}>Loading analytics...</p>
-          <p style={{ marginTop: '0.4rem', color: '#94a3b8', fontSize: '0.82rem', maxWidth: '380px', margin: '0.4rem auto 0' }}>
-            This may take a few moments. We&apos;re pulling in-depth analytics from your website, social media, and email platforms all at once.
-          </p>
-        </div>
+        {profile === 'rotr' ? (
+          /* Music-themed loading for ROTR */
+          <div className="analytics-loading-card">
+            <div className="music-loading-scene">
+              <div className="music-loading-eq">
+                <div className="music-eq-bar"></div>
+                <div className="music-eq-bar"></div>
+                <div className="music-eq-bar"></div>
+                <div className="music-eq-bar"></div>
+                <div className="music-eq-bar"></div>
+                <div className="music-eq-bar"></div>
+                <div className="music-eq-bar"></div>
+              </div>
+              <div className="music-loading-note music-note-1"><i className="fas fa-music"></i></div>
+              <div className="music-loading-note music-note-2"><i className="fas fa-music"></i></div>
+              <div className="music-loading-note music-note-3"><i className="fas fa-music"></i></div>
+            </div>
+            <h3 className="analytics-loading-title">Loading Analytics</h3>
+            <p className="analytics-loading-step">{LOADING_STEPS[loadingStep]}</p>
+            <div className="analytics-loading-progress">
+              <div className="analytics-loading-progress-bar" style={{ background: 'linear-gradient(90deg, #7C3AED, #EF4444)' }}></div>
+            </div>
+          </div>
+        ) : (
+          /* Lighthouse loading for LPFA */
+          <div className="analytics-loading-card">
+            <div className="lighthouse-loading-scene">
+              <div className="lighthouse-beam"></div>
+              <div className="lighthouse-tower">
+                <div className="lighthouse-lamp"></div>
+                <div className="lighthouse-top"></div>
+                <div className="lighthouse-body">
+                  <div className="lighthouse-stripe"></div>
+                  <div className="lighthouse-stripe"></div>
+                </div>
+                <div className="lighthouse-base"></div>
+              </div>
+              <div className="lighthouse-water">
+                <div className="analytics-water-wave analytics-water-wave-1"></div>
+                <div className="analytics-water-wave analytics-water-wave-2"></div>
+              </div>
+            </div>
+            <h3 className="analytics-loading-title">Scanning the Horizon</h3>
+            <p className="analytics-loading-step">{LOADING_STEPS[loadingStep]}</p>
+            <div className="analytics-loading-progress">
+              <div className="analytics-loading-progress-bar"></div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -1484,43 +1555,27 @@ function TripPlannerSection({ data }: { data: TripAnalyticsData }) {
   return (
     <>
       {/* Summary stat cards */}
-      <div className="rotr-stat-grid" style={{ marginBottom: '1.25rem' }}>
-        <div className="rotr-stat-card">
-          <div className="rotr-stat-icon" style={{ background: '#05966915', color: '#059669' }}>
-            <i className="fas fa-route"></i>
+      <div className="admin-stats-grid dash-compact" style={{ marginBottom: '1.25rem' }}>
+        {[
+          { title: 'Trips Planned', value: formatNumber(data.totalTrips), icon: 'fas fa-route', color: '#059669' },
+          { title: 'Unique Users', value: formatNumber(data.uniqueUsers), icon: 'fas fa-users', color: '#1B8BEB' },
+          { title: 'Multi-Stop Trips', value: data.tripsByType['multi-stop'] || 0, icon: 'fas fa-ship', color: '#D97706' },
+          { title: 'Poor/Dangerous', value: (data.tripsByRating['Poor'] || 0) + (data.tripsByRating['Dangerous'] || 0), icon: 'fas fa-exclamation-triangle', color: '#EF4444' },
+        ].map(card => (
+          <div key={card.title} className="admin-stat-card dash-compact-card">
+            <div className="admin-stat-icon" style={{ background: `${card.color}15`, color: card.color, width: 36, height: 36, borderRadius: 8, fontSize: '0.95rem' }}>
+              <i className={card.icon}></i>
+            </div>
+            <div className="admin-stat-info">
+              <span className="admin-stat-count" style={{ fontSize: '1.35rem' }}>{card.value}</span>
+              <span className="admin-stat-label">{card.title}</span>
+            </div>
           </div>
-          <div className="rotr-stat-value">{formatNumber(data.totalTrips)}</div>
-          <div className="rotr-stat-label">Trips Planned</div>
-        </div>
-        <div className="rotr-stat-card">
-          <div className="rotr-stat-icon" style={{ background: '#1B8BEB15', color: '#1B8BEB' }}>
-            <i className="fas fa-users"></i>
-          </div>
-          <div className="rotr-stat-value">{formatNumber(data.uniqueUsers)}</div>
-          <div className="rotr-stat-label">Unique Users</div>
-        </div>
-        <div className="rotr-stat-card">
-          <div className="rotr-stat-icon" style={{ background: '#D9770615', color: '#D97706' }}>
-            <i className="fas fa-ship"></i>
-          </div>
-          <div className="rotr-stat-value">
-            {data.tripsByType['multi-stop'] || 0}
-          </div>
-          <div className="rotr-stat-label">Multi-Stop Trips</div>
-        </div>
-        <div className="rotr-stat-card">
-          <div className="rotr-stat-icon" style={{ background: '#EF444415', color: '#EF4444' }}>
-            <i className="fas fa-exclamation-triangle"></i>
-          </div>
-          <div className="rotr-stat-value">
-            {(data.tripsByRating['Poor'] || 0) + (data.tripsByRating['Dangerous'] || 0)}
-          </div>
-          <div className="rotr-stat-label">Poor/Dangerous Ratings</div>
-        </div>
+        ))}
       </div>
 
       {/* Top Destinations */}
-      <SubSection title="Top Destinations" icon="fas fa-map-marker-alt" defaultOpen={true}>
+      <SubSection title="Top Destinations" icon="fas fa-map-marker-alt">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
           {data.topDestinations.map(d => (
             <div key={d.destination} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
@@ -1543,7 +1598,7 @@ function TripPlannerSection({ data }: { data: TripAnalyticsData }) {
       </SubSection>
 
       {/* Vessel Breakdown */}
-      <SubSection title="Vessel Breakdown" icon="fas fa-ship" defaultOpen={true}>
+      <SubSection title="Vessel Breakdown" icon="fas fa-ship">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div>
             <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.03em' }}>By Size</div>
@@ -1565,7 +1620,7 @@ function TripPlannerSection({ data }: { data: TripAnalyticsData }) {
       </SubSection>
 
       {/* Activities */}
-      <SubSection title="Planned Activities" icon="fas fa-compass" defaultOpen={true}>
+      <SubSection title="Planned Activities" icon="fas fa-compass">
         <BreakdownBar segments={[
           { label: 'Cruising', value: data.tripsByActivity['cruising'] || 0, color: '#1B8BEB' },
           { label: 'Fishing', value: data.tripsByActivity['fishing'] || 0, color: '#059669' },

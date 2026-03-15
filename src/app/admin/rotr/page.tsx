@@ -115,8 +115,26 @@ export default function AdminROTRPage() {
   return (
     <Suspense fallback={
       <div className="admin-page">
-        <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
-          <i className="fas fa-spinner fa-spin" style={{ fontSize: '2rem', color: 'var(--blue-accent)' }}></i>
+        <div className="analytics-loading-card">
+          <div className="music-loading-scene">
+            <div className="music-loading-eq">
+              <div className="music-eq-bar"></div>
+              <div className="music-eq-bar"></div>
+              <div className="music-eq-bar"></div>
+              <div className="music-eq-bar"></div>
+              <div className="music-eq-bar"></div>
+              <div className="music-eq-bar"></div>
+              <div className="music-eq-bar"></div>
+            </div>
+            <div className="music-loading-note music-note-1"><i className="fas fa-music"></i></div>
+            <div className="music-loading-note music-note-2"><i className="fas fa-music"></i></div>
+            <div className="music-loading-note music-note-3"><i className="fas fa-music"></i></div>
+          </div>
+          <h3 className="analytics-loading-title">Loading...</h3>
+          <p className="analytics-loading-step">Loading ROTR dashboard...</p>
+          <div className="analytics-loading-progress">
+            <div className="analytics-loading-progress-bar" style={{ background: 'linear-gradient(90deg, #7C3AED, #EF4444)' }}></div>
+          </div>
         </div>
       </div>
     }>
@@ -132,6 +150,7 @@ function ROTRContent() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [overviewLoadingStep, setOverviewLoadingStep] = useState(0);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [orderFilter, setOrderFilter] = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState('');
@@ -146,6 +165,7 @@ function ROTRContent() {
   const [analyticsData, setAnalyticsData] = useState<{ metrics: AnalyticsMetric[]; previousMetrics: AnalyticsMetric[] | null; period: { start: string; end: string; days: number } } | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState('30d');
+  const [analyticsLoadingStep, setAnalyticsLoadingStep] = useState(0);
   const [publishMap, setPublishMap] = useState<Map<string, { id: string; is_published: boolean }>>(new Map());
   const [collapsedYears, setCollapsedYears] = useState<Set<number>>(new Set());
   const [showAllUpcoming, setShowAllUpcoming] = useState(false);
@@ -333,6 +353,40 @@ function ROTRContent() {
     setFinanceSummaryError(null);
   }, [financePeriod]);
 
+  // Cycle overview loading steps
+  const OVERVIEW_STEPS = [
+    'Connecting to Wix Events...',
+    'Loading the lineup...',
+    'Counting ticket sales...',
+    'Checking the inbox...',
+    'Warming up the stage...',
+  ];
+  useEffect(() => {
+    if (!loading) { setOverviewLoadingStep(0); return; }
+    const interval = setInterval(() => {
+      setOverviewLoadingStep(prev => (prev + 1) % OVERVIEW_STEPS.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [loading]);
+
+  // Cycle analytics loading steps
+  const ANALYTICS_STEPS = [
+    'Scanning website traffic...',
+    'Measuring visitor engagement...',
+    'Counting page sessions...',
+    'Tracking ticket sales...',
+    'Analyzing contact conversions...',
+    'Compiling form submissions...',
+    'Charting your insights...',
+  ];
+  useEffect(() => {
+    if (!analyticsLoading) { setAnalyticsLoadingStep(0); return; }
+    const interval = setInterval(() => {
+      setAnalyticsLoadingStep(prev => (prev + 1) % ANALYTICS_STEPS.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [analyticsLoading]);
+
   // Load analytics when analytics tab opens (or period changes)
   useEffect(() => {
     if (tab === 'analytics') {
@@ -461,11 +515,28 @@ function ROTRContent() {
         <div className="admin-page-header">
           <div>
             <h1>Rockin&apos; on the River</h1>
-            <p>Loading data from Wix...</p>
           </div>
         </div>
-        <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
-          <i className="fas fa-spinner fa-spin" style={{ fontSize: '2rem', color: 'var(--blue-accent)' }}></i>
+        <div className="analytics-loading-card">
+          <div className="music-loading-scene">
+            <div className="music-loading-eq">
+              <div className="music-eq-bar"></div>
+              <div className="music-eq-bar"></div>
+              <div className="music-eq-bar"></div>
+              <div className="music-eq-bar"></div>
+              <div className="music-eq-bar"></div>
+              <div className="music-eq-bar"></div>
+              <div className="music-eq-bar"></div>
+            </div>
+            <div className="music-loading-note music-note-1"><i className="fas fa-music"></i></div>
+            <div className="music-loading-note music-note-2"><i className="fas fa-music"></i></div>
+            <div className="music-loading-note music-note-3"><i className="fas fa-music"></i></div>
+          </div>
+          <h3 className="analytics-loading-title">Loading ROTR</h3>
+          <p className="analytics-loading-step">{OVERVIEW_STEPS[overviewLoadingStep]}</p>
+          <div className="analytics-loading-progress">
+            <div className="analytics-loading-progress-bar" style={{ background: 'linear-gradient(90deg, #7C3AED, #EF4444)' }}></div>
+          </div>
         </div>
       </div>
     );
@@ -892,9 +963,26 @@ function ROTRContent() {
           </div>
 
           {ordersLoading ? (
-            <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
-              <i className="fas fa-spinner fa-spin" style={{ fontSize: '1.5rem', color: 'var(--blue-accent)' }}></i>
-              <p style={{ marginTop: '0.75rem', color: 'var(--gray-500)' }}>Loading orders...</p>
+            <div className="analytics-loading-card">
+              <div className="music-loading-scene">
+                <div className="music-loading-eq">
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                </div>
+                <div className="music-loading-note music-note-1"><i className="fas fa-music"></i></div>
+                <div className="music-loading-note music-note-2"><i className="fas fa-music"></i></div>
+                <div className="music-loading-note music-note-3"><i className="fas fa-music"></i></div>
+              </div>
+              <h3 className="analytics-loading-title">Loading Orders...</h3>
+              <p className="analytics-loading-step">Fetching ticket orders...</p>
+              <div className="analytics-loading-progress">
+                <div className="analytics-loading-progress-bar" style={{ background: 'linear-gradient(90deg, #7C3AED, #EF4444)' }}></div>
+              </div>
             </div>
           ) : filteredOrders.length === 0 ? (
             <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
@@ -977,9 +1065,26 @@ function ROTRContent() {
       {tab === 'customers' && (
         <div style={{ marginTop: '0.5rem' }}>
           {ordersLoading ? (
-            <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
-              <i className="fas fa-spinner fa-spin" style={{ fontSize: '1.5rem', color: 'var(--blue-accent)' }}></i>
-              <p style={{ marginTop: '0.75rem', color: 'var(--gray-500)' }}>Loading customer data...</p>
+            <div className="analytics-loading-card">
+              <div className="music-loading-scene">
+                <div className="music-loading-eq">
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                </div>
+                <div className="music-loading-note music-note-1"><i className="fas fa-music"></i></div>
+                <div className="music-loading-note music-note-2"><i className="fas fa-music"></i></div>
+                <div className="music-loading-note music-note-3"><i className="fas fa-music"></i></div>
+              </div>
+              <h3 className="analytics-loading-title">Loading Customers...</h3>
+              <p className="analytics-loading-step">Analyzing customer data...</p>
+              <div className="analytics-loading-progress">
+                <div className="analytics-loading-progress-bar" style={{ background: 'linear-gradient(90deg, #7C3AED, #EF4444)' }}></div>
+              </div>
             </div>
           ) : (
             <>
@@ -1074,9 +1179,26 @@ function ROTRContent() {
       {tab === 'inbox' && (
         <div style={{ marginTop: '0.5rem' }}>
           {inboxLoading ? (
-            <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
-              <i className="fas fa-spinner fa-spin" style={{ fontSize: '1.5rem', color: 'var(--blue-accent)' }}></i>
-              <p style={{ marginTop: '0.75rem', color: 'var(--gray-500)' }}>Loading messages from Wix...</p>
+            <div className="analytics-loading-card">
+              <div className="music-loading-scene">
+                <div className="music-loading-eq">
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                </div>
+                <div className="music-loading-note music-note-1"><i className="fas fa-music"></i></div>
+                <div className="music-loading-note music-note-2"><i className="fas fa-music"></i></div>
+                <div className="music-loading-note music-note-3"><i className="fas fa-music"></i></div>
+              </div>
+              <h3 className="analytics-loading-title">Loading Inbox...</h3>
+              <p className="analytics-loading-step">Fetching messages from Wix...</p>
+              <div className="analytics-loading-progress">
+                <div className="analytics-loading-progress-bar" style={{ background: 'linear-gradient(90deg, #7C3AED, #EF4444)' }}></div>
+              </div>
             </div>
           ) : inboxError ? (
             <div className="admin-card" style={{ padding: '2rem', textAlign: 'center' }}>
@@ -1311,9 +1433,26 @@ function ROTRContent() {
       {tab === 'finances' && (
         <div>
           {ordersLoading || txnLoading ? (
-            <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
-              <i className="fas fa-spinner fa-spin" style={{ fontSize: '1.5rem', color: 'var(--blue-accent)' }}></i>
-              <p style={{ marginTop: '0.75rem', color: 'var(--gray-500)' }}>Loading financial data...</p>
+            <div className="analytics-loading-card">
+              <div className="music-loading-scene">
+                <div className="music-loading-eq">
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                </div>
+                <div className="music-loading-note music-note-1"><i className="fas fa-music"></i></div>
+                <div className="music-loading-note music-note-2"><i className="fas fa-music"></i></div>
+                <div className="music-loading-note music-note-3"><i className="fas fa-music"></i></div>
+              </div>
+              <h3 className="analytics-loading-title">Loading Finances...</h3>
+              <p className="analytics-loading-step">Crunching financial data...</p>
+              <div className="analytics-loading-progress">
+                <div className="analytics-loading-progress-bar" style={{ background: 'linear-gradient(90deg, #7C3AED, #EF4444)' }}></div>
+              </div>
             </div>
           ) : (() => {
             // Get available years from orders
@@ -1998,9 +2137,26 @@ function ROTRContent() {
           </div>
 
           {analyticsLoading ? (
-            <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
-              <i className="fas fa-spinner fa-spin" style={{ fontSize: '1.5rem', color: 'var(--blue-accent)' }}></i>
-              <p style={{ marginTop: '0.75rem', color: 'var(--gray-500)' }}>Loading analytics...</p>
+            <div className="analytics-loading-card">
+              <div className="music-loading-scene">
+                <div className="music-loading-eq">
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                  <div className="music-eq-bar"></div>
+                </div>
+                <div className="music-loading-note music-note-1"><i className="fas fa-music"></i></div>
+                <div className="music-loading-note music-note-2"><i className="fas fa-music"></i></div>
+                <div className="music-loading-note music-note-3"><i className="fas fa-music"></i></div>
+              </div>
+              <h3 className="analytics-loading-title">Loading Analytics</h3>
+              <p className="analytics-loading-step">{ANALYTICS_STEPS[analyticsLoadingStep]}</p>
+              <div className="analytics-loading-progress">
+                <div className="analytics-loading-progress-bar" style={{ background: 'linear-gradient(90deg, #7C3AED, #EF4444)' }}></div>
+              </div>
             </div>
           ) : analyticsData ? (() => {
             const { metrics, previousMetrics } = analyticsData;

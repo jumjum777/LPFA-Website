@@ -8,7 +8,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 
 // ─── Rate Limiting (in-memory, per-instance) ───────────────────────────────
 const ipSubmissions = new Map<string, number[]>();
-const RATE_LIMIT = 10;       // max submissions
+const RATE_LIMIT = 5;        // max submissions
 const RATE_WINDOW = 3600000; // per hour
 
 function isRateLimited(ip: string): boolean {
@@ -67,12 +67,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
   }
 
-  let body: TripRequest & { legs?: TripLeg[] };
+  let body: TripRequest & { legs?: TripLeg[]; website?: string; _ts?: number };
 
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  // Bot protection: honeypot field (hidden input that humans never fill)
+  if (body.website) {
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+  }
+
+  // Bot protection: timing check (submissions faster than 2 seconds are likely bots)
+  if (body._ts && Date.now() - body._ts < 2000) {
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 
   const { boatSize, experienceLevel } = body;

@@ -27,12 +27,16 @@ export default function AdminToursPage() {
   const [filter, setFilter] = useState<TourFilter>('all');
   const [search, setSearch] = useState('');
 
-  function loadTours() {
-    const supabase = createClient();
-    supabase.from('tours').select('*').order('sort_order').then(({ data }) => {
-      setTours(data || []);
+  async function loadTours() {
+    try {
+      const res = await fetch('/api/admin/tours');
+      const data = await res.json();
+      setTours(data.tours || []);
+    } catch (err) {
+      console.error('Tours load failed:', err);
+    } finally {
       setLoading(false);
-    });
+    }
   }
 
   useEffect(() => { loadTours(); }, []);
@@ -103,9 +107,28 @@ export default function AdminToursPage() {
     return (
       <div className="admin-page">
         <div className="admin-page-header"><h1>Boat Tours</h1></div>
-        <div className="admin-card p-12 text-center">
-          <i className="fas fa-spinner fa-spin text-2xl text-blue"></i>
-          <p className="mt-3 text-slate-500 dark:text-slate-400">Loading tours...</p>
+        <div className="analytics-loading-card">
+          <div className="lighthouse-loading-scene">
+            <div className="lighthouse-beam"></div>
+            <div className="lighthouse-tower">
+              <div className="lighthouse-lamp"></div>
+              <div className="lighthouse-top"></div>
+              <div className="lighthouse-body">
+                <div className="lighthouse-stripe"></div>
+                <div className="lighthouse-stripe"></div>
+              </div>
+              <div className="lighthouse-base"></div>
+            </div>
+            <div className="lighthouse-water">
+              <div className="analytics-water-wave analytics-water-wave-1"></div>
+              <div className="analytics-water-wave analytics-water-wave-2"></div>
+            </div>
+          </div>
+          <h3 className="analytics-loading-title">Loading Tours...</h3>
+          <p className="analytics-loading-step">Fetching boat tour listings...</p>
+          <div className="analytics-loading-progress">
+            <div className="analytics-loading-progress-bar"></div>
+          </div>
         </div>
       </div>
     );

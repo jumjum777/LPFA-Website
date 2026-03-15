@@ -87,27 +87,29 @@ export default function AdminPhotosPage() {
 
   useEffect(() => {
     loadPhotos();
-    loadCategories();
   }, []);
 
   async function loadPhotos() {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('photos')
-      .select('*')
-      .order('created_at', { ascending: false });
-    setPhotos(data || []);
-    setLoading(false);
+    try {
+      const res = await fetch('/api/admin/photos');
+      const data = await res.json();
+      setPhotos(data.photos || []);
+      setDbCategories(data.categories || []);
+    } catch (err) {
+      console.error('Photos load failed:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function loadCategories() {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('photo_categories')
-      .select('*')
-      .order('sort_order')
-      .order('name');
-    setDbCategories(data || []);
+    try {
+      const res = await fetch('/api/admin/photos');
+      const data = await res.json();
+      setDbCategories(data.categories || []);
+    } catch (err) {
+      console.error('Categories load failed:', err);
+    }
   }
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -240,9 +242,28 @@ export default function AdminPhotosPage() {
     return (
       <div className="admin-page">
         <div className="admin-page-header"><h1>Photo Library</h1></div>
-        <div className="admin-card p-12 text-center">
-          <i className="fas fa-spinner fa-spin text-2xl text-blue"></i>
-          <p className="mt-3 text-slate-500 dark:text-slate-400">Loading photos...</p>
+        <div className="analytics-loading-card">
+          <div className="lighthouse-loading-scene">
+            <div className="lighthouse-beam"></div>
+            <div className="lighthouse-tower">
+              <div className="lighthouse-lamp"></div>
+              <div className="lighthouse-top"></div>
+              <div className="lighthouse-body">
+                <div className="lighthouse-stripe"></div>
+                <div className="lighthouse-stripe"></div>
+              </div>
+              <div className="lighthouse-base"></div>
+            </div>
+            <div className="lighthouse-water">
+              <div className="analytics-water-wave analytics-water-wave-1"></div>
+              <div className="analytics-water-wave analytics-water-wave-2"></div>
+            </div>
+          </div>
+          <h3 className="analytics-loading-title">Loading Photos...</h3>
+          <p className="analytics-loading-step">Fetching photo library...</p>
+          <div className="analytics-loading-progress">
+            <div className="analytics-loading-progress-bar"></div>
+          </div>
         </div>
       </div>
     );

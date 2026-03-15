@@ -46,13 +46,12 @@ const PO_COLORS: Record<string, string> = {
 };
 
 const STAT_CARDS = [
-  { title: 'News Articles', key: 'news', href: '/admin/news', icon: 'fas fa-newspaper', color: '#1B8BEB' },
   { title: 'Upcoming Events', key: 'upcomingEvents', href: '/admin/events', icon: 'fas fa-calendar-alt', color: '#D97706', subtitle: 'Next 7 days' },
   { title: 'Upcoming Tours', key: 'upcomingTours', href: '/admin/tours', icon: 'fas fa-ship', color: '#059669', subtitle: 'Next 7 days' },
   { title: 'Unread Messages', key: 'unread', href: '/admin/leads', icon: 'fas fa-envelope', color: '#DC2626' },
   { title: 'Pending POs', key: 'pendingPOs', href: '/admin/purchase-orders', icon: 'fas fa-file-invoice', color: '#7C3AED' },
+  { title: 'Trips Planned', key: 'tripsPlanned', href: '/admin/analytics', icon: 'fas fa-route', color: '#059669', subtitle: 'Last 7 days' },
   { title: 'Active Alerts', key: 'activeAlerts', href: '/marine', icon: 'fas fa-exclamation-triangle', color: '#EF4444' },
-  { title: 'Files', key: 'files', href: '/admin/files', icon: 'fas fa-folder-open', color: '#8B5CF6' },
   { title: 'Vessel Traffic', key: 'vessels', href: '/admin/vessels', icon: 'fas fa-anchor', color: '#0B1F3A' },
 ];
 
@@ -125,12 +124,28 @@ export default function AdminDashboard() {
     return (
       <div className="admin-page" style={{ maxWidth: '1400px' }}>
         <div className="admin-page-header"><h1><i className="fas fa-gauge-high" style={{ marginRight: '0.5rem', color: '#1B8BEB' }}></i> Dashboard</h1></div>
-        <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
-          <i className="fas fa-spinner fa-spin" style={{ fontSize: '2rem', color: 'var(--blue-accent)' }}></i>
-          <p style={{ marginTop: '1rem', color: '#64748B', fontWeight: 500 }}>Building your command center...</p>
-          <p style={{ marginTop: '0.4rem', color: '#94a3b8', fontSize: '0.82rem', maxWidth: '420px', margin: '0.4rem auto 0' }}>
-            This may take a moment. We&apos;re pulling in data from analytics, inbox messages, purchase orders, social media, and more to build your dashboard.
-          </p>
+        <div className="analytics-loading-card">
+          <div className="lighthouse-loading-scene">
+            <div className="lighthouse-beam"></div>
+            <div className="lighthouse-tower">
+              <div className="lighthouse-lamp"></div>
+              <div className="lighthouse-top"></div>
+              <div className="lighthouse-body">
+                <div className="lighthouse-stripe"></div>
+                <div className="lighthouse-stripe"></div>
+              </div>
+              <div className="lighthouse-base"></div>
+            </div>
+            <div className="lighthouse-water">
+              <div className="analytics-water-wave analytics-water-wave-1"></div>
+              <div className="analytics-water-wave analytics-water-wave-2"></div>
+            </div>
+          </div>
+          <h3 className="analytics-loading-title">Loading Dashboard...</h3>
+          <p className="analytics-loading-step">Building your command center...</p>
+          <div className="analytics-loading-progress">
+            <div className="analytics-loading-progress-bar"></div>
+          </div>
         </div>
       </div>
     );

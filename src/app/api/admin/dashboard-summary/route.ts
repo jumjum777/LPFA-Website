@@ -49,6 +49,8 @@ export async function GET() {
         .eq('status', 'new').order('created_at', { ascending: false }).limit(5),
       supabase.from('rfps').select('id, title, status, created_at')
         .in('status', ['new', 'open']).order('created_at', { ascending: false }).limit(5),
+      supabase.from('trip_submissions').select('id', { count: 'exact', head: true })
+        .gte('created_at', new Date(now.getTime() - 7 * 86400000).toISOString()),
     ]),
 
     // 2) GA4 traffic (10s timeout)
@@ -113,7 +115,7 @@ export async function GET() {
     newsRes, eventsRes, toursRes, staffRes,
     filesRes, docsRes, photosRes, vesselsRes,
     posRes, inboxRes,
-    pendingPOsRes, unreadInboxRes, activeRFPsRes,
+    pendingPOsRes, unreadInboxRes, activeRFPsRes, tripsRes,
   ] = supabaseResults;
 
   // ── Upcoming tours (next 7 days) ───────────────────────────────────
@@ -141,6 +143,7 @@ export async function GET() {
     unread: unreadInboxRes.data?.length || 0,
     pendingPOs: (pendingPOsRes.data?.length || 0),
     activeAlerts: marineResult,
+    tripsPlanned: tripsRes.count || 0,
   };
 
   // ── PO breakdown by status ──────────────────────────────────────────

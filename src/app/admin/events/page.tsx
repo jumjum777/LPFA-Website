@@ -62,11 +62,15 @@ export default function AdminEventsPage() {
   const [search, setSearch] = useState('');
 
   const loadEvents = useCallback(async () => {
-    const supabase = createClient();
-    const { data, error } = await supabase.from('events').select('*').order('event_date', { ascending: true });
-    if (error) console.error('Error loading events:', error);
-    setEvents(data || []);
-    setLoading(false);
+    try {
+      const res = await fetch('/api/admin/events');
+      const data = await res.json();
+      setEvents(data.events || []);
+    } catch (err) {
+      console.error('Events load failed:', err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   async function syncFromWix() {
@@ -167,9 +171,28 @@ export default function AdminEventsPage() {
     return (
       <div className="admin-page">
         <div className="admin-page-header"><h1>Events</h1></div>
-        <div className="admin-card p-12 text-center">
-          <i className="fas fa-spinner fa-spin text-2xl text-blue"></i>
-          <p className="mt-3 text-slate-500 dark:text-slate-400">Loading events...</p>
+        <div className="analytics-loading-card">
+          <div className="lighthouse-loading-scene">
+            <div className="lighthouse-beam"></div>
+            <div className="lighthouse-tower">
+              <div className="lighthouse-lamp"></div>
+              <div className="lighthouse-top"></div>
+              <div className="lighthouse-body">
+                <div className="lighthouse-stripe"></div>
+                <div className="lighthouse-stripe"></div>
+              </div>
+              <div className="lighthouse-base"></div>
+            </div>
+            <div className="lighthouse-water">
+              <div className="analytics-water-wave analytics-water-wave-1"></div>
+              <div className="analytics-water-wave analytics-water-wave-2"></div>
+            </div>
+          </div>
+          <h3 className="analytics-loading-title">Loading Events...</h3>
+          <p className="analytics-loading-step">Fetching event calendar...</p>
+          <div className="analytics-loading-progress">
+            <div className="analytics-loading-progress-bar"></div>
+          </div>
         </div>
       </div>
     );

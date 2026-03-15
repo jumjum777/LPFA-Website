@@ -100,7 +100,29 @@ export default function AdminRFPsPage() {
       </div>
 
       {loading ? (
-        <p>Loading...</p>
+        <div className="analytics-loading-card">
+          <div className="lighthouse-loading-scene">
+            <div className="lighthouse-beam"></div>
+            <div className="lighthouse-tower">
+              <div className="lighthouse-lamp"></div>
+              <div className="lighthouse-top"></div>
+              <div className="lighthouse-body">
+                <div className="lighthouse-stripe"></div>
+                <div className="lighthouse-stripe"></div>
+              </div>
+              <div className="lighthouse-base"></div>
+            </div>
+            <div className="lighthouse-water">
+              <div className="analytics-water-wave analytics-water-wave-1"></div>
+              <div className="analytics-water-wave analytics-water-wave-2"></div>
+            </div>
+          </div>
+          <h3 className="analytics-loading-title">Loading RFPs...</h3>
+          <p className="analytics-loading-step">Fetching proposals and bids...</p>
+          <div className="analytics-loading-progress">
+            <div className="analytics-loading-progress-bar"></div>
+          </div>
+        </div>
       ) : filtered.length === 0 ? (
         <div className="admin-empty">
           <i className="fas fa-file-contract" style={{ fontSize: '2rem', opacity: 0.3, marginBottom: '0.5rem' }}></i>

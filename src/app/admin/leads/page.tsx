@@ -84,10 +84,15 @@ export default function AdminInboxPage() {
   useEffect(() => { loadInbox(); }, []);
 
   async function loadInbox() {
-    const supabase = createClient();
-    const { data } = await supabase.from('contact_submissions').select('*').order('created_at', { ascending: false });
-    setInbox(data || []);
-    setLoading(false);
+    try {
+      const res = await fetch('/api/admin/leads');
+      const data = await res.json();
+      setInbox(data.messages || []);
+    } catch (err) {
+      console.error('Inbox load failed:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function updateStatus(id: string, status: string) {
@@ -140,9 +145,28 @@ export default function AdminInboxPage() {
     return (
       <div className="admin-page">
         <div className="admin-page-header"><h1>Inbox</h1></div>
-        <div className="admin-card p-12 text-center">
-          <i className="fas fa-spinner fa-spin text-2xl text-blue"></i>
-          <p className="mt-3 text-slate-500 dark:text-slate-400">Loading messages...</p>
+        <div className="analytics-loading-card">
+          <div className="lighthouse-loading-scene">
+            <div className="lighthouse-beam"></div>
+            <div className="lighthouse-tower">
+              <div className="lighthouse-lamp"></div>
+              <div className="lighthouse-top"></div>
+              <div className="lighthouse-body">
+                <div className="lighthouse-stripe"></div>
+                <div className="lighthouse-stripe"></div>
+              </div>
+              <div className="lighthouse-base"></div>
+            </div>
+            <div className="lighthouse-water">
+              <div className="analytics-water-wave analytics-water-wave-1"></div>
+              <div className="analytics-water-wave analytics-water-wave-2"></div>
+            </div>
+          </div>
+          <h3 className="analytics-loading-title">Loading Inbox...</h3>
+          <p className="analytics-loading-step">Fetching contact submissions...</p>
+          <div className="analytics-loading-progress">
+            <div className="analytics-loading-progress-bar"></div>
+          </div>
         </div>
       </div>
     );

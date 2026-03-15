@@ -42,13 +42,15 @@ export default function AdminNewsPage() {
   }, []);
 
   async function loadArticles() {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('news_articles')
-      .select('*')
-      .order('published_date', { ascending: false });
-    setArticles(data || []);
-    setLoading(false);
+    try {
+      const res = await fetch('/api/admin/news');
+      const data = await res.json();
+      setArticles(data.articles || []);
+    } catch (err) {
+      console.error('Articles load failed:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function deleteArticle(id: string) {
@@ -91,9 +93,28 @@ export default function AdminNewsPage() {
     return (
       <div className="admin-page">
         <div className="admin-page-header"><h1>News Articles</h1></div>
-        <div className="admin-card p-12 text-center">
-          <i className="fas fa-spinner fa-spin text-2xl text-blue"></i>
-          <p className="mt-3 text-slate-500 dark:text-slate-400">Loading articles...</p>
+        <div className="analytics-loading-card">
+          <div className="lighthouse-loading-scene">
+            <div className="lighthouse-beam"></div>
+            <div className="lighthouse-tower">
+              <div className="lighthouse-lamp"></div>
+              <div className="lighthouse-top"></div>
+              <div className="lighthouse-body">
+                <div className="lighthouse-stripe"></div>
+                <div className="lighthouse-stripe"></div>
+              </div>
+              <div className="lighthouse-base"></div>
+            </div>
+            <div className="lighthouse-water">
+              <div className="analytics-water-wave analytics-water-wave-1"></div>
+              <div className="analytics-water-wave analytics-water-wave-2"></div>
+            </div>
+          </div>
+          <h3 className="analytics-loading-title">Loading News...</h3>
+          <p className="analytics-loading-step">Pulling latest articles...</p>
+          <div className="analytics-loading-progress">
+            <div className="analytics-loading-progress-bar"></div>
+          </div>
         </div>
       </div>
     );

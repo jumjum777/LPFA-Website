@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import ScrollAnimator from '@/components/ui/ScrollAnimator';
 
+
 export const metadata = { title: 'Waterborne Commerce' };
 
 export default function CommercePage() {
@@ -195,11 +196,6 @@ export default function CommercePage() {
               <h4>Black River Wharf Info Sheet</h4>
               <span className="commerce-resource-dl"><i className="fas fa-external-link-alt"></i> View Document</span>
             </a>
-            <a href="https://drive.google.com/file/d/1R7jHzEJLqJQytNUFDns3PkCcKRRDbVT/view?usp=sharing" target="_blank" rel="noopener noreferrer" className="commerce-resource-card">
-              <div className="commerce-resource-icon"><i className="fas fa-water"></i></div>
-              <h4>Waterfront Development Info</h4>
-              <span className="commerce-resource-dl"><i className="fas fa-external-link-alt"></i> View Document</span>
-            </a>
           </div>
         </div>
       </section>
@@ -214,22 +210,22 @@ export default function CommercePage() {
 
           <div className="commerce-videos" data-animate="fade-up">
             <div className="commerce-video-wrap">
-              <h3>Dorothy Anne Arriving &mdash; November 23, 2022</h3>
+              <h3>Herbert C. Jackson Departing Port Lorain</h3>
               <div className="commerce-video-embed">
                 <iframe
-                  src="https://www.youtube.com/embed/gPG1FxGODNw"
-                  title="Dorothy Anne arriving at Port Lorain"
+                  src="https://www.youtube.com/embed/508z7Sjs44c"
+                  title="Herbert C. Jackson Departing Port Lorain"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 ></iframe>
               </div>
             </div>
             <div className="commerce-video-wrap">
-              <h3>Laura L Vanenkevort Arriving &mdash; July 7, 2022</h3>
+              <h3>Tug &amp; Barge Defiance and Ashtabula Arriving</h3>
               <div className="commerce-video-embed">
                 <iframe
-                  src="https://www.youtube.com/embed/NXHg4Hxh7Pw"
-                  title="Laura L Vanenkevort arriving at Port Lorain"
+                  src="https://www.youtube.com/embed/VRyKFDmSWUA"
+                  title="Tug and Barge Defiance and Ashtabula Arriving"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 ></iframe>

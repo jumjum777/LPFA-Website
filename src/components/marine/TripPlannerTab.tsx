@@ -91,6 +91,10 @@ export default function TripPlannerTab() {
     { destination: 'vermilion', departureDate: getTodayStr(), departureTime: getDefaultTime(4) },
   ]);
 
+  // Bot protection
+  const [formLoadedAt] = useState(() => Date.now());
+  const [honeypot, setHoneypot] = useState('');
+
   // Results state
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
@@ -239,7 +243,7 @@ export default function TripPlannerTab() {
         const res = await fetch('/api/trip-planner', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ boatSize, boatType, activities, experienceLevel: experience, legs }),
+          body: JSON.stringify({ boatSize, boatType, activities, experienceLevel: experience, legs, website: honeypot, _ts: formLoadedAt }),
         });
 
         if (!res.ok) {
@@ -274,6 +278,8 @@ export default function TripPlannerTab() {
             destination,
             departureTime,
             returnTime,
+            website: honeypot,
+            _ts: formLoadedAt,
           }),
         });
 
@@ -1075,6 +1081,18 @@ export default function TripPlannerTab() {
             <i className="fas fa-exclamation-circle" style={{ marginRight: '0.35rem' }}></i> {error}
           </div>
         )}
+
+        {/* Honeypot - hidden from humans, bots fill it */}
+        <input
+          type="text"
+          name="website"
+          value={honeypot}
+          onChange={e => setHoneypot(e.target.value)}
+          style={{ position: 'absolute', left: '-9999px', opacity: 0, height: 0, width: 0, tabIndex: -1 } as React.CSSProperties}
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+        />
 
         {/* Submit */}
         <button

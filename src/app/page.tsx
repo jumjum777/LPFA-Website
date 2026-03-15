@@ -45,9 +45,9 @@ export default async function HomePage() {
             </h1>
             <div className="hero-actions">
               <Link href="/development" className="btn btn-gold">Learn More</Link>
+              <Link href="/marine" className="btn btn-outline ml-3" style={{ borderColor: 'rgba(255,255,255,0.4)', color: '#fff' }}>Marine &amp; Alerts</Link>
             </div>
           </div>
-
         </div>
 
         <a href="#services" className="scroll-indicator" aria-label="Scroll down">
@@ -177,7 +177,7 @@ export default async function HomePage() {
               ))}
             </div>
           ) : (
-            <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.6)', padding: '2rem 0' }}>No upcoming events scheduled. Check back soon!</p>
+            <p className="text-center py-8" style={{ color: 'rgba(255,255,255,0.6)' }}>No upcoming events scheduled. Check back soon!</p>
           )}
 
           <div className="section-cta" data-animate="fade-up">

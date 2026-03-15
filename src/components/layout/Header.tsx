@@ -39,7 +39,19 @@ export default function Header() {
 
             <ul className="nav-menu" id="nav-menu" role="menubar">
               <li role="none"><Link href="/" role="menuitem">Home</Link></li>
-              <li role="none"><Link href="/marine" role="menuitem">Marine &amp; Alerts</Link></li>
+              <li className="has-dropdown" role="none">
+                <Link href="/marine" role="menuitem" aria-haspopup="true" aria-expanded="false">Marine &amp; Alerts <i className="fas fa-chevron-down"></i></Link>
+                <ul className="dropdown" role="menu" aria-label="Marine & Alerts">
+                  <li role="none"><a href="/marine#alerts" role="menuitem">Active Alerts</a></li>
+                  <li role="none"><a href="/marine#trip" role="menuitem">Plan Your Boat Trip</a></li>
+                  <li role="none"><a href="/marine#wind" role="menuitem">Wind &amp; Radar</a></li>
+                  <li role="none"><a href="/marine#conditions" role="menuitem">Offshore Conditions</a></li>
+                  <li role="none"><a href="/marine#vessels" role="menuitem">Vessel Traffic</a></li>
+                  <li role="none"><a href="/marine#beach" role="menuitem">Beach Water Quality</a></li>
+                  <li role="none"><a href="/marine#weather" role="menuitem">Weather Forecast</a></li>
+                  <li role="none"><a href="/marine#resources" role="menuitem">Boater Resources</a></li>
+                </ul>
+              </li>
 <li role="none"><Link href="/news" role="menuitem">News</Link></li>
               <li role="none"><Link href="/live-cams" role="menuitem">Live Cams</Link></li>
               <li role="none"><Link href="/donate" role="menuitem">Stage Project</Link></li>
