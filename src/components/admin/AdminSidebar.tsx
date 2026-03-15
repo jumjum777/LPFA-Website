@@ -110,9 +110,15 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
   };
 
   const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push('/admin/login');
+    // Sign out server-side to clear httpOnly cookies
+    await fetch('/api/admin/logout', { method: 'POST' }).catch(() => {});
+    // Clear client-side auth data
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('sb-') || key.includes('supabase')) {
+        localStorage.removeItem(key);
+      }
+    });
+    window.location.href = '/admin/login';
   };
 
   const switchContext = (ctx: SidebarContext) => {
