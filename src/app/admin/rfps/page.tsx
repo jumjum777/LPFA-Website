@@ -39,13 +39,15 @@ export default function AdminRFPsPage() {
   }, []);
 
   async function loadRFPs() {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('rfps')
-      .select('*')
-      .order('posted_date', { ascending: false });
-    setRfps(data || []);
-    setLoading(false);
+    try {
+      const res = await fetch('/api/admin/rfps');
+      const data = await res.json();
+      setRfps(data.rfps || []);
+    } catch (err) {
+      console.error('RFPs load failed:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function deleteRFP(id: string) {

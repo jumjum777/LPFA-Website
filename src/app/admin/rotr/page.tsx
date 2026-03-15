@@ -9,8 +9,9 @@ import { generateFinancePdf } from '@/lib/generateFinancePdf';
 import dynamic from 'next/dynamic';
 const FileRepository = dynamic(() => import('@/app/admin/files/page'), { ssr: false });
 const ROTRStaffManager = dynamic(() => import('@/components/admin/ROTRStaffManager'), { ssr: false });
+const PurchaseOrders = dynamic(() => import('@/app/admin/purchase-orders/page'), { ssr: false });
 
-type Tab = 'overview' | 'events' | 'orders' | 'customers' | 'inbox' | 'finances' | 'analytics' | 'files' | 'email' | 'staff';
+type Tab = 'overview' | 'events' | 'orders' | 'customers' | 'inbox' | 'finances' | 'analytics' | 'files' | 'email' | 'staff' | 'purchase-orders';
 
 interface TicketDef {
   id: string;
@@ -83,6 +84,10 @@ interface Summary {
   totalOrders: number;
   totalRevenue: number;
   totalTickets: number;
+  recentOrders: number;
+  recentRevenue: number;
+  recentTickets: number;
+  recentInbox: number;
 }
 
 interface Customer {
@@ -135,6 +140,7 @@ function ROTRContent() {
   const [financeSummary, setFinanceSummary] = useState<{ summary: string; highlights: string[]; trend: string; generatedAt: string } | null>(null);
   const [financeSummaryLoading, setFinanceSummaryLoading] = useState(false);
   const [financeSummaryError, setFinanceSummaryError] = useState<string | null>(null);
+  const [financeSummaryCollapsed, setFinanceSummaryCollapsed] = useState(false);
   const [financePdfLoading, setFinancePdfLoading] = useState(false);
   const [txnLoading, setTxnLoading] = useState(false);
   const [analyticsData, setAnalyticsData] = useState<{ metrics: AnalyticsMetric[]; previousMetrics: AnalyticsMetric[] | null; period: { start: string; end: string; days: number } } | null>(null);
@@ -142,6 +148,7 @@ function ROTRContent() {
   const [analyticsPeriod, setAnalyticsPeriod] = useState('30d');
   const [publishMap, setPublishMap] = useState<Map<string, { id: string; is_published: boolean }>>(new Map());
   const [collapsedYears, setCollapsedYears] = useState<Set<number>>(new Set());
+  const [showAllUpcoming, setShowAllUpcoming] = useState(false);
   const [inboxThreads, setInboxThreads] = useState<Array<{
     conversationId: string;
     contactName: string;
@@ -298,7 +305,7 @@ function ROTRContent() {
 
   // Load orders when tab switches to orders, customers, or finances
   useEffect(() => {
-    if ((tab === 'orders' || tab === 'customers' || tab === 'finances') && orders.length === 0 && !ordersLoading) {
+    if ((tab === 'overview' || tab === 'orders' || tab === 'customers' || tab === 'finances') && orders.length === 0 && !ordersLoading) {
       setOrdersLoading(true);
       fetch('/api/admin/rotr/orders')
         .then(res => res.json())
@@ -468,10 +475,10 @@ function ROTRContent() {
     <div className="admin-page">
       <div className="admin-page-header">
         <div>
-          <h1>{tab === 'email' ? <><i className="fas fa-envelope" style={{ marginRight: '0.5rem', color: '#1B8BEB' }}></i> Email Marketing</> : tab === 'files' ? <><i className="fas fa-folder-open" style={{ marginRight: '0.5rem', color: '#D97706' }}></i> Files</> : tab === 'staff' ? <><i className="fas fa-hard-hat" style={{ marginRight: '0.5rem', color: '#1B8BEB' }}></i> Staff &amp; Contractors</> : "Rockin' on the River"}</h1>
-          <p>{tab === 'email' ? "Campaign analytics from Constant Contact" : tab === 'files' ? "Shared document and asset repository" : tab === 'staff' ? "Manage event staff, assignments, hours, and payroll exports" : "Concert series data from Wix Events"}</p>
+          <h1>{tab === 'email' ? <><i className="fas fa-envelope" style={{ marginRight: '0.5rem', color: '#1B8BEB' }}></i> Email Marketing</> : tab === 'files' ? <><i className="fas fa-folder-open" style={{ marginRight: '0.5rem', color: '#D97706' }}></i> Files</> : tab === 'staff' ? <><i className="fas fa-hard-hat" style={{ marginRight: '0.5rem', color: '#1B8BEB' }}></i> Staff &amp; Contractors</> : tab === 'purchase-orders' ? <><i className="fas fa-file-invoice" style={{ marginRight: '0.5rem', color: '#7C3AED' }}></i> Purchase Orders</> : "Rockin' on the River"}</h1>
+          <p>{tab === 'email' ? "Campaign analytics from Constant Contact" : tab === 'files' ? "Shared document and asset repository" : tab === 'staff' ? "Manage event staff, assignments, hours, and payroll exports" : tab === 'purchase-orders' ? "Shared purchase orders across all departments" : "Concert series data from Wix Events"}</p>
         </div>
-        {tab !== 'email' && tab !== 'files' && tab !== 'staff' && (
+        {tab !== 'email' && tab !== 'files' && tab !== 'staff' && tab !== 'purchase-orders' && (
           <div className="admin-header-actions">
             <a
               href="https://www.rockinontheriver.com"
@@ -487,112 +494,159 @@ function ROTRContent() {
 
       {/* === OVERVIEW TAB === */}
       {tab === 'overview' && summary && (
-        <div>
-          <div className="rotr-stats-row">
-            <div className="rotr-stat-card">
-              <div className="rotr-stat-icon" style={{ background: 'rgba(27,139,235,0.1)', color: '#1B8BEB' }}>
-                <i className="fas fa-calendar-alt"></i>
-              </div>
-              <div className="rotr-stat-value">{summary.upcomingEvents}</div>
-              <div className="rotr-stat-label">Upcoming Shows</div>
-            </div>
-            <div className="rotr-stat-card">
-              <div className="rotr-stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10B981' }}>
-                <i className="fas fa-receipt"></i>
-              </div>
-              <div className="rotr-stat-value">{summary.totalOrders}</div>
-              <div className="rotr-stat-label">Total Orders</div>
-            </div>
-            <div className="rotr-stat-card">
-              <div className="rotr-stat-icon" style={{ background: 'rgba(217,119,6,0.1)', color: '#D97706' }}>
-                <i className="fas fa-dollar-sign"></i>
-              </div>
-              <div className="rotr-stat-value">{formatCurrency(summary.totalRevenue)}</div>
-              <div className="rotr-stat-label">Total Revenue</div>
-            </div>
-            <div className="rotr-stat-card">
-              <div className="rotr-stat-icon" style={{ background: 'rgba(124,58,237,0.1)', color: '#7C3AED' }}>
-                <i className="fas fa-ticket-alt"></i>
-              </div>
-              <div className="rotr-stat-value">{summary.totalTickets}</div>
-              <div className="rotr-stat-label">Tickets Sold</div>
-            </div>
+        <div style={{ maxWidth: '1400px' }}>
+          {/* Stat Cards — Last 7 Days */}
+          <div className="admin-stats-grid dash-compact" style={{ marginBottom: '1.5rem' }}>
+            {[
+              { title: 'Upcoming Shows', subtitle: 'Next 7 days', value: summary.upcomingEvents, icon: 'fas fa-calendar-alt', color: '#1B8BEB', href: '/admin/rotr?tab=events' },
+              { title: 'Orders', subtitle: 'Last 7 days', value: summary.recentOrders, icon: 'fas fa-receipt', color: '#10B981', href: '/admin/rotr?tab=orders' },
+              { title: 'Revenue', subtitle: 'Last 7 days', value: formatCurrency(summary.recentRevenue), icon: 'fas fa-dollar-sign', color: '#D97706', href: '/admin/rotr?tab=finances' },
+              { title: 'Tickets Sold', subtitle: 'Last 7 days', value: summary.recentTickets, icon: 'fas fa-ticket-alt', color: '#7C3AED', href: '/admin/rotr?tab=orders' },
+              { title: 'Inbox Messages', subtitle: 'Last 7 days', value: summary.recentInbox, icon: 'fas fa-envelope', color: '#EF4444', href: '/admin/rotr?tab=inbox' },
+            ].map(card => (
+              <Link key={card.title} href={card.href} className="admin-stat-card dash-compact-card">
+                <div className="admin-stat-icon" style={{ background: `${card.color}15`, color: card.color, width: 36, height: 36, borderRadius: 8, fontSize: '0.95rem' }}>
+                  <i className={card.icon}></i>
+                </div>
+                <div className="admin-stat-info">
+                  <span className="admin-stat-count" style={{ fontSize: '1.35rem' }}>{card.value}</span>
+                  <span className="admin-stat-label">{card.title}</span>
+                  <span style={{ fontSize: '0.6rem', color: '#94a3b8', fontWeight: 500, marginTop: '0.1rem', display: 'block' }}>{card.subtitle}</span>
+                </div>
+              </Link>
+            ))}
           </div>
 
-          {/* Upcoming Events Quick View */}
-          <div className="admin-card" style={{ marginTop: '1.5rem' }}>
-            <h3 style={{ marginBottom: '1rem' }}>Upcoming Shows</h3>
-            {upcomingEvents.length === 0 ? (
-              <p style={{ color: 'var(--gray-500)' }}>No upcoming shows scheduled.</p>
-            ) : (
-              <div className="rotr-upcoming-list">
-                {upcomingEvents.map(event => (
-                  <Link
-                    key={event.id}
-                    href={`/admin/rotr/${event.id}`}
-                    className="rotr-upcoming-item"
-                  >
-                    {event.mainImage && (
-                      <img
-                        src={event.mainImage.url}
-                        alt={event.title}
-                        className="rotr-upcoming-thumb"
-                      />
+          {/* Two-column layout: Upcoming Shows + Quick Actions */}
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+
+            {/* Upcoming Shows */}
+            <div className="admin-card">
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 0 1rem' }}>
+                <i className="fas fa-calendar-alt" style={{ color: '#1B8BEB' }}></i> Upcoming Shows
+                <Link href="/admin/rotr?tab=events" style={{ fontSize: '0.82rem', fontWeight: 500, color: '#1B8BEB', marginLeft: 'auto', textDecoration: 'none' }}>
+                  View All <i className="fas fa-arrow-right" style={{ fontSize: '0.7rem' }}></i>
+                </Link>
+              </h3>
+              {upcomingEvents.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: '#94a3b8' }}>
+                  <i className="fas fa-calendar-alt" style={{ fontSize: '2rem', marginBottom: '0.5rem', display: 'block', opacity: 0.4 }}></i>
+                  <p style={{ margin: 0 }}>No upcoming shows scheduled</p>
+                  <a href="https://www.rockinontheriver.com" target="_blank" rel="noopener noreferrer" className="admin-btn admin-btn-primary" style={{ marginTop: '0.75rem', display: 'inline-flex' }}>
+                    <i className="fas fa-plus"></i> Create on Wix
+                  </a>
+                </div>
+              ) : (() => {
+                const ticketsByEvent = new Map<string, number>();
+                orders.forEach(o => {
+                  if (o.status === 'CONFIRMED' || o.status === 'PAID') {
+                    ticketsByEvent.set(o.eventId, (ticketsByEvent.get(o.eventId) || 0) + o.ticketsQuantity);
+                  }
+                });
+                const displayed = showAllUpcoming ? upcomingEvents : upcomingEvents.slice(0, 5);
+                return (
+                  <>
+                    <div className="rotr-upcoming-list">
+                      {displayed.map(event => (
+                        <Link
+                          key={event.id}
+                          href={`/admin/rotr/${event.id}`}
+                          className="rotr-upcoming-item"
+                        >
+                          {event.mainImage ? (
+                            <img
+                              src={event.mainImage.url}
+                              alt={event.title}
+                              className="rotr-upcoming-thumb"
+                            />
+                          ) : (
+                            <div className="rotr-upcoming-thumb" style={{ background: 'var(--gray-100)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <i className="fas fa-music" style={{ color: 'var(--gray-400)' }}></i>
+                            </div>
+                          )}
+                          <div className="rotr-upcoming-info">
+                            <span className="rotr-upcoming-title">{event.title}</span>
+                            <span className="rotr-upcoming-date">
+                              <i className="fas fa-calendar"></i> {event.dateAndTimeSettings.formatted.startDate}
+                              {event.dateAndTimeSettings.formatted.startTime && ` at ${event.dateAndTimeSettings.formatted.startTime}`}
+                            </span>
+                          </div>
+                          <div className="rotr-upcoming-meta" style={{ textAlign: 'right' }}>
+                            <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--navy)' }}>{ticketsByEvent.get(event.id) || 0}</span>
+                            <span style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8' }}>tickets sold</span>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                    {upcomingEvents.length > 5 && (
+                      <button
+                        onClick={() => setShowAllUpcoming(!showAllUpcoming)}
+                        style={{ width: '100%', padding: '0.6rem', background: 'none', border: 'none', cursor: 'pointer', color: '#1B8BEB', fontSize: '0.85rem', fontWeight: 600, marginTop: '0.5rem' }}
+                      >
+                        {showAllUpcoming ? 'Show Less' : `Show All ${upcomingEvents.length} Shows`}
+                        <i className={`fas fa-chevron-${showAllUpcoming ? 'up' : 'down'}`} style={{ marginLeft: '0.4rem', fontSize: '0.7rem' }}></i>
+                      </button>
                     )}
-                    <div className="rotr-upcoming-info">
-                      <span className="rotr-upcoming-title">{event.title}</span>
-                      <span className="rotr-upcoming-date">
-                        <i className="fas fa-calendar"></i> {event.dateAndTimeSettings.formatted.startDate}
-                        {event.dateAndTimeSettings.formatted.startTime && ` at ${event.dateAndTimeSettings.formatted.startTime}`}
-                      </span>
-                    </div>
-                    <div className="rotr-upcoming-meta">
-                      {event.registration.tickets?.soldOut ? (
-                        <span className="admin-status-badge" style={{ background: '#DC2626' }}>Sold Out</span>
-                      ) : event.registration.tickets?.lowestPrice ? (
-                        <span className="rotr-upcoming-price">{event.registration.tickets.lowestPrice.formattedValue}</span>
-                      ) : (
-                        <span className="rotr-upcoming-price">Free</span>
-                      )}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+                  </>
+                );
+              })()}
+            </div>
 
-          {/* Revenue by Event */}
-          {pastEvents.length > 0 && (
-            <div className="admin-card" style={{ marginTop: '1.5rem' }}>
-              <h3 style={{ marginBottom: '1rem' }}>Past Shows</h3>
-              <div className="admin-table-wrap">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Event</th>
-                      <th>Date</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pastEvents.slice(0, 10).map(event => (
-                      <tr key={event.id}>
-                        <td>
-                          <Link href={`/admin/rotr/${event.id}`} style={{ color: 'var(--blue-accent)', fontWeight: 500 }}>
-                            {event.title}
-                          </Link>
-                        </td>
-                        <td>{event.dateAndTimeSettings.formatted.startDate}</td>
-                        <td>
-                          <span className="admin-status-badge" style={{ background: '#6B7280' }}>Ended</span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {/* Quick Actions + Recent Activity */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {/* Quick Actions */}
+              <div className="admin-card">
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 0 1rem' }}>
+                  <i className="fas fa-bolt" style={{ color: '#D97706' }}></i> Quick Actions
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <a href="https://www.rockinontheriver.com" target="_blank" rel="noopener noreferrer" className="admin-btn admin-btn-secondary" style={{ justifyContent: 'flex-start', width: '100%' }}>
+                    <i className="fas fa-external-link-alt"></i> Manage on Wix
+                  </a>
+                  <Link href="/admin/rotr?tab=orders" className="admin-btn admin-btn-secondary" style={{ justifyContent: 'flex-start', width: '100%' }}>
+                    <i className="fas fa-receipt"></i> View Orders
+                  </Link>
+                  <Link href="/admin/rotr?tab=finances" className="admin-btn admin-btn-secondary" style={{ justifyContent: 'flex-start', width: '100%' }}>
+                    <i className="fas fa-chart-pie"></i> Financial Reports
+                  </Link>
+                  <Link href="/admin/rotr?tab=analytics" className="admin-btn admin-btn-secondary" style={{ justifyContent: 'flex-start', width: '100%' }}>
+                    <i className="fas fa-chart-line"></i> Site Analytics
+                  </Link>
+                </div>
+              </div>
+
+              {/* 2026 Season Totals */}
+              <div className="admin-card" style={{ flex: 1 }}>
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 0 1rem' }}>
+                  <i className="fas fa-chart-bar" style={{ color: '#7C3AED' }}></i> 2026 Season
+                </h3>
+                {(() => {
+                  const yearStart = '2026-01-01T00:00:00.000Z';
+                  const yearOrders = orders.filter(o => (o.status === 'CONFIRMED' || o.status === 'PAID') && o.created >= yearStart);
+                  const yearRevenue = yearOrders.reduce((s, o) => s + parseFloat(o.totalPrice?.amount || '0'), 0);
+                  const yearTickets = yearOrders.reduce((s, o) => s + o.ticketsQuantity, 0);
+                  const yearEvents = events.filter(e => new Date(e.dateAndTimeSettings.startDate).getFullYear() === 2026).length;
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      {[
+                        { label: 'Events', value: yearEvents, color: '#1B8BEB' },
+                        { label: 'Orders', value: yearOrders.length, color: '#10B981' },
+                        { label: 'Revenue', value: formatCurrency(yearRevenue), color: '#D97706' },
+                        { label: 'Tickets Sold', value: yearTickets, color: '#7C3AED' },
+                        { label: 'Avg. Order Value', value: yearOrders.length > 0 ? formatCurrency(yearRevenue / yearOrders.length) : '$0', color: '#EF4444' },
+                      ].map(item => (
+                        <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid var(--gray-100)' }}>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--gray-500)' }}>{item.label}</span>
+                          <span style={{ fontSize: '1rem', fontWeight: 700, color: item.color }}>{item.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
-          )}
+          </div>
+
         </div>
       )}
 
@@ -608,11 +662,20 @@ function ROTRContent() {
         const yearGroups = Array.from(yearMap.entries())
           .sort(([a], [b]) => b - a); // newest first
 
+        // Ticket counts from orders
+        const ticketsByEvent = new Map<string, number>();
+        orders.forEach(o => {
+          if (o.status === 'CONFIRMED' || o.status === 'PAID') {
+            ticketsByEvent.set(o.eventId, (ticketsByEvent.get(o.eventId) || 0) + o.ticketsQuantity);
+          }
+        });
+
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
             {yearGroups.map(([year, yearEvents]) => {
               const isCollapsed = collapsedYears.has(year);
               const liveCount = yearEvents.filter(e => publishMap.get(e.id)?.is_published).length;
+              const yearTickets = yearEvents.reduce((s, e) => s + (ticketsByEvent.get(e.id) || 0), 0);
               // Sort: published first, then by date
               const sorted = [...yearEvents].sort((a, b) => {
                 const aPub = publishMap.get(a.id)?.is_published ?? false;
@@ -627,124 +690,141 @@ function ROTRContent() {
                     onClick={() => toggleEventsYear(year)}
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem',
-                      padding: '0.75rem 1rem', background: 'none', border: 'none', cursor: 'pointer',
+                      padding: '1rem 1.25rem', background: 'none', border: 'none', cursor: 'pointer',
                       color: 'inherit', fontSize: '1rem', fontWeight: 600, textAlign: 'left',
+                      borderBottom: isCollapsed ? 'none' : '1px solid var(--gray-100)',
                     }}
                   >
-                    <i className={`fas fa-chevron-${isCollapsed ? 'right' : 'down'}`} style={{ fontSize: '0.75rem', width: '0.75rem' }}></i>
+                    <i className={`fas fa-chevron-${isCollapsed ? 'right' : 'down'}`} style={{ fontSize: '0.75rem', width: '0.75rem', color: '#94a3b8' }}></i>
                     <span>{year}</span>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 400, color: '#94a3b8' }}>
-                      {yearEvents.length} event{yearEvents.length !== 1 ? 's' : ''} &middot; {liveCount} live
-                    </span>
+                    <div style={{ display: 'flex', gap: '1rem', marginLeft: 'auto', fontSize: '0.75rem', fontWeight: 500 }}>
+                      <span style={{ color: '#1B8BEB' }}><i className="fas fa-calendar-alt" style={{ marginRight: '0.3rem' }}></i>{yearEvents.length} events</span>
+                      <span style={{ color: '#10B981' }}><i className="fas fa-check-circle" style={{ marginRight: '0.3rem' }}></i>{liveCount} live</span>
+                      <span style={{ color: '#7C3AED' }}><i className="fas fa-ticket-alt" style={{ marginRight: '0.3rem' }}></i>{yearTickets} sold</span>
+                    </div>
                   </button>
                   {!isCollapsed && (
-                    <div className="admin-table-wrap">
-                      <table className="admin-table" style={{ marginTop: 0 }}>
-                        <thead>
-                          <tr>
-                            <th></th>
-                            <th>Event</th>
-                            <th>Date</th>
-                            <th>Price</th>
-                            <th>Wix Status</th>
-                            <th>Tickets</th>
-                            <th>Live on Site</th>
-                            <th></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {sorted.map(event => {
-                            const wixUrl = event.eventPageUrl
-                              ? `${event.eventPageUrl.base}${event.eventPageUrl.path}`
-                              : null;
-                            const pubEntry = publishMap.get(event.id);
-                            const isLive = pubEntry?.is_published ?? false;
-                            const isSynced = !!pubEntry;
-                            const dimmed = isSynced && !isLive;
-                            return (
-                              <tr key={event.id} style={dimmed ? { opacity: 0.55 } : undefined}>
-                                <td style={{ width: '50px', padding: '0.5rem' }}>
-                                  {event.mainImage ? (
-                                    <img
-                                      src={event.mainImage.url}
-                                      alt=""
-                                      style={{ width: '44px', height: '44px', objectFit: 'cover', borderRadius: '6px' }}
-                                    />
-                                  ) : (
-                                    <div style={{ width: '44px', height: '44px', background: 'var(--gray-100)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                      <i className="fas fa-music" style={{ color: 'var(--gray-400)' }}></i>
-                                    </div>
-                                  )}
-                                </td>
-                                <td>
-                                  <Link href={`/admin/rotr/${event.id}`} style={{ color: dimmed ? '#94a3b8' : 'var(--blue-accent)', fontWeight: 500 }}>
-                                    {event.title}
-                                  </Link>
-                                </td>
-                                <td style={{ whiteSpace: 'nowrap' }}>
-                                  {event.dateAndTimeSettings.formatted.startDate}
-                                </td>
-                                <td>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      {sorted.map((event, idx) => {
+                        const wixUrl = event.eventPageUrl
+                          ? `${event.eventPageUrl.base}${event.eventPageUrl.path}`
+                          : null;
+                        const pubEntry = publishMap.get(event.id);
+                        const isLive = pubEntry?.is_published ?? false;
+                        const isSynced = !!pubEntry;
+                        const dimmed = isSynced && !isLive;
+                        const eventTickets = ticketsByEvent.get(event.id) || 0;
+                        return (
+                          <div
+                            key={event.id}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: '1rem',
+                              padding: '0.85rem 1.25rem',
+                              borderBottom: idx < sorted.length - 1 ? '1px solid var(--gray-100)' : 'none',
+                              opacity: dimmed ? 0.55 : 1,
+                              transition: 'background 0.15s',
+                            }}
+                            className="rotr-event-row"
+                          >
+                            {/* Thumbnail */}
+                            <div style={{ flexShrink: 0 }}>
+                              {event.mainImage ? (
+                                <img
+                                  src={event.mainImage.url}
+                                  alt=""
+                                  style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px' }}
+                                />
+                              ) : (
+                                <div style={{ width: '48px', height: '48px', background: 'var(--gray-100)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <i className="fas fa-music" style={{ color: 'var(--gray-400)' }}></i>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Event Info */}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <Link href={`/admin/rotr/${event.id}`} style={{ color: dimmed ? '#94a3b8' : 'var(--blue-accent)', fontWeight: 600, fontSize: '0.92rem', textDecoration: 'none' }}>
+                                {event.title}
+                              </Link>
+                              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.2rem', fontSize: '0.78rem', color: '#94a3b8' }}>
+                                <span><i className="fas fa-calendar" style={{ marginRight: '0.3rem', fontSize: '0.7rem' }}></i>{event.dateAndTimeSettings.formatted.startDate}</span>
+                                {event.dateAndTimeSettings.formatted.startTime && (
+                                  <span><i className="fas fa-clock" style={{ marginRight: '0.3rem', fontSize: '0.7rem' }}></i>{event.dateAndTimeSettings.formatted.startTime}</span>
+                                )}
+                                <span>
                                   {event.registration.tickets?.lowestPrice
                                     ? event.registration.tickets.lowestPrice.formattedValue
                                     : 'Free'}
-                                </td>
-                                <td>
-                                  <span
-                                    className="admin-status-badge"
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Tickets Sold */}
+                            <div style={{ textAlign: 'center', minWidth: '60px' }}>
+                              <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--navy)' }}>{eventTickets}</div>
+                              <div style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase' }}>tickets</div>
+                            </div>
+
+                            {/* Status */}
+                            <div style={{ minWidth: '70px', textAlign: 'center' }}>
+                              <span
+                                className="admin-status-badge"
+                                style={{
+                                  background: event.status === 'UPCOMING' ? '#10B981'
+                                    : event.status === 'ENDED' ? '#6B7280'
+                                    : '#EF4444',
+                                  fontSize: '0.7rem',
+                                }}
+                              >
+                                {event.status}
+                              </span>
+                              {event.registration.tickets?.soldOut && (
+                                <div style={{ fontSize: '0.7rem', color: '#DC2626', fontWeight: 600, marginTop: '0.2rem' }}>Sold Out</div>
+                              )}
+                            </div>
+
+                            {/* Live Toggle */}
+                            <div style={{ minWidth: '80px' }}>
+                              {isSynced ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }} onClick={() => toggleEventPublished(event.id)}>
+                                  <div
                                     style={{
-                                      background: event.status === 'UPCOMING' ? '#10B981'
-                                        : event.status === 'ENDED' ? '#6B7280'
-                                        : '#EF4444',
+                                      width: '2.5rem', height: '1.35rem', borderRadius: '999px', position: 'relative',
+                                      background: isLive ? '#16a34a' : '#374151', transition: 'background 0.2s',
                                     }}
                                   >
-                                    {event.status}
+                                    <div style={{
+                                      width: '1rem', height: '1rem', borderRadius: '50%', background: '#fff',
+                                      position: 'absolute', top: '0.175rem',
+                                      left: isLive ? '1.3rem' : '0.2rem',
+                                      transition: 'left 0.2s',
+                                    }} />
+                                  </div>
+                                  <span style={{ fontSize: '0.72rem', color: isLive ? '#16a34a' : '#94a3b8', fontWeight: 500 }}>
+                                    {isLive ? 'Live' : 'Hidden'}
                                   </span>
-                                </td>
-                                <td>
-                                  {event.registration.tickets?.soldOut ? (
-                                    <span style={{ color: '#DC2626', fontWeight: 600, fontSize: '0.82rem' }}>Sold Out</span>
-                                  ) : (
-                                    <span style={{ color: '#10B981', fontSize: '0.82rem' }}>Available</span>
-                                  )}
-                                </td>
-                                <td>
-                                  {isSynced ? (
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                      <div
-                                        onClick={() => toggleEventPublished(event.id)}
-                                        style={{
-                                          width: '2.5rem', height: '1.35rem', borderRadius: '999px', position: 'relative',
-                                          background: isLive ? '#16a34a' : '#374151', transition: 'background 0.2s', cursor: 'pointer',
-                                        }}
-                                      >
-                                        <div style={{
-                                          width: '1rem', height: '1rem', borderRadius: '50%', background: '#fff',
-                                          position: 'absolute', top: '0.175rem',
-                                          left: isLive ? '1.3rem' : '0.2rem',
-                                          transition: 'left 0.2s',
-                                        }} />
-                                      </div>
-                                      <span style={{ fontSize: '0.75rem', color: isLive ? '#16a34a' : '#94a3b8' }}>
-                                        {isLive ? 'Live' : 'Hidden'}
-                                      </span>
-                                    </label>
-                                  ) : (
-                                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Not synced</span>
-                                  )}
-                                </td>
-                                <td>
-                                  {wixUrl && (
-                                    <a href={wixUrl} target="_blank" rel="noopener noreferrer" className="admin-btn-icon" title="View on Wix">
-                                      <i className="fas fa-external-link-alt"></i>
-                                    </a>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
+                                </div>
+                              ) : (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', opacity: 0.5 }}>
+                                  <div style={{ width: '2.5rem', height: '1.35rem', borderRadius: '999px', position: 'relative', background: '#374151' }}>
+                                    <div style={{ width: '1rem', height: '1rem', borderRadius: '50%', background: '#fff', position: 'absolute', top: '0.175rem', left: '0.2rem' }} />
+                                  </div>
+                                  <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 500 }}>Hidden</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Wix Link */}
+                            <div style={{ flexShrink: 0 }}>
+                              {wixUrl && (
+                                <a href={wixUrl} target="_blank" rel="noopener noreferrer" className="admin-btn-icon" title="View on Wix" style={{ fontSize: '0.8rem' }}>
+                                  <i className="fas fa-external-link-alt"></i>
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -756,33 +836,59 @@ function ROTRContent() {
 
       {/* === ORDERS TAB === */}
       {tab === 'orders' && (
-        <div>
-          <div className="rotr-orders-toolbar">
-            <div className="rotr-orders-filters">
-              <select
-                value={orderFilter}
-                onChange={e => setOrderFilter(e.target.value)}
-                className="rotr-filter-select"
+        <div style={{ marginTop: '0.5rem' }}>
+          {/* Summary Stats */}
+          <div className="admin-stats-grid dash-compact" style={{ marginBottom: '1.25rem' }}>
+            {[
+              { title: 'Total Orders', value: filteredOrders.length, icon: 'fas fa-receipt', color: '#1B8BEB' },
+              { title: 'Revenue', value: formatCurrency(filteredRevenue), icon: 'fas fa-dollar-sign', color: '#10B981' },
+              { title: 'Tickets', value: filteredOrders.reduce((s, o) => s + o.ticketsQuantity, 0), icon: 'fas fa-ticket-alt', color: '#7C3AED' },
+              { title: 'Avg. Order', value: filteredOrders.length > 0 ? formatCurrency(filteredRevenue / filteredOrders.length) : '$0', icon: 'fas fa-chart-line', color: '#D97706' },
+            ].map(card => (
+              <div key={card.title} className="admin-stat-card dash-compact-card">
+                <div className="admin-stat-icon" style={{ background: `${card.color}15`, color: card.color, width: 36, height: 36, borderRadius: 8, fontSize: '0.95rem' }}>
+                  <i className={card.icon}></i>
+                </div>
+                <div className="admin-stat-info">
+                  <span className="admin-stat-count" style={{ fontSize: '1.35rem' }}>{card.value}</span>
+                  <span className="admin-stat-label">{card.title}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Filters */}
+          <div className="admin-card" style={{ padding: '0.75rem 1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <i className="fas fa-filter" style={{ color: '#94a3b8', fontSize: '0.85rem' }}></i>
+            <select
+              value={orderFilter}
+              onChange={e => setOrderFilter(e.target.value)}
+              className="rotr-filter-select"
+              style={{ flex: '1', maxWidth: '280px' }}
+            >
+              <option value="">All Events</option>
+              {events.filter(e => e.status === 'UPCOMING' || e.status === 'ENDED').map(e => (
+                <option key={e.id} value={e.id}>{e.title}</option>
+              ))}
+            </select>
+            <select
+              value={orderStatusFilter}
+              onChange={e => setOrderStatusFilter(e.target.value)}
+              className="rotr-filter-select"
+              style={{ maxWidth: '160px' }}
+            >
+              <option value="">All Statuses</option>
+              <option value="PAID">Paid</option>
+              <option value="FREE">Free</option>
+            </select>
+            {(orderFilter || orderStatusFilter) && (
+              <button
+                onClick={() => { setOrderFilter(''); setOrderStatusFilter(''); }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', fontSize: '0.82rem', fontWeight: 500 }}
               >
-                <option value="">All Events</option>
-                {events.filter(e => e.status === 'UPCOMING' || e.status === 'ENDED').map(e => (
-                  <option key={e.id} value={e.id}>{e.title}</option>
-                ))}
-              </select>
-              <select
-                value={orderStatusFilter}
-                onChange={e => setOrderStatusFilter(e.target.value)}
-                className="rotr-filter-select"
-              >
-                <option value="">All Statuses</option>
-                <option value="PAID">Paid</option>
-                <option value="FREE">Free</option>
-              </select>
-            </div>
-            <div className="rotr-orders-summary">
-              <span>{filteredOrders.length} orders</span>
-              <span className="rotr-orders-revenue">{formatCurrency(filteredRevenue)}</span>
-            </div>
+                <i className="fas fa-times" style={{ marginRight: '0.25rem' }}></i> Clear
+              </button>
+            )}
           </div>
 
           {ordersLoading ? (
@@ -790,67 +896,78 @@ function ROTRContent() {
               <i className="fas fa-spinner fa-spin" style={{ fontSize: '1.5rem', color: 'var(--blue-accent)' }}></i>
               <p style={{ marginTop: '0.75rem', color: 'var(--gray-500)' }}>Loading orders...</p>
             </div>
+          ) : filteredOrders.length === 0 ? (
+            <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
+              <i className="fas fa-receipt" style={{ fontSize: '2rem', color: '#94a3b8', opacity: 0.4, marginBottom: '0.5rem', display: 'block' }}></i>
+              <p style={{ color: '#94a3b8', margin: 0 }}>No orders found</p>
+            </div>
           ) : (
-            <div className="admin-table-wrap">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Order #</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Event</th>
-                    <th>Qty</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredOrders.length === 0 ? (
-                    <tr>
-                      <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray-500)' }}>
-                        No orders found.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredOrders.map(order => (
-                      <tr key={order.orderNumber}>
-                        <td style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{order.orderNumber}</td>
-                        <td style={{ fontWeight: 500 }}>{order.fullName || `${order.firstName} ${order.lastName}`.trim()}</td>
-                        <td>
-                          <a href={`mailto:${order.email}`} style={{ color: 'var(--blue-accent)' }}>
-                            {order.email}
-                          </a>
-                        </td>
-                        <td style={{ fontSize: '0.85rem' }}>
-                          {eventMap.get(order.eventId) || 'Unknown'}
-                        </td>
-                        <td>{order.ticketsQuantity}</td>
-                        <td style={{ fontWeight: 500 }}>
-                          {parseFloat(order.totalPrice?.amount || '0') > 0
-                            ? formatCurrency(parseFloat(order.totalPrice!.amount))
-                            : 'Free'}
-                        </td>
-                        <td>
-                          <span
-                            className="admin-status-badge"
-                            style={{
-                              background: order.status === 'PAID' ? '#10B981'
-                                : order.status === 'FREE' ? '#6B7280'
-                                : '#EF4444',
-                            }}
-                          >
-                            {order.status === 'NA_ORDER_STATUS' ? 'N/A' : order.status}
-                          </span>
-                        </td>
-                        <td style={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
-                          {formatDate(order.created)}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+            <div className="admin-card" style={{ padding: 0, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {filteredOrders.map((order, idx) => (
+                  <div
+                    key={order.orderNumber}
+                    className="rotr-event-row"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '1rem',
+                      padding: '0.85rem 1.25rem',
+                      borderBottom: idx < filteredOrders.length - 1 ? '1px solid var(--gray-100)' : 'none',
+                    }}
+                  >
+                    {/* Order Icon */}
+                    <div style={{
+                      width: '40px', height: '40px', borderRadius: '8px', flexShrink: 0,
+                      background: order.status === 'PAID' ? '#10B98115' : '#6B728015',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: order.status === 'PAID' ? '#10B981' : '#6B7280',
+                    }}>
+                      <i className={order.status === 'PAID' ? 'fas fa-credit-card' : 'fas fa-ticket-alt'}></i>
+                    </div>
+
+                    {/* Order Info */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--navy)' }}>
+                        {order.fullName || `${order.firstName} ${order.lastName}`.trim()}
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.15rem', fontSize: '0.78rem', color: '#94a3b8' }}>
+                        <span style={{ fontFamily: 'monospace' }}>#{order.orderNumber}</span>
+                        <span>{eventMap.get(order.eventId) || 'Unknown'}</span>
+                      </div>
+                    </div>
+
+                    {/* Tickets */}
+                    <div style={{ textAlign: 'center', minWidth: '45px' }}>
+                      <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--navy)' }}>{order.ticketsQuantity}</div>
+                      <div style={{ fontSize: '0.6rem', color: '#94a3b8', textTransform: 'uppercase' }}>qty</div>
+                    </div>
+
+                    {/* Amount */}
+                    <div style={{ textAlign: 'right', minWidth: '80px' }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.95rem', color: parseFloat(order.totalPrice?.amount || '0') > 0 ? 'var(--navy)' : '#94a3b8' }}>
+                        {parseFloat(order.totalPrice?.amount || '0') > 0
+                          ? formatCurrency(parseFloat(order.totalPrice!.amount))
+                          : 'Free'}
+                      </div>
+                    </div>
+
+                    {/* Status + Date */}
+                    <div style={{ textAlign: 'right', minWidth: '90px' }}>
+                      <span
+                        className="admin-status-badge"
+                        style={{
+                          background: order.status === 'PAID' ? '#10B981'
+                            : order.status === 'FREE' ? '#6B7280'
+                            : '#EF4444',
+                          fontSize: '0.7rem',
+                        }}
+                      >
+                        {order.status === 'NA_ORDER_STATUS' ? 'N/A' : order.status}
+                      </span>
+                      <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.2rem' }}>{formatDate(order.created)}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -858,7 +975,7 @@ function ROTRContent() {
 
       {/* === CUSTOMERS TAB === */}
       {tab === 'customers' && (
-        <div>
+        <div style={{ marginTop: '0.5rem' }}>
           {ordersLoading ? (
             <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
               <i className="fas fa-spinner fa-spin" style={{ fontSize: '1.5rem', color: 'var(--blue-accent)' }}></i>
@@ -866,41 +983,88 @@ function ROTRContent() {
             </div>
           ) : (
             <>
-              <p style={{ margin: '1rem 0 0.5rem', color: 'var(--gray-500)', fontSize: '0.88rem' }}>
-                {customers.length} unique customers
-              </p>
-              <div className="admin-table-wrap">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Email</th>
-                      <th>Orders</th>
-                      <th>Tickets</th>
-                      <th>Total Spent</th>
-                      <th>Last Order</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {customers.map(c => (
-                      <tr key={c.email}>
-                        <td style={{ fontWeight: 500 }}>{c.name}</td>
-                        <td>
-                          <a href={`mailto:${c.email}`} style={{ color: 'var(--blue-accent)' }}>
-                            {c.email}
-                          </a>
-                        </td>
-                        <td>{c.orderCount}</td>
-                        <td>{c.ticketCount}</td>
-                        <td style={{ fontWeight: 500 }}>
-                          {c.totalSpent > 0 ? formatCurrency(c.totalSpent) : 'Free'}
-                        </td>
-                        <td style={{ fontSize: '0.85rem' }}>{formatDate(c.lastOrder)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              {/* Summary Stats */}
+              <div className="admin-stats-grid dash-compact" style={{ marginBottom: '1.25rem' }}>
+                {[
+                  { title: 'Unique Customers', value: customers.length, icon: 'fas fa-users', color: '#1B8BEB' },
+                  { title: 'Repeat Buyers', value: customers.filter(c => c.orderCount > 1).length, icon: 'fas fa-redo', color: '#7C3AED' },
+                  { title: 'Total Spent', value: formatCurrency(customers.reduce((s, c) => s + c.totalSpent, 0)), icon: 'fas fa-dollar-sign', color: '#D97706' },
+                  { title: 'Avg. per Customer', value: customers.length > 0 ? formatCurrency(customers.reduce((s, c) => s + c.totalSpent, 0) / customers.length) : '$0', icon: 'fas fa-chart-line', color: '#10B981' },
+                ].map(card => (
+                  <div key={card.title} className="admin-stat-card dash-compact-card">
+                    <div className="admin-stat-icon" style={{ background: `${card.color}15`, color: card.color, width: 36, height: 36, borderRadius: 8, fontSize: '0.95rem' }}>
+                      <i className={card.icon}></i>
+                    </div>
+                    <div className="admin-stat-info">
+                      <span className="admin-stat-count" style={{ fontSize: '1.35rem' }}>{card.value}</span>
+                      <span className="admin-stat-label">{card.title}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
+
+              {customers.length === 0 ? (
+                <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
+                  <i className="fas fa-users" style={{ fontSize: '2rem', color: '#94a3b8', opacity: 0.4, marginBottom: '0.5rem', display: 'block' }}></i>
+                  <p style={{ color: '#94a3b8', margin: 0 }}>No customers yet</p>
+                </div>
+              ) : (
+                <div className="admin-card" style={{ padding: 0, overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    {customers.map((c, idx) => (
+                      <div
+                        key={c.email}
+                        className="rotr-event-row"
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '1rem',
+                          padding: '0.85rem 1.25rem',
+                          borderBottom: idx < customers.length - 1 ? '1px solid var(--gray-100)' : 'none',
+                        }}
+                      >
+                        {/* Avatar */}
+                        <div style={{
+                          width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
+                          background: '#1B8BEB15', color: '#1B8BEB',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontWeight: 700, fontSize: '0.9rem',
+                        }}>
+                          {c.name.charAt(0).toUpperCase()}
+                        </div>
+
+                        {/* Customer Info */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--navy)' }}>{c.name}</div>
+                          <a href={`mailto:${c.email}`} style={{ fontSize: '0.78rem', color: '#1B8BEB', textDecoration: 'none' }}>{c.email}</a>
+                        </div>
+
+                        {/* Orders */}
+                        <div style={{ textAlign: 'center', minWidth: '50px' }}>
+                          <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--navy)' }}>{c.orderCount}</div>
+                          <div style={{ fontSize: '0.6rem', color: '#94a3b8', textTransform: 'uppercase' }}>orders</div>
+                        </div>
+
+                        {/* Tickets */}
+                        <div style={{ textAlign: 'center', minWidth: '50px' }}>
+                          <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--navy)' }}>{c.ticketCount}</div>
+                          <div style={{ fontSize: '0.6rem', color: '#94a3b8', textTransform: 'uppercase' }}>tickets</div>
+                        </div>
+
+                        {/* Total Spent */}
+                        <div style={{ textAlign: 'right', minWidth: '80px' }}>
+                          <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy)' }}>
+                            {c.totalSpent > 0 ? formatCurrency(c.totalSpent) : 'Free'}
+                          </div>
+                        </div>
+
+                        {/* Last Order */}
+                        <div style={{ textAlign: 'right', minWidth: '80px' }}>
+                          <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{formatDate(c.lastOrder)}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -908,7 +1072,7 @@ function ROTRContent() {
 
       {/* === INBOX TAB === */}
       {tab === 'inbox' && (
-        <div>
+        <div style={{ marginTop: '0.5rem' }}>
           {inboxLoading ? (
             <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
               <i className="fas fa-spinner fa-spin" style={{ fontSize: '1.5rem', color: 'var(--blue-accent)' }}></i>
@@ -943,39 +1107,65 @@ function ROTRContent() {
               <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>No inbox conversations found.</p>
             </div>
           ) : (
-            <div className={`rotr-inbox-container ${selectedConvo ? 'has-selected' : ''}`}>
-              {/* Thread List */}
-              <div className="rotr-inbox-threads">
-                <div className="rotr-inbox-threads-header">
-                  <span>{inboxThreads.length} conversation{inboxThreads.length !== 1 ? 's' : ''}</span>
-                  <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
-                    {inboxThreads.some(t => t.lastDirection === 'PARTICIPANT_TO_BUSINESS' && !readConvoIds.has(t.conversationId)) && (
+            <>
+              {/* Inbox Stats */}
+              {(() => {
+                const unreadCount = inboxThreads.filter(t => t.lastDirection === 'PARTICIPANT_TO_BUSINESS' && !readConvoIds.has(t.conversationId)).length;
+                const formCount = inboxThreads.filter(t => t.messages?.some(m => m.content?.contentType === 'FORM')).length;
+                return (
+                  <div className="admin-stats-grid dash-compact" style={{ marginBottom: '1.25rem' }}>
+                    {[
+                      { title: 'Conversations', value: inboxThreads.length, icon: 'fas fa-comments', color: '#1B8BEB' },
+                      { title: 'Unread', value: unreadCount, icon: 'fas fa-envelope', color: unreadCount > 0 ? '#EF4444' : '#10B981' },
+                      { title: 'Form Submissions', value: formCount, icon: 'fas fa-file-alt', color: '#7C3AED' },
+                    ].map(card => (
+                      <div key={card.title} className="admin-stat-card dash-compact-card">
+                        <div className="admin-stat-icon" style={{ background: `${card.color}15`, color: card.color, width: 36, height: 36, borderRadius: 8, fontSize: '0.95rem' }}>
+                          <i className={card.icon}></i>
+                        </div>
+                        <div className="admin-stat-info">
+                          <span className="admin-stat-count" style={{ fontSize: '1.35rem' }}>{card.value}</span>
+                          <span className="admin-stat-label">{card.title}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              <div className={`rotr-inbox-container ${selectedConvo ? 'has-selected' : ''}`}>
+                {/* Thread List */}
+                <div className="rotr-inbox-threads">
+                  <div className="rotr-inbox-threads-header">
+                    <span>{inboxThreads.length} conversation{inboxThreads.length !== 1 ? 's' : ''}</span>
+                    <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                      {inboxThreads.some(t => t.lastDirection === 'PARTICIPANT_TO_BUSINESS' && !readConvoIds.has(t.conversationId)) && (
+                        <button
+                          className="admin-btn-icon"
+                          title="Mark all as read"
+                          onClick={markAllInboxRead}
+                        >
+                          <i className="fas fa-check-double"></i>
+                        </button>
+                      )}
                       <button
                         className="admin-btn-icon"
-                        title="Mark all as read"
-                        onClick={markAllInboxRead}
+                        title="Refresh"
+                        onClick={() => { setInboxLoaded(false); setInboxThreads([]); setSelectedConvo(null); }}
                       >
-                        <i className="fas fa-check-double"></i>
+                        <i className="fas fa-sync-alt"></i>
                       </button>
-                    )}
-                    <button
-                      className="admin-btn-icon"
-                      title="Refresh"
-                      onClick={() => { setInboxLoaded(false); setInboxThreads([]); setSelectedConvo(null); }}
-                    >
-                      <i className="fas fa-sync-alt"></i>
-                    </button>
-                    <a
-                      href="https://www.wix.com/dashboard/inbox"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="admin-btn-icon"
-                      title="Open in Wix"
-                    >
-                      <i className="fas fa-external-link-alt"></i>
-                    </a>
+                      <a
+                        href="https://www.wix.com/dashboard/inbox"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="admin-btn-icon"
+                        title="Open in Wix"
+                      >
+                        <i className="fas fa-external-link-alt"></i>
+                      </a>
+                    </div>
                   </div>
-                </div>
                 {inboxThreads.map(thread => {
                   const isUnread = thread.lastDirection === 'PARTICIPANT_TO_BUSINESS' && !readConvoIds.has(thread.conversationId);
                   return (
@@ -1112,6 +1302,7 @@ function ROTRContent() {
                 )}
               </div>
             </div>
+            </>
           )}
         </div>
       )}
@@ -1407,47 +1598,20 @@ function ROTRContent() {
 
             return (
               <>
-                {/* Period Filter + Actions */}
-                <div className="rotr-finance-toolbar">
-                  <div className="rotr-finance-periods">
-                    {(['this-month', 'last-month', '90d', 'ytd'] as const).map(p => (
-                      <button
-                        key={p}
-                        className={`rotr-analytics-period-btn ${financePeriod === p ? 'active' : ''}`}
-                        onClick={() => setFinancePeriod(p)}
-                      >
-                        {p === 'ytd' ? 'YTD' : p === 'this-month' ? 'This Month' : p === 'last-month' ? 'Last Month' : p}
-                      </button>
-                    ))}
-                    <select
-                      value={['this-month', 'last-month', '90d', 'ytd'].includes(financePeriod) ? '' : financePeriod}
-                      onChange={e => setFinancePeriod(e.target.value)}
-                      className="rotr-filter-select"
-                      style={{ marginLeft: '0.5rem' }}
-                    >
-                      <option value="" disabled>More...</option>
-                      <option value="7d">Past 7 Days</option>
-                      <option value="30d">Past 30 Days</option>
-                      <option value="all">All Time</option>
-                      {orderYears.map(y => (
-                        <option key={y} value={String(y)}>
-                          {y}{y === currentYear ? ' (Current)' : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="rotr-finance-actions">
-                    <button onClick={downloadCSV} className="admin-btn admin-btn-secondary">
-                      <i className="fas fa-download"></i> CSV
-                    </button>
-                  </div>
-                </div>
-
                 {/* AI Financial Summary */}
-                <div className="ua-ai-summary-card">
+                <div className="ua-ai-summary-card" style={{ marginTop: '0.5rem' }}>
                   <div className="ua-ai-summary-header">
                     <div className="ua-ai-summary-title">
                       <i className="fas fa-robot"></i> AI Financial Summary
+                      {financeSummary && !financeSummaryLoading && (
+                        <button
+                          onClick={() => setFinanceSummaryCollapsed(!financeSummaryCollapsed)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: '0.8rem', marginLeft: '0.5rem', padding: '0.15rem 0.4rem', borderRadius: '4px' }}
+                          title={financeSummaryCollapsed ? 'Expand summary' : 'Collapse summary'}
+                        >
+                          <i className={`fas fa-chevron-${financeSummaryCollapsed ? 'down' : 'up'}`}></i>
+                        </button>
+                      )}
                     </div>
                     <div className="ua-ai-header-actions">
                       {financeSummary && !financeSummaryLoading && (
@@ -1478,7 +1642,7 @@ function ROTRContent() {
                     </div>
                   )}
 
-                  {financeSummary && !financeSummaryLoading && (
+                  {financeSummary && !financeSummaryLoading && !financeSummaryCollapsed && (
                     <div className="ua-ai-content">
                       {financeSummary.trend && (
                         <span className={`ua-ai-trend-badge ua-ai-trend-${financeSummary.trend}`}>
@@ -1503,16 +1667,99 @@ function ROTRContent() {
                       )}
                       <div className="ua-ai-footer">
                         <i className="fas fa-info-circle"></i>
-                        AI-generated financial summary for {periodLabel} &middot; {new Date(financeSummary.generatedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                        AI-generated summary for {periodLabel} &middot; {new Date(financeSummary.generatedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                       </div>
+                    </div>
+                  )}
+
+                  {financeSummary && !financeSummaryLoading && financeSummaryCollapsed && (
+                    <div style={{ padding: '0.5rem 0', fontSize: '0.82rem', color: '#94a3b8', cursor: 'pointer' }} onClick={() => setFinanceSummaryCollapsed(false)}>
+                      {financeSummary.trend && (
+                        <span className={`ua-ai-trend-badge ua-ai-trend-${financeSummary.trend}`} style={{ marginRight: '0.5rem' }}>
+                          <i className={`fas fa-arrow-${financeSummary.trend === 'positive' ? 'up' : financeSummary.trend === 'declining' ? 'down' : 'right'}`}></i>
+                          {financeSummary.trend.charAt(0).toUpperCase() + financeSummary.trend.slice(1)}
+                        </span>
+                      )}
+                      Summary generated &middot; Click to expand
                     </div>
                   )}
 
                   {!financeSummary && !financeSummaryLoading && !financeSummaryError && (
                     <p className="ua-ai-placeholder">
-                      Click &ldquo;Generate Summary&rdquo; for an AI-powered financial analysis of your {periodLabel} data — including fee reconciliation, revenue trends, and accountant-ready insights.
+                      Click &ldquo;Generate Summary&rdquo; for an AI-powered analysis of your {periodLabel} data.
                     </p>
                   )}
+                </div>
+
+                {/* Period Filter + Actions */}
+                <div className="admin-card" style={{ padding: '0.75rem 1rem', marginTop: '0.5rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <i className="fas fa-calendar-alt" style={{ color: '#94a3b8', fontSize: '0.85rem' }}></i>
+                  <div className="rotr-finance-periods">
+                    {(['this-month', 'last-month', '90d', 'ytd'] as const).map(p => (
+                      <button
+                        key={p}
+                        className={`rotr-analytics-period-btn ${financePeriod === p ? 'active' : ''}`}
+                        onClick={() => setFinancePeriod(p)}
+                      >
+                        {p === 'ytd' ? 'YTD' : p === 'this-month' ? 'This Month' : p === 'last-month' ? 'Last Month' : p}
+                      </button>
+                    ))}
+                    <select
+                      value={['this-month', 'last-month', '90d', 'ytd'].includes(financePeriod) ? '' : financePeriod}
+                      onChange={e => setFinancePeriod(e.target.value)}
+                      className="rotr-filter-select"
+                      style={{ marginLeft: '0.5rem' }}
+                    >
+                      <option value="" disabled>More...</option>
+                      <option value="7d">Past 7 Days</option>
+                      <option value="30d">Past 30 Days</option>
+                      <option value="all">All Time</option>
+                      {orderYears.map(y => (
+                        <option key={y} value={String(y)}>
+                          {y}{y === currentYear ? ' (Current)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
+                    <button onClick={downloadCSV} className="admin-btn admin-btn-secondary">
+                      <i className="fas fa-download"></i> CSV
+                    </button>
+                  </div>
+                </div>
+
+                {/* Summary Cards */}
+                <div className="admin-stats-grid dash-compact" style={{ marginBottom: '1.25rem' }}>
+                  {[
+                    { title: 'Gross Revenue', value: formatCurrency(totalRevenue), icon: 'fas fa-dollar-sign', color: '#10B981' },
+                    { title: 'Processing Fees', value: `-${formatCurrency(totalProcessingFees)}`, icon: 'fas fa-minus-circle', color: '#EF4444' },
+                    { title: 'Net Payout', value: formatCurrency(totalNetPayout), icon: 'fas fa-hand-holding-usd', color: '#1B8BEB' },
+                    { title: `Wix Service Fees${hasTxnData ? '' : ' (est)'}`, value: formatCurrency(totalServiceFees), icon: 'fas fa-hand-holding-heart', color: '#7C3AED' },
+                    { title: 'Avg. Order Value', value: formatCurrency(avgOrderValue), icon: 'fas fa-chart-line', color: '#D97706' },
+                  ].map(card => (
+                    <div key={card.title} className="admin-stat-card dash-compact-card">
+                      <div className="admin-stat-icon" style={{ background: `${card.color}15`, color: card.color, width: 36, height: 36, borderRadius: 8, fontSize: '0.95rem' }}>
+                        <i className={card.icon}></i>
+                      </div>
+                      <div className="admin-stat-info">
+                        <span className="admin-stat-count" style={{ fontSize: '1.2rem' }}>{card.value}</span>
+                        <span className="admin-stat-label">{card.title}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Fee Breakdown Note */}
+                <div className="admin-card" style={{ padding: '0.75rem 1rem', marginBottom: '1.25rem', borderLeft: '4px solid #1B8BEB', fontSize: '0.82rem', color: '#64748b', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                  <i className="fas fa-info-circle" style={{ color: '#1B8BEB', marginTop: '0.15rem' }}></i>
+                  <span>
+                    Processing fees: <strong>2.9% + $0.30</strong> per transaction.
+                    {hasTxnData
+                      ? <> Service fees from <strong>actual payment records</strong>.</>
+                      : <> Service fees estimated at <strong>2.5%</strong>.</>
+                    }
+                    {' '}{paidOrders.length} paid, {freeOrders.length} free orders.
+                  </span>
                 </div>
 
                 {/* Print-only header */}
@@ -1521,171 +1768,131 @@ function ROTRContent() {
                   <p>{periodLabel} &bull; Generated {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
                 </div>
 
-                {/* Summary Cards */}
-                <div className="rotr-stats-row">
-                  <div className="rotr-stat-card">
-                    <div className="rotr-stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10B981' }}>
-                      <i className="fas fa-dollar-sign"></i>
-                    </div>
-                    <div className="rotr-stat-value">{formatCurrency(totalRevenue)}</div>
-                    <div className="rotr-stat-label">Gross Revenue</div>
-                  </div>
-                  <div className="rotr-stat-card">
-                    <div className="rotr-stat-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#EF4444' }}>
-                      <i className="fas fa-minus-circle"></i>
-                    </div>
-                    <div className="rotr-stat-value">-{formatCurrency(totalProcessingFees)}</div>
-                    <div className="rotr-stat-label">Processing Fees</div>
-                  </div>
-                  <div className="rotr-stat-card">
-                    <div className="rotr-stat-icon" style={{ background: 'rgba(27,139,235,0.1)', color: '#1B8BEB' }}>
-                      <i className="fas fa-hand-holding-usd"></i>
-                    </div>
-                    <div className="rotr-stat-value">{formatCurrency(totalNetPayout)}</div>
-                    <div className="rotr-stat-label">Net Payout</div>
-                  </div>
-                  <div className="rotr-stat-card">
-                    <div className="rotr-stat-icon" style={{ background: 'rgba(124,58,237,0.1)', color: '#7C3AED' }}>
-                      <i className="fas fa-hand-holding-heart"></i>
-                    </div>
-                    <div className="rotr-stat-value">{formatCurrency(totalServiceFees)}</div>
-                    <div className="rotr-stat-label">Wix Service Fees{hasTxnData ? '' : ' (est)'}</div>
-                  </div>
-                </div>
-
-                {/* Fee Breakdown Note */}
-                <div className="rotr-finance-note">
-                  <i className="fas fa-info-circle"></i>
-                  <span>
-                    Processing fees calculated at Wix rate: <strong>2.9% + $0.30</strong> per transaction (verified against payout statements).
-                    {hasTxnData
-                      ? <> Wix service fees are <strong>actual amounts</strong> from payment records.</>
-                      : <> Wix service fee estimated at <strong>2.5%</strong> (charged to buyer).</>
-                    }
-                    {' '}{paidOrders.length} paid orders, {freeOrders.length} free orders.
-                  </span>
-                </div>
-
-                {/* Monthly Revenue Breakdown */}
-                {monthlyData.length > 0 && (
-                  <div className="rotr-finance-section">
-                    <h3><i className="fas fa-calendar-alt"></i> Monthly Breakdown</h3>
-                    <div className="admin-table-wrap">
-                      <table className="admin-table">
-                        <thead>
-                          <tr>
-                            <th>Month</th>
-                            <th style={{ textAlign: 'right' }}>Orders</th>
-                            <th style={{ textAlign: 'right' }}>Tickets</th>
-                            <th style={{ textAlign: 'right' }}>Gross</th>
-                            <th style={{ textAlign: 'right' }}>Proc. Fees</th>
-                            <th style={{ textAlign: 'right' }}>Svc Fees{hasTxnData ? '' : '*'}</th>
-                            <th style={{ textAlign: 'right' }}>Net Payout</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {monthlyData.map(m => (
-                            <tr key={m.label}>
-                              <td style={{ fontWeight: 500 }}>{m.label}</td>
-                              <td style={{ textAlign: 'right' }}>{m.orders}</td>
-                              <td style={{ textAlign: 'right' }}>{m.tickets}</td>
-                              <td style={{ textAlign: 'right' }}>{formatCurrency(m.revenue)}</td>
-                              <td style={{ textAlign: 'right', color: '#EF4444', fontSize: '0.85rem' }}>-{formatCurrency(m.fees)}</td>
-                              <td style={{ textAlign: 'right', color: '#7C3AED', fontSize: '0.85rem' }}>{formatCurrency(m.svcFees)}</td>
-                              <td style={{ textAlign: 'right', fontWeight: 600 }}>{formatCurrency(m.net)}</td>
+                {/* Two-column: Monthly + Payment Methods */}
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                  {/* Monthly Revenue Breakdown */}
+                  {monthlyData.length > 0 && (
+                    <div className="admin-card">
+                      <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 0 1rem' }}>
+                        <i className="fas fa-calendar-alt" style={{ color: '#1B8BEB' }}></i> Monthly Breakdown
+                      </h3>
+                      <div className="admin-table-wrap">
+                        <table className="admin-table" style={{ marginTop: 0 }}>
+                          <thead>
+                            <tr>
+                              <th>Month</th>
+                              <th style={{ textAlign: 'right' }}>Orders</th>
+                              <th style={{ textAlign: 'right' }}>Tickets</th>
+                              <th style={{ textAlign: 'right' }}>Gross</th>
+                              <th style={{ textAlign: 'right' }}>Fees</th>
+                              <th style={{ textAlign: 'right' }}>Net</th>
                             </tr>
-                          ))}
-                          <tr className="rotr-finance-total-row">
-                            <td>Total</td>
-                            <td style={{ textAlign: 'right' }}>{periodOrders.length}</td>
-                            <td style={{ textAlign: 'right' }}>{totalTickets}</td>
-                            <td style={{ textAlign: 'right' }}>{formatCurrency(totalRevenue)}</td>
-                            <td style={{ textAlign: 'right', color: '#EF4444' }}>-{formatCurrency(totalProcessingFees)}</td>
-                            <td style={{ textAlign: 'right', color: '#7C3AED' }}>{formatCurrency(totalServiceFees)}</td>
-                            <td style={{ textAlign: 'right' }}>{formatCurrency(totalNetPayout)}</td>
-                          </tr>
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {monthlyData.map(m => (
+                              <tr key={m.label}>
+                                <td style={{ fontWeight: 500, fontSize: '0.85rem' }}>{m.label}</td>
+                                <td style={{ textAlign: 'right' }}>{m.orders}</td>
+                                <td style={{ textAlign: 'right' }}>{m.tickets}</td>
+                                <td style={{ textAlign: 'right' }}>{formatCurrency(m.revenue)}</td>
+                                <td style={{ textAlign: 'right', color: '#EF4444', fontSize: '0.82rem' }}>-{formatCurrency(m.fees)}</td>
+                                <td style={{ textAlign: 'right', fontWeight: 600 }}>{formatCurrency(m.net)}</td>
+                              </tr>
+                            ))}
+                            <tr className="rotr-finance-total-row">
+                              <td>Total</td>
+                              <td style={{ textAlign: 'right' }}>{periodOrders.length}</td>
+                              <td style={{ textAlign: 'right' }}>{totalTickets}</td>
+                              <td style={{ textAlign: 'right' }}>{formatCurrency(totalRevenue)}</td>
+                              <td style={{ textAlign: 'right', color: '#EF4444' }}>-{formatCurrency(totalProcessingFees)}</td>
+                              <td style={{ textAlign: 'right' }}>{formatCurrency(totalNetPayout)}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+
+                  {/* Payment Methods */}
+                  {paymentMethods.length > 0 && (
+                    <div className="admin-card">
+                      <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 0 1rem' }}>
+                        <i className="fas fa-credit-card" style={{ color: '#7C3AED' }}></i> Payment Methods
+                      </h3>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        {paymentMethods.map((pm, idx) => {
+                          const pct = totalRevenue > 0 ? (pm.revenue / totalRevenue) * 100 : 0;
+                          return (
+                            <div key={pm.method} style={{
+                              display: 'flex', alignItems: 'center', gap: '0.75rem',
+                              padding: '0.65rem 0',
+                              borderBottom: idx < paymentMethods.length - 1 ? '1px solid var(--gray-100)' : 'none',
+                            }}>
+                              <div style={{
+                                width: '32px', height: '32px', borderRadius: '8px', flexShrink: 0,
+                                background: '#7C3AED15', color: '#7C3AED',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem',
+                              }}>
+                                <i className={pm.method === 'creditCard' ? 'fas fa-credit-card' : pm.method === 'payPal' ? 'fab fa-paypal' : pm.method === 'Free' ? 'fas fa-gift' : 'fas fa-wallet'}></i>
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--navy)' }}>{fmtMethod(pm.method)}</div>
+                                <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{pm.count} orders &middot; {pct.toFixed(1)}%</div>
+                              </div>
+                              <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--navy)' }}>{formatCurrency(pm.revenue)}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Revenue by Event */}
                 {eventRevenue.length > 0 && (
-                  <div className="rotr-finance-section">
-                    <h3><i className="fas fa-music"></i> Revenue by Event</h3>
-                    <div className="admin-table-wrap">
-                      <table className="admin-table">
-                        <thead>
-                          <tr>
-                            <th>Event</th>
-                            <th>Date</th>
-                            <th style={{ textAlign: 'right' }}>Orders</th>
-                            <th style={{ textAlign: 'right' }}>Gross</th>
-                            <th style={{ textAlign: 'right' }}>Proc. Fees</th>
-                            <th style={{ textAlign: 'right' }}>Net Payout</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {eventRevenue.map(ev => (
-                            <tr key={ev.name}>
-                              <td style={{ fontWeight: 500 }}>{ev.name}</td>
-                              <td style={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>{ev.date}</td>
-                              <td style={{ textAlign: 'right' }}>{ev.orders}</td>
-                              <td style={{ textAlign: 'right' }}>{formatCurrency(ev.revenue)}</td>
-                              <td style={{ textAlign: 'right', color: '#EF4444', fontSize: '0.85rem' }}>-{formatCurrency(ev.fees)}</td>
-                              <td style={{ textAlign: 'right', fontWeight: 600 }}>{formatCurrency(ev.net)}</td>
-                            </tr>
-                          ))}
-                          <tr className="rotr-finance-total-row">
-                            <td colSpan={2}>Total</td>
-                            <td style={{ textAlign: 'right' }}>{periodOrders.length}</td>
-                            <td style={{ textAlign: 'right' }}>{formatCurrency(totalRevenue)}</td>
-                            <td style={{ textAlign: 'right', color: '#EF4444' }}>-{formatCurrency(totalProcessingFees)}</td>
-                            <td style={{ textAlign: 'right' }}>{formatCurrency(totalNetPayout)}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-                {/* Payment Method Breakdown */}
-                {paymentMethods.length > 0 && (
-                  <div className="rotr-finance-section">
-                    <h3><i className="fas fa-credit-card"></i> Payment Methods</h3>
-                    <div className="admin-table-wrap">
-                      <table className="admin-table">
-                        <thead>
-                          <tr>
-                            <th>Method</th>
-                            <th style={{ textAlign: 'right' }}>Orders</th>
-                            <th style={{ textAlign: 'right' }}>Revenue</th>
-                            <th style={{ textAlign: 'right' }}>% of Revenue</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {paymentMethods.map(pm => (
-                            <tr key={pm.method}>
-                              <td style={{ fontWeight: 500 }}>
-                                {fmtMethod(pm.method)}
-                              </td>
-                              <td style={{ textAlign: 'right' }}>{pm.count}</td>
-                              <td style={{ textAlign: 'right', fontWeight: 600 }}>{formatCurrency(pm.revenue)}</td>
-                              <td style={{ textAlign: 'right', fontSize: '0.85rem' }}>
-                                {totalRevenue > 0 ? `${((pm.revenue / totalRevenue) * 100).toFixed(1)}%` : '0%'}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                  <div className="admin-card" style={{ marginBottom: '1.25rem' }}>
+                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 0 1rem' }}>
+                      <i className="fas fa-music" style={{ color: '#D97706' }}></i> Revenue by Event
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      {eventRevenue.map((ev, idx) => (
+                        <div key={ev.name} className="rotr-event-row" style={{
+                          display: 'flex', alignItems: 'center', gap: '1rem',
+                          padding: '0.75rem 0',
+                          borderBottom: idx < eventRevenue.length - 1 ? '1px solid var(--gray-100)' : 'none',
+                        }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--navy)' }}>{ev.name}</div>
+                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{ev.date} &middot; {ev.orders} orders &middot; {ev.tickets} tickets</div>
+                          </div>
+                          <div style={{ textAlign: 'right', minWidth: '120px' }}>
+                            <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy)' }}>{formatCurrency(ev.revenue)}</div>
+                            <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
+                              <span style={{ color: '#EF4444' }}>-{formatCurrency(ev.fees)}</span> &rarr; <span style={{ fontWeight: 600 }}>{formatCurrency(ev.net)}</span> net
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {/* Total row */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem 0', borderTop: '2px solid var(--gray-200)', marginTop: '0.25rem' }}>
+                        <div style={{ flex: 1, fontWeight: 700, fontSize: '0.9rem', color: 'var(--navy)' }}>Total ({periodOrders.length} orders)</div>
+                        <div style={{ textAlign: 'right', minWidth: '120px' }}>
+                          <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy)' }}>{formatCurrency(totalRevenue)}</div>
+                          <div style={{ fontSize: '0.7rem' }}>
+                            <span style={{ color: '#EF4444' }}>-{formatCurrency(totalProcessingFees)}</span> &rarr; <span style={{ fontWeight: 700 }}>{formatCurrency(totalNetPayout)}</span> net
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {/* All Transactions — the table the accountant needs */}
-                <div className="rotr-finance-section">
-                  <h3><i className="fas fa-list"></i> All Transactions</h3>
+                <div className="admin-card" style={{ padding: 0, overflow: 'hidden' }}>
+                  <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, padding: '1rem 1.25rem', borderBottom: '1px solid var(--gray-100)' }}>
+                    <i className="fas fa-list" style={{ color: '#6B7280' }}></i> All Transactions
+                    <span style={{ fontSize: '0.82rem', fontWeight: 400, color: '#94a3b8', marginLeft: 'auto' }}>{periodOrders.length} transactions</span>
+                  </h3>
                   <div className="admin-table-wrap">
                     <table className="admin-table">
                       <thead>
@@ -1757,9 +1964,10 @@ function ROTRContent() {
       )}
       {/* === ANALYTICS TAB === */}
       {tab === 'analytics' && (
-        <div>
-          {/* Period Filter + Date Range */}
-          <div className="rotr-finance-toolbar">
+        <div style={{ marginTop: '0.5rem' }}>
+          {/* Period Filter */}
+          <div className="admin-card" style={{ padding: '0.75rem 1rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <i className="fas fa-calendar-alt" style={{ color: '#94a3b8', fontSize: '0.85rem' }}></i>
             <div className="rotr-finance-periods">
               {(['this-month', 'last-month', '30', 'ytd'] as const).map(p => (
                 <button
@@ -1782,7 +1990,7 @@ function ROTRContent() {
                 <option value="60">Past 60 Days</option>
               </select>
             </div>
-            <span className="rotr-analytics-range">
+            <span style={{ marginLeft: 'auto', fontSize: '0.82rem', color: '#94a3b8' }}>
               {analyticsData?.period
                 ? `${new Date(analyticsData.period.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — ${new Date(analyticsData.period.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
                 : ''}
@@ -1817,34 +2025,12 @@ function ROTRContent() {
             const prevOrders = getPrevMetric('TOTAL_ORDERS');
 
             const cards = [
-              {
-                label: 'Sessions',
-                value: sessions?.total?.toLocaleString() || '0',
-                change: calcChange(sessions?.total || 0, prevSessions?.total),
-                icon: 'fas fa-eye',
-                color: '#1B8BEB',
-              },
-              {
-                label: 'Unique Visitors',
-                value: visitors?.total?.toLocaleString() || '0',
-                change: calcChange(visitors?.total || 0, prevVisitors?.total),
-                icon: 'fas fa-users',
-                color: '#10B981',
-              },
-              {
-                label: 'Sales',
-                value: formatCurrency(sales?.total || 0),
-                change: calcChange(sales?.total || 0, prevSales?.total),
-                icon: 'fas fa-dollar-sign',
-                color: '#D97706',
-              },
-              {
-                label: 'Orders',
-                value: ordersMetric?.total?.toLocaleString() || '0',
-                change: calcChange(ordersMetric?.total || 0, prevOrders?.total),
-                icon: 'fas fa-receipt',
-                color: '#7C3AED',
-              },
+              { label: 'Sessions', value: sessions?.total?.toLocaleString() || '0', change: calcChange(sessions?.total || 0, prevSessions?.total), icon: 'fas fa-eye', color: '#1B8BEB' },
+              { label: 'Unique Visitors', value: visitors?.total?.toLocaleString() || '0', change: calcChange(visitors?.total || 0, prevVisitors?.total), icon: 'fas fa-users', color: '#10B981' },
+              { label: 'Sales', value: formatCurrency(sales?.total || 0), change: calcChange(sales?.total || 0, prevSales?.total), icon: 'fas fa-dollar-sign', color: '#D97706' },
+              { label: 'Orders', value: ordersMetric?.total?.toLocaleString() || '0', change: calcChange(ordersMetric?.total || 0, prevOrders?.total), icon: 'fas fa-receipt', color: '#7C3AED' },
+              { label: 'Clicks to Contact', value: String(contacts?.total || 0), change: null, icon: 'fas fa-phone', color: '#EF4444' },
+              { label: 'Forms Submitted', value: String(forms?.total || 0), change: null, icon: 'fas fa-envelope', color: '#0B1F3A' },
             ];
 
             // Chart: daily sessions + visitors
@@ -1852,47 +2038,45 @@ function ROTRContent() {
             const visitorValues = visitors?.values || [];
             const maxVal = Math.max(...sessionValues.map(v => v.value), 1);
 
-            // Engagement cards
-            const engagementCards = [
-              { label: 'Clicks to Contact', value: contacts?.total || 0, icon: 'fas fa-phone' },
-              { label: 'Forms Submitted', value: forms?.total || 0, icon: 'fas fa-envelope' },
-              {
-                label: 'Sessions/Visitor',
-                value: visitors?.total ? (sessions?.total || 0 / visitors.total).toFixed(1) : '0',
-                icon: 'fas fa-redo',
-              },
-            ];
-
             return (
               <>
                 {/* Summary Cards */}
-                <div className="rotr-stats-row">
+                <div className="admin-stats-grid dash-compact" style={{ marginBottom: '1.25rem' }}>
                   {cards.map(card => (
-                    <div key={card.label} className="rotr-stat-card">
-                      <div className="rotr-stat-icon" style={{ background: `${card.color}15`, color: card.color }}>
+                    <div key={card.label} className="admin-stat-card dash-compact-card">
+                      <div className="admin-stat-icon" style={{ background: `${card.color}15`, color: card.color, width: 36, height: 36, borderRadius: 8, fontSize: '0.95rem' }}>
                         <i className={card.icon}></i>
                       </div>
-                      <div className="rotr-stat-value">{card.value}</div>
-                      <div className="rotr-stat-label">{card.label}</div>
-                      {card.change !== null && (
-                        <div className={`rotr-analytics-change ${card.change >= 0 ? 'positive' : 'negative'}`}>
-                          <i className={`fas fa-arrow-${card.change >= 0 ? 'up' : 'down'}`}></i>
-                          {Math.abs(card.change).toFixed(1)}%
-                        </div>
-                      )}
+                      <div className="admin-stat-info">
+                        <span className="admin-stat-count" style={{ fontSize: '1.35rem' }}>{card.value}</span>
+                        <span className="admin-stat-label">{card.label}</span>
+                        {card.change !== null && (
+                          <span style={{ fontSize: '0.7rem', fontWeight: 600, color: card.change >= 0 ? '#10B981' : '#EF4444' }}>
+                            <i className={`fas fa-arrow-${card.change >= 0 ? 'up' : 'down'}`} style={{ marginRight: '0.2rem' }}></i>
+                            {Math.abs(card.change).toFixed(1)}%
+                          </span>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
 
                 {previousMetrics && (
-                  <p className="rotr-analytics-compare-note">
-                    <i className="fas fa-info-circle"></i> Compared to previous {analyticsData?.period.days || 30} days
-                  </p>
+                  <div className="admin-card" style={{ padding: '0.5rem 1rem', marginBottom: '1.25rem', borderLeft: '4px solid #1B8BEB', fontSize: '0.82rem', color: '#64748b' }}>
+                    <i className="fas fa-info-circle" style={{ color: '#1B8BEB', marginRight: '0.4rem' }}></i>
+                    Compared to previous {analyticsData?.period.days || 30} days
+                  </div>
                 )}
 
                 {/* Daily Traffic Chart */}
-                <div className="admin-card rotr-analytics-chart-card">
-                  <h3><i className="fas fa-chart-area"></i> Daily Traffic</h3>
+                <div className="admin-card" style={{ marginBottom: '1.25rem' }}>
+                  <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 0 1rem' }}>
+                    <i className="fas fa-chart-area" style={{ color: '#1B8BEB' }}></i> Daily Traffic
+                    <div className="rotr-analytics-chart-legend" style={{ marginLeft: 'auto' }}>
+                      <span><span className="rotr-legend-dot sessions"></span> Sessions</span>
+                      <span><span className="rotr-legend-dot visitors"></span> Visitors</span>
+                    </div>
+                  </h3>
                   <div className="rotr-analytics-chart">
                     <div className="rotr-analytics-chart-bars">
                       {sessionValues.map((s, i) => {
@@ -1903,14 +2087,8 @@ function ROTRContent() {
                         return (
                           <div key={s.date} className="rotr-analytics-bar-group" title={`${dayLabel}\nSessions: ${s.value}\nVisitors: ${v?.value || 0}`}>
                             <div className="rotr-analytics-bar-container">
-                              <div
-                                className="rotr-analytics-bar sessions"
-                                style={{ height: `${sessionHeight}%` }}
-                              ></div>
-                              <div
-                                className="rotr-analytics-bar visitors"
-                                style={{ height: `${visitorHeight}%` }}
-                              ></div>
+                              <div className="rotr-analytics-bar sessions" style={{ height: `${sessionHeight}%` }}></div>
+                              <div className="rotr-analytics-bar visitors" style={{ height: `${visitorHeight}%` }}></div>
                             </div>
                             {(sessionValues.length <= 14 || i % Math.ceil(sessionValues.length / 14) === 0) && (
                               <span className="rotr-analytics-bar-label">
@@ -1921,29 +2099,17 @@ function ROTRContent() {
                         );
                       })}
                     </div>
-                    <div className="rotr-analytics-chart-legend">
-                      <span><span className="rotr-legend-dot sessions"></span> Sessions</span>
-                      <span><span className="rotr-legend-dot visitors"></span> Visitors</span>
-                    </div>
                   </div>
                 </div>
 
-                {/* Engagement Cards */}
-                <div className="rotr-analytics-engagement">
-                  {engagementCards.map(card => (
-                    <div key={card.label} className="rotr-analytics-engagement-card">
-                      <i className={card.icon}></i>
-                      <div className="rotr-analytics-engagement-value">{card.value}</div>
-                      <div className="rotr-analytics-engagement-label">{card.label}</div>
-                    </div>
-                  ))}
-                </div>
-
                 {/* Daily Breakdown Table */}
-                <div className="admin-card" style={{ marginTop: '1.5rem' }}>
-                  <h3 style={{ marginBottom: '1rem' }}><i className="fas fa-table"></i> Daily Breakdown</h3>
+                <div className="admin-card" style={{ padding: 0, overflow: 'hidden', marginBottom: '1.25rem' }}>
+                  <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, padding: '1rem 1.25rem', borderBottom: '1px solid var(--gray-100)' }}>
+                    <i className="fas fa-table" style={{ color: '#6B7280' }}></i> Daily Breakdown
+                    <span style={{ fontSize: '0.82rem', fontWeight: 400, color: '#94a3b8', marginLeft: 'auto' }}>{sessionValues.length} days</span>
+                  </h3>
                   <div className="admin-table-wrap">
-                    <table className="admin-table">
+                    <table className="admin-table" style={{ marginTop: 0 }}>
                       <thead>
                         <tr>
                           <th>Date</th>
@@ -1989,11 +2155,12 @@ function ROTRContent() {
                   </div>
                 </div>
 
-                <div className="rotr-analytics-note">
-                  <i className="fas fa-info-circle"></i>
-                  <strong>Data source:</strong> Wix Analytics &middot; Max 62-day lookback
+                {/* Data Source Note */}
+                <div className="admin-card" style={{ padding: '0.5rem 1rem', borderLeft: '4px solid #94a3b8', fontSize: '0.82rem', color: '#64748b' }}>
+                  <i className="fas fa-info-circle" style={{ marginRight: '0.4rem' }}></i>
+                  <strong>Wix Analytics</strong> &middot; Max 62-day lookback
                   {(analyticsPeriod === 'ytd' || analyticsPeriod === '60') && (
-                    <span> &middot; <em>Periods beyond 62 days are capped to the most recent 62 days of web data</em></span>
+                    <span> &middot; <em>Capped to most recent 62 days</em></span>
                   )}
                   {analyticsPeriod !== 'ytd' && analyticsPeriod !== '60' && (
                     <span> &middot; Visitors who decline cookies are not tracked</span>
@@ -2006,6 +2173,12 @@ function ROTRContent() {
               No analytics data available.
             </div>
           )}
+        </div>
+      )}
+      {/* === PURCHASE ORDERS TAB === */}
+      {tab === 'purchase-orders' && (
+        <div>
+          <PurchaseOrders />
         </div>
       )}
       {/* === FILES TAB === */}

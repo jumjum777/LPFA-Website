@@ -12206,6 +12206,9 @@ a.lead-detail-value:hover { text-decoration: underline; }
 .rotr-upcoming-item:last-child { border-bottom: none; }
 .rotr-upcoming-item:hover { background: var(--gray-50); }
 
+.rotr-event-row { transition: background 0.15s; }
+.rotr-event-row:hover { background: var(--gray-50); }
+
 .rotr-upcoming-thumb {
   width: 52px;
   height: 52px;
@@ -12313,6 +12316,7 @@ a.lead-detail-value:hover { text-decoration: underline; }
 [data-theme="dark"] .rotr-stat-value { color: #F1F5F9; }
 [data-theme="dark"] .rotr-upcoming-item:hover { background: #1E293B; }
 [data-theme="dark"] .rotr-upcoming-item { border-color: #334155; }
+[data-theme="dark"] .rotr-event-row:hover { background: #1E293B; }
 [data-theme="dark"] .rotr-upcoming-title { color: #F1F5F9; }
 [data-theme="dark"] .rotr-upcoming-date { color: #94A3B8; }
 [data-theme="dark"] .rotr-filter-select {

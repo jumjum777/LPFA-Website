@@ -133,10 +133,15 @@ export default function AdminFilesPage() {
   useEffect(() => { loadFiles(); }, []);
 
   async function loadFiles() {
-    const supabase = createClient();
-    const { data } = await supabase.from('files').select('*').order('created_at', { ascending: false });
-    setFiles(data || []);
-    setLoading(false);
+    try {
+      const res = await fetch('/api/admin/files');
+      const data = await res.json();
+      setFiles(data.files || []);
+    } catch (err) {
+      console.error('Files load failed:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   // ─── Computed ─────────────────────────────────────────────────────────

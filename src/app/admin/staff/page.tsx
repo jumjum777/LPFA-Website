@@ -26,14 +26,15 @@ export default function AdminStaffPage() {
   useEffect(() => { loadStaff(); }, []);
 
   async function loadStaff() {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from('staff_members')
-      .select('*')
-      .order('sort_order');
-    if (error) console.error('Error loading staff:', error);
-    setStaff(data || []);
-    setLoading(false);
+    try {
+      const res = await fetch('/api/admin/staff');
+      const data = await res.json();
+      setStaff(data.staff || []);
+    } catch (err) {
+      console.error('Staff load failed:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function deleteStaff(id: string) {

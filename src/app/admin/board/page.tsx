@@ -27,14 +27,15 @@ export default function AdminBoardPage() {
   useEffect(() => { loadMembers(); }, []);
 
   async function loadMembers() {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from('board_members')
-      .select('*')
-      .order('sort_order');
-    if (error) console.error('Error loading board members:', error);
-    setMembers(data || []);
-    setLoading(false);
+    try {
+      const res = await fetch('/api/admin/board');
+      const data = await res.json();
+      setMembers(data.members || []);
+    } catch (err) {
+      console.error('Board members load failed:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function deleteMember(id: string) {

@@ -119,13 +119,15 @@ export default function PurchaseOrdersPage() {
   }, []);
 
   async function loadData() {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('purchase_orders')
-      .select('*')
-      .order('created_at', { ascending: false });
-    setOrders(data || []);
-    setLoading(false);
+    try {
+      const res = await fetch('/api/admin/purchase-orders');
+      const data = await res.json();
+      setOrders(data.orders || []);
+    } catch (err) {
+      console.error('Purchase orders load failed:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   // ─── PO Number Generation ──────────────────────────────────────────────

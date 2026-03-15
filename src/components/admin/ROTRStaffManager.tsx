@@ -193,14 +193,16 @@ export default function ROTRStaffManager({ events }: Props) {
   }, []);
 
   async function loadData() {
-    const supabase = createClient();
-    const [{ data: c }, { data: a }] = await Promise.all([
-      supabase.from('rotr_contractors').select('*').order('last_name'),
-      supabase.from('rotr_event_assignments').select('*').order('event_date', { ascending: false }),
-    ]);
-    setContractors(c || []);
-    setAssignments(a || []);
-    setLoading(false);
+    try {
+      const res = await fetch('/api/admin/rotr-staff');
+      const data = await res.json();
+      setContractors(data.contractors || []);
+      setAssignments(data.assignments || []);
+    } catch (err) {
+      console.error('Staff load failed:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   // ─── Contractor CRUD ───────────────────────────────────────────────────
@@ -1486,31 +1488,27 @@ export default function ROTRStaffManager({ events }: Props) {
       {view === 'roster' && (
         <>
           {/* Stats */}
-          <div className="rotr-stats-row">
-            <div className="rotr-stat-card">
-              <div className="rotr-stat-icon" style={{ background: '#0B1F3A15', color: '#0B1F3A' }}><i className="fas fa-hard-hat"></i></div>
-              <div className="rotr-stat-value">{activeContractors.length}</div>
-              <div className="rotr-stat-label">Active Staff</div>
-            </div>
-            <div className="rotr-stat-card">
-              <div className="rotr-stat-icon" style={{ background: '#1B8BEB15', color: '#1B8BEB' }}><i className="fas fa-calendar-check"></i></div>
-              <div className="rotr-stat-value">{seasonAssignments.length}</div>
-              <div className="rotr-stat-label">{currentYear} Assignments</div>
-            </div>
-            <div className="rotr-stat-card">
-              <div className="rotr-stat-icon" style={{ background: '#1B8BEB15', color: '#1B8BEB' }}><i className="fas fa-clock"></i></div>
-              <div className="rotr-stat-value">{totalHours.toFixed(1)}</div>
-              <div className="rotr-stat-label">Hours This Season</div>
-            </div>
-            <div className="rotr-stat-card">
-              <div className="rotr-stat-icon" style={{ background: '#0B1F3A15', color: '#0B1F3A' }}><i className="fas fa-dollar-sign"></i></div>
-              <div className="rotr-stat-value">{formatCurrency(totalPaid)}</div>
-              <div className="rotr-stat-label">Total Paid Out</div>
-            </div>
+          <div className="admin-stats-grid dash-compact" style={{ marginBottom: '1.25rem' }}>
+            {[
+              { title: 'Active Staff', value: activeContractors.length, icon: 'fas fa-hard-hat', color: '#0B1F3A' },
+              { title: `${currentYear} Assignments`, value: seasonAssignments.length, icon: 'fas fa-calendar-check', color: '#1B8BEB' },
+              { title: 'Hours This Season', value: totalHours.toFixed(1), icon: 'fas fa-clock', color: '#7C3AED' },
+              { title: 'Total Paid Out', value: formatCurrency(totalPaid), icon: 'fas fa-dollar-sign', color: '#D97706' },
+            ].map(card => (
+              <div key={card.title} className="admin-stat-card dash-compact-card">
+                <div className="admin-stat-icon" style={{ background: `${card.color}15`, color: card.color, width: 36, height: 36, borderRadius: 8, fontSize: '0.95rem' }}>
+                  <i className={card.icon}></i>
+                </div>
+                <div className="admin-stat-info">
+                  <span className="admin-stat-count" style={{ fontSize: '1.35rem' }}>{card.value}</span>
+                  <span className="admin-stat-label">{card.title}</span>
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Toolbar */}
-          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap', margin: '1.25rem 0' }}>
+          <div className="admin-card" style={{ padding: '0.75rem 1rem', marginBottom: '1rem', display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <div style={{ position: 'relative', flex: '1 1 200px', maxWidth: '300px' }}>
               <i className="fas fa-search" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)', fontSize: '0.85rem' }}></i>
               <input type="text" placeholder="Search staff..." value={search} onChange={e => setSearch(e.target.value)} style={{ paddingLeft: '2rem', width: '100%' }} />
@@ -1524,88 +1522,103 @@ export default function ROTRStaffManager({ events }: Props) {
               <option value="inactive">Inactive</option>
               <option value="all">All</option>
             </select>
-            <button className="admin-btn admin-btn-secondary" onClick={printStaffDirectory} style={{ fontSize: '0.85rem' }}>
-              <i className="fas fa-print"></i> Print Roster
-            </button>
-            <button className="admin-btn admin-btn-primary" onClick={openAddModal}>
-              <i className="fas fa-plus"></i> Add Contractor
-            </button>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
+              <button className="admin-btn admin-btn-secondary" onClick={printStaffDirectory} style={{ fontSize: '0.85rem' }}>
+                <i className="fas fa-print"></i> Print
+              </button>
+              <button className="admin-btn admin-btn-primary" onClick={openAddModal}>
+                <i className="fas fa-plus"></i> Add Contractor
+              </button>
+            </div>
           </div>
 
           {/* Table */}
           {filteredContractors.length === 0 ? (
-            <div className="admin-empty">
-              <i className="fas fa-hard-hat" style={{ fontSize: '2rem', marginBottom: '0.75rem' }}></i>
-              <p>{contractors.length === 0 ? 'No contractors yet. Add your first one!' : 'No contractors match your filters.'}</p>
+            <div className="admin-card" style={{ padding: '3rem', textAlign: 'center' }}>
+              <i className="fas fa-hard-hat" style={{ fontSize: '2rem', color: '#94a3b8', opacity: 0.4, marginBottom: '0.5rem', display: 'block' }}></i>
+              <p style={{ color: '#94a3b8', margin: 0 }}>{contractors.length === 0 ? 'No contractors yet. Add your first one!' : 'No contractors match your filters.'}</p>
             </div>
           ) : (
-            <div className="admin-table-wrap">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Role</th>
-                    <th>Rate</th>
-                    <th>W-9</th>
-                    <th>Priority</th>
-                    <th style={{ textAlign: 'center' }}>Events</th>
-                    <th style={{ textAlign: 'right' }}>Hours</th>
-                    <th style={{ textAlign: 'right' }}>Pay</th>
-                    <th>Status</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredContractors.map(c => {
-                    const cAssignments = assignments.filter(a => a.contractor_id === c.id && a.status !== 'cancelled');
-                    const cEvents = cAssignments.length;
-                    const cHours = cAssignments.reduce((s, a) => s + (a.actual_hours || a.scheduled_hours || 0), 0);
-                    const cPay = cAssignments.reduce((s, a) => s + calcPay(a), 0);
-                    const prio = c.priority || 'medium';
-                    const prioColor = prio === 'high' ? '#DC2626' : prio === 'low' ? '#64748b' : '#0B1F3A';
-                    const prioBg = prio === 'high' ? '#fee2e2' : prio === 'low' ? '#f1f5f9' : '#e2e8f0';
-                    return (
-                      <tr key={c.id}>
-                        <td>
-                          <button className="rotr-staff-name-link" onClick={() => setDetailId(c.id)}>
-                            {c.last_name}, {c.first_name}
-                          </button>
-                          {c.email && <div style={{ fontSize: '0.78rem', color: 'var(--gray-500)' }}>{c.email}</div>}
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                            {c.primary_role.split(',').map(r => (
-                              <span key={r} className={`rotr-role-chip ${r}`}>{roleLabel(r)}</span>
-                            ))}
-                          </div>
-                        </td>
-                        <td>{formatCurrency(c.default_pay_rate)}/{c.pay_type === 'hourly' ? 'hr' : 'flat'}</td>
-                        <td>
-                          <i className={`fas fa-${c.w9_status === 'received' ? 'check-circle rotr-w9-received' : c.w9_status === 'expired' ? 'exclamation-triangle rotr-w9-expired' : 'times-circle rotr-w9-missing'}`}></i>
-                        </td>
-                        <td>
-                          <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '0.15rem 0.45rem', borderRadius: '9999px', background: prioBg, color: prioColor, textTransform: 'capitalize' }}>
+            <div className="admin-card" style={{ padding: 0, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {filteredContractors.map((c, idx) => {
+                  const cAssignments = assignments.filter(a => a.contractor_id === c.id && a.status !== 'cancelled');
+                  const cEvents = cAssignments.length;
+                  const cHours = cAssignments.reduce((s, a) => s + (a.actual_hours || a.scheduled_hours || 0), 0);
+                  const cPay = cAssignments.reduce((s, a) => s + calcPay(a), 0);
+                  const prio = c.priority || 'medium';
+                  const prioColor = prio === 'high' ? '#DC2626' : prio === 'low' ? '#64748b' : '#0B1F3A';
+                  const prioBg = prio === 'high' ? '#fee2e2' : prio === 'low' ? '#f1f5f9' : '#e2e8f0';
+                  return (
+                    <div
+                      key={c.id}
+                      className="rotr-event-row"
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '1rem',
+                        padding: '0.85rem 1.25rem',
+                        borderBottom: idx < filteredContractors.length - 1 ? '1px solid var(--gray-100)' : 'none',
+                        opacity: c.status === 'inactive' ? 0.55 : 1,
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => setDetailId(c.id)}
+                    >
+                      {/* Avatar */}
+                      <div style={{
+                        width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
+                        background: c.status === 'active' ? '#0B1F3A15' : '#94a3b815',
+                        color: c.status === 'active' ? '#0B1F3A' : '#94a3b8',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontWeight: 700, fontSize: '0.85rem',
+                      }}>
+                        {c.first_name.charAt(0)}{c.last_name.charAt(0)}
+                      </div>
+
+                      {/* Name + Role */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--navy)' }}>
+                          {c.first_name} {c.last_name}
+                          <span style={{ fontSize: '0.72rem', fontWeight: 600, padding: '0.1rem 0.4rem', borderRadius: '9999px', background: prioBg, color: prioColor, marginLeft: '0.5rem', textTransform: 'capitalize' }}>
                             {prio}
                           </span>
-                        </td>
-                        <td style={{ textAlign: 'center' }}>{cEvents}</td>
-                        <td style={{ textAlign: 'right', fontSize: '0.82rem' }}>{cHours > 0 ? `${cHours.toFixed(1)}` : '—'}</td>
-                        <td style={{ textAlign: 'right', fontSize: '0.82rem', fontWeight: 500 }}>{cPay > 0 ? formatCurrency(cPay) : '—'}</td>
-                        <td>
-                          <button className={`admin-status-badge ${c.status === 'active' ? 'published' : 'draft'}`} onClick={() => toggleStatus(c)} style={{ cursor: 'pointer', border: 'none' }}>
-                            {c.status}
-                          </button>
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
-                          <button className="admin-btn admin-btn-secondary" style={{ fontSize: '0.78rem', padding: '0.25rem 0.6rem' }} onClick={() => setDetailId(c.id)}>
-                            <i className="fas fa-arrow-right"></i> View
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          <i className={`fas fa-${c.w9_status === 'received' ? 'check-circle rotr-w9-received' : c.w9_status === 'expired' ? 'exclamation-triangle rotr-w9-expired' : 'times-circle rotr-w9-missing'}`} style={{ marginLeft: '0.4rem', fontSize: '0.75rem' }}></i>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.2rem', flexWrap: 'wrap' }}>
+                          {c.primary_role.split(',').map(r => (
+                            <span key={r} className={`rotr-role-chip ${r}`}>{roleLabel(r)}</span>
+                          ))}
+                          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                            {formatCurrency(c.default_pay_rate)}/{c.pay_type === 'hourly' ? 'hr' : 'flat'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Events */}
+                      <div style={{ textAlign: 'center', minWidth: '50px' }}>
+                        <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--navy)' }}>{cEvents}</div>
+                        <div style={{ fontSize: '0.6rem', color: '#94a3b8', textTransform: 'uppercase' }}>events</div>
+                      </div>
+
+                      {/* Hours */}
+                      <div style={{ textAlign: 'center', minWidth: '50px' }}>
+                        <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--navy)' }}>{cHours > 0 ? cHours.toFixed(1) : '—'}</div>
+                        <div style={{ fontSize: '0.6rem', color: '#94a3b8', textTransform: 'uppercase' }}>hours</div>
+                      </div>
+
+                      {/* Pay */}
+                      <div style={{ textAlign: 'right', minWidth: '70px' }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--navy)' }}>{cPay > 0 ? formatCurrency(cPay) : '—'}</div>
+                      </div>
+
+                      {/* Status */}
+                      <div style={{ minWidth: '60px', textAlign: 'center' }} onClick={e => { e.stopPropagation(); toggleStatus(c); }}>
+                        <span className={`admin-status-badge ${c.status === 'active' ? 'published' : 'draft'}`} style={{ cursor: 'pointer', border: 'none', fontSize: '0.7rem' }}>
+                          {c.status}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </>
