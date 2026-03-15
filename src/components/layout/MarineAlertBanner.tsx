@@ -39,7 +39,7 @@ function MarineAlertBannerInner() {
 
   // Only fetch alerts on marine-related pages (or preview mode) to avoid
   // blocking the dev server with slow external API calls on every page
-  const shouldFetch = isPreview || pathname === '/' || pathname === '/marine' || pathname === '/fishing';
+  const shouldFetch = isPreview || pathname === '/' || pathname === '/marine';
 
   useEffect(() => {
     if (isPreview) {

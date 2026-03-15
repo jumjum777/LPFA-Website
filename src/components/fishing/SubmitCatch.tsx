@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { SPECIES, LOCATION_PRESETS, BAIT_OPTIONS, METHOD_OPTIONS, DEPTH_OPTIONS, BITE_RATINGS } from '@/lib/fishing';
+import { SPECIES, LOCATION_PRESETS, BAIT_OPTIONS, METHOD_OPTIONS, DEPTH_OPTIONS, BITE_RATINGS, GPS_BOUNDS } from '@/lib/fishing';
 import { useAuth } from '@/lib/auth/AuthContext';
 
 interface Props {
@@ -42,11 +42,17 @@ export default function SubmitCatch({ onSubmitted }: Props) {
   const [longitude, setLongitude] = useState<number | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoError, setGeoError] = useState<string | null>(null);
+  const [outOfBounds, setOutOfBounds] = useState(false);
 
   // Submission state
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function checkBounds(lat: number, lng: number): boolean {
+    return lat >= GPS_BOUNDS.latMin && lat <= GPS_BOUNDS.latMax &&
+           lng >= GPS_BOUNDS.lngMin && lng <= GPS_BOUNDS.lngMax;
+  }
 
   // Auto-detect GPS on mount
   useEffect(() => {
@@ -54,8 +60,11 @@ export default function SubmitCatch({ onSubmitted }: Props) {
       setGeoLoading(true);
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          setLatitude(Math.round(pos.coords.latitude * 1000000) / 1000000);
-          setLongitude(Math.round(pos.coords.longitude * 1000000) / 1000000);
+          const lat = Math.round(pos.coords.latitude * 1000000) / 1000000;
+          const lng = Math.round(pos.coords.longitude * 1000000) / 1000000;
+          setLatitude(lat);
+          setLongitude(lng);
+          setOutOfBounds(!checkBounds(lat, lng));
           setGeoLoading(false);
         },
         () => {
@@ -69,11 +78,15 @@ export default function SubmitCatch({ onSubmitted }: Props) {
 
   function handleRetryGPS() {
     setGeoError(null);
+    setOutOfBounds(false);
     setGeoLoading(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setLatitude(Math.round(pos.coords.latitude * 1000000) / 1000000);
-        setLongitude(Math.round(pos.coords.longitude * 1000000) / 1000000);
+        const lat = Math.round(pos.coords.latitude * 1000000) / 1000000;
+        const lng = Math.round(pos.coords.longitude * 1000000) / 1000000;
+        setLatitude(lat);
+        setLongitude(lng);
+        setOutOfBounds(!checkBounds(lat, lng));
         setGeoLoading(false);
       },
       () => {
@@ -212,11 +225,22 @@ export default function SubmitCatch({ onSubmitted }: Props) {
               <i className="fas fa-spinner fa-spin" style={{ marginRight: '0.3rem' }}></i> Detecting your location...
             </span>
           )}
-          {latitude !== null && longitude !== null && (
+          {latitude !== null && longitude !== null && !outOfBounds && (
             <span style={{ color: '#059669' }}>
               <i className="fas fa-map-marker-alt" style={{ marginRight: '0.3rem' }}></i>
               Location detected: {latitude.toFixed(4)}, {longitude.toFixed(4)}
             </span>
+          )}
+          {outOfBounds && (
+            <div className="fish-out-of-bounds">
+              <i className="fas fa-exclamation-triangle" style={{ marginRight: '0.4rem' }}></i>
+              <div>
+                <strong>You&apos;re outside the fishing area.</strong>
+                <p style={{ margin: '0.25rem 0 0', fontSize: '0.82rem' }}>
+                  Catch reports are limited to the Lake Erie / Lorain area. You must be in the area to submit a report.
+                </p>
+              </div>
+            </div>
           )}
           {geoError && (
             <div>
@@ -257,12 +281,6 @@ export default function SubmitCatch({ onSubmitted }: Props) {
             <label htmlFor="fish-date">Catch Date *</label>
             <input id="fish-date" type="date" value={catchDate} onChange={e => setCatchDate(e.target.value)} min={get7DaysAgoStr()} max={getTodayStr()} required />
           </div>
-        </div>
-
-        {/* Quantity */}
-        <div className="fish-form-group">
-          <label htmlFor="fish-quantity">Quantity Kept</label>
-          <input id="fish-quantity" type="number" min="0" max="100" value={quantityKept} onChange={e => setQuantityKept(e.target.value)} placeholder="How many did you keep?" />
         </div>
 
         {/* Location */}
@@ -344,7 +362,7 @@ export default function SubmitCatch({ onSubmitted }: Props) {
         )}
 
         {/* Submit */}
-        <button className="fish-submit-btn" type="submit" disabled={submitting || latitude === null}>
+        <button className="fish-submit-btn" type="submit" disabled={submitting || latitude === null || outOfBounds}>
           {submitting ? (
             <><i className="fas fa-spinner fa-spin" style={{ marginRight: '0.4rem' }}></i> Submitting...</>
           ) : (

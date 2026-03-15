@@ -148,7 +148,7 @@ export default function HeaderClient({ children }: { children: React.ReactNode }
       '/public-records': '/about',
       '/didyouknow': '/about',
       '/marine': '/marine',
-      '/fishing': '/fishing',
+      // '/fishing': '/fishing',
       '/live-cams': '/live-cams',
       '/donate': '/donate',
       '/contact': '/contact',

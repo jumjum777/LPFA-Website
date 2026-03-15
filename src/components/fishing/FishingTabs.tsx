@@ -5,11 +5,9 @@ import ConditionsTab from './ConditionsTab';
 import CatchBoard from './CatchBoard';
 import SubmitCatch from './SubmitCatch';
 import SpeciesGuide from './SpeciesGuide';
-import RegulationsTab from './RegulationsTab';
-import CatchMap from './CatchMap';
 import type { FishingCatch, MayflyActivityLevel } from '@/lib/fishing';
 
-type TabId = 'conditions' | 'catches' | 'submit' | 'species' | 'regulations' | 'map';
+type TabId = 'conditions' | 'catches' | 'submit' | 'species';
 
 interface ConditionsData {
   waterTemp: number | null;
@@ -36,7 +34,7 @@ interface BiteSummary {
 
 export default function FishingTabs({ conditions }: { conditions: ConditionsData }) {
   const hashTab = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : '';
-  const validHashTab = ['conditions', 'catches', 'submit', 'species', 'regulations', 'map'].includes(hashTab) ? hashTab as TabId : null;
+  const validHashTab = ['conditions', 'catches', 'submit', 'species'].includes(hashTab) ? hashTab as TabId : null;
   const [active, setActive] = useState<TabId>(validHashTab || 'conditions');
 
   const [catches, setCatches] = useState<FishingCatch[]>([]);
@@ -69,9 +67,7 @@ export default function FishingTabs({ conditions }: { conditions: ConditionsData
     { id: 'conditions', label: 'Fishing Conditions', icon: 'fa-water' },
     { id: 'catches', label: 'Catch Board', icon: 'fa-fish' },
     { id: 'submit', label: 'Report a Catch', icon: 'fa-plus-circle' },
-    { id: 'map', label: 'Catch Map', icon: 'fa-map-marked-alt' },
     { id: 'species', label: 'Species Guide', icon: 'fa-book-open' },
-    { id: 'regulations', label: 'Regulations', icon: 'fa-gavel' },
   ];
 
   function handleSwitchToSubmit() {
@@ -175,17 +171,6 @@ export default function FishingTabs({ conditions }: { conditions: ConditionsData
             </div>
           )}
 
-          {active === 'map' && (
-            <div>
-              <div className="section-header center">
-                <div className="section-label">Fishing Map</div>
-                <h2 className="section-title"><i className="fas fa-map-marked-alt" style={{ color: 'var(--gold)', marginRight: '0.5rem' }}></i> Catch Map</h2>
-                <p className="section-desc">Explore popular fishing spots and see where the community is catching fish around Lorain Harbor and Lake Erie.</p>
-              </div>
-              <CatchMap catches={catches} loaded={catchesLoaded} />
-            </div>
-          )}
-
           {active === 'species' && (
             <div>
               <div className="section-header center">
@@ -201,16 +186,6 @@ export default function FishingTabs({ conditions }: { conditions: ConditionsData
             </div>
           )}
 
-          {active === 'regulations' && (
-            <div>
-              <div className="section-header center">
-                <div className="section-label">Rules & Resources</div>
-                <h2 className="section-title"><i className="fas fa-gavel" style={{ color: 'var(--gold)', marginRight: '0.5rem' }}></i> Regulations</h2>
-                <p className="section-desc">Ohio fishing regulations, license requirements, and helpful resources for Lake Erie anglers.</p>
-              </div>
-              <RegulationsTab />
-            </div>
-          )}
         </div>
       </div>
     </section>

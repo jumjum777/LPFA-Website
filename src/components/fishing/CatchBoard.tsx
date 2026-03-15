@@ -36,6 +36,7 @@ function getBiteLabel(rating: number | null | undefined): string {
 export default function CatchBoard({ catches, loaded, onSwitchToSubmit }: Props) {
   const [filterSpecies, setFilterSpecies] = useState('all');
   const [sortBy, setSortBy] = useState<'newest' | 'biggest'>('newest');
+  const [showStats, setShowStats] = useState(false);
 
   const filtered = useMemo(() => {
     let items = [...catches];
@@ -65,6 +66,47 @@ export default function CatchBoard({ catches, loaded, onSwitchToSubmit }: Props)
   const speciesInCatches = useMemo(() => {
     const ids = new Set(catches.map(c => c.species));
     return SPECIES.filter(s => ids.has(s.id));
+  }, [catches]);
+
+  // Analytics: Popular spots
+  const spotStats = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const c of catches) {
+      const loc = c.location_name || 'Unknown';
+      counts[loc] = (counts[loc] || 0) + 1;
+    }
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8);
+  }, [catches]);
+
+  // Analytics: Species breakdown
+  const speciesStats = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const c of catches) counts[c.species] = (counts[c.species] || 0) + 1;
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1]);
+  }, [catches]);
+
+  // Analytics: Bait popularity
+  const baitStats = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const c of catches) {
+      if (c.bait_used) counts[c.bait_used] = (counts[c.bait_used] || 0) + 1;
+    }
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6);
+  }, [catches]);
+
+  // Analytics: Method breakdown
+  const methodStats = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const c of catches) {
+      if (c.fishing_method) counts[c.fishing_method] = (counts[c.fishing_method] || 0) + 1;
+    }
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1]);
   }, [catches]);
 
   if (!loaded) {
@@ -209,6 +251,143 @@ export default function CatchBoard({ catches, loaded, onSwitchToSubmit }: Props)
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* Community Stats */}
+      {catches.length > 0 && (
+        <div className="fish-stats-section">
+          <button className="fish-stats-toggle" onClick={() => setShowStats(!showStats)}>
+            <span>
+              <i className="fas fa-chart-bar" style={{ color: 'var(--gold)', marginRight: '0.4rem' }}></i>
+              Community Fishing Stats
+            </span>
+            <i className={`fas fa-chevron-${showStats ? 'up' : 'down'}`} style={{ color: '#94a3b8', fontSize: '0.75rem' }}></i>
+          </button>
+
+          {showStats && (
+            <div className="fish-stats-body">
+              {/* Summary cards */}
+              <div className="fish-stats-summary">
+                <div className="fish-stat-card">
+                  <div className="fish-stat-value">{catches.length}</div>
+                  <div className="fish-stat-label">Total Catches</div>
+                </div>
+                <div className="fish-stat-card">
+                  <div className="fish-stat-value">{new Set(catches.map(c => c.angler_name)).size}</div>
+                  <div className="fish-stat-label">Anglers</div>
+                </div>
+                <div className="fish-stat-card">
+                  <div className="fish-stat-value">{speciesInCatches.length}</div>
+                  <div className="fish-stat-label">Species</div>
+                </div>
+                <div className="fish-stat-card">
+                  <div className="fish-stat-value">
+                    {catches.filter(c => c.bite_rating).length > 0
+                      ? (catches.filter(c => c.bite_rating).reduce((sum, c) => sum + (c.bite_rating || 0), 0) / catches.filter(c => c.bite_rating).length).toFixed(1)
+                      : '--'}
+                  </div>
+                  <div className="fish-stat-label">Avg Bite Rating</div>
+                </div>
+              </div>
+
+              {/* Popular Spots */}
+              {spotStats.length > 0 && (
+                <div className="fish-chart-section">
+                  <h4 className="fish-chart-title">
+                    <i className="fas fa-map-marker-alt"></i> Popular Spots
+                  </h4>
+                  <div className="fish-chart-bars">
+                    {spotStats.map(([name, count]) => (
+                      <div key={name} className="fish-bar-row">
+                        <span className="fish-bar-label">{name}</span>
+                        <div className="fish-bar-track">
+                          <div
+                            className="fish-bar-fill"
+                            style={{ width: `${(count / spotStats[0][1]) * 100}%`, background: 'var(--blue-accent)' }}
+                          ></div>
+                        </div>
+                        <span className="fish-bar-count">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Species Breakdown */}
+              {speciesStats.length > 0 && (
+                <div className="fish-chart-section">
+                  <h4 className="fish-chart-title">
+                    <i className="fas fa-fish"></i> Species Breakdown
+                  </h4>
+                  <div className="fish-chart-bars">
+                    {speciesStats.map(([id, count]) => (
+                      <div key={id} className="fish-bar-row">
+                        <span className="fish-bar-label">
+                          <span className="fish-catch-species-dot" style={{ background: getSpeciesColor(id), marginRight: '0.35rem' }}></span>
+                          {getSpeciesName(id)}
+                        </span>
+                        <div className="fish-bar-track">
+                          <div
+                            className="fish-bar-fill"
+                            style={{ width: `${(count / speciesStats[0][1]) * 100}%`, background: getSpeciesColor(id) }}
+                          ></div>
+                        </div>
+                        <span className="fish-bar-count">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Bait & Method side by side */}
+              <div className="fish-chart-row">
+                {baitStats.length > 0 && (
+                  <div className="fish-chart-section">
+                    <h4 className="fish-chart-title">
+                      <i className="fas fa-worm"></i> Top Baits
+                    </h4>
+                    <div className="fish-chart-bars">
+                      {baitStats.map(([name, count]) => (
+                        <div key={name} className="fish-bar-row">
+                          <span className="fish-bar-label">{name}</span>
+                          <div className="fish-bar-track">
+                            <div
+                              className="fish-bar-fill"
+                              style={{ width: `${(count / baitStats[0][1]) * 100}%`, background: '#D97706' }}
+                            ></div>
+                          </div>
+                          <span className="fish-bar-count">{count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {methodStats.length > 0 && (
+                  <div className="fish-chart-section">
+                    <h4 className="fish-chart-title">
+                      <i className="fas fa-anchor"></i> Fishing Methods
+                    </h4>
+                    <div className="fish-chart-bars">
+                      {methodStats.map(([name, count]) => (
+                        <div key={name} className="fish-bar-row">
+                          <span className="fish-bar-label">{name}</span>
+                          <div className="fish-bar-track">
+                            <div
+                              className="fish-bar-fill"
+                              style={{ width: `${(count / methodStats[0][1]) * 100}%`, background: '#059669' }}
+                            ></div>
+                          </div>
+                          <span className="fish-bar-count">{count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

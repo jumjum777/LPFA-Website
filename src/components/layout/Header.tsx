@@ -40,7 +40,7 @@ export default function Header() {
             <ul className="nav-menu" id="nav-menu" role="menubar">
               <li role="none"><Link href="/" role="menuitem">Home</Link></li>
               <li role="none"><Link href="/marine" role="menuitem">Marine &amp; Alerts</Link></li>
-              <li role="none"><Link href="/fishing" role="menuitem">Fishing</Link></li>
+              {/* <li role="none"><Link href="/fishing" role="menuitem">Fishing</Link></li> */}
               <li role="none"><Link href="/news" role="menuitem">News</Link></li>
               <li role="none"><Link href="/live-cams" role="menuitem">Live Cams</Link></li>
               <li role="none"><Link href="/donate" role="menuitem">Stage Project</Link></li>
