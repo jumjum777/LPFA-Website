@@ -1,14 +1,12 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { usePathname } from 'next/navigation';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<{ email: string; role: string; display_name: string } | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
   const pathname = usePathname();
   const isLoginPage = pathname === '/admin/login';
   const isSetPasswordPage = pathname === '/admin/set-password';
@@ -16,72 +14,39 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (isLoginPage || isSetPasswordPage) return;
 
-    const supabase = createClient();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
 
-    async function checkAuth() {
-      try {
-        // Timeout the session check in case Supabase locks hang (browser extension issue)
-        const session = await Promise.race([
-          supabase.auth.getSession(),
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000)),
-        ]);
-
-        if (!session) {
-          console.warn('Supabase getSession timed out');
-          router.push('/admin/login');
-          return;
-        }
-
-        const token = session.data.session?.access_token;
-
-        if (!token) {
-          router.push('/admin/login');
-          return;
-        }
-
-        // Use API route to check admin access and get user info (bypasses RLS)
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000);
-        const res = await fetch('/api/admin/check', {
-          headers: { 'Authorization': `Bearer ${token}` },
-          signal: controller.signal,
-        });
-        clearTimeout(timeout);
-
-        if (!res.ok) {
-          router.push('/admin/login');
-          return;
-        }
-
-        const result = await res.json();
-
+    // Skip client-side Supabase entirely — just ask the API (reads cookies server-side)
+    fetch('/api/admin/check', { signal: controller.signal, credentials: 'include' })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(result => {
         if (!result.isAdmin) {
-          router.push('/admin/login');
+          window.location.href = '/admin/login';
           return;
         }
-
         setUser({
           email: result.email,
           role: result.role,
           display_name: result.display_name,
         });
-      } catch (err) {
-        console.error('Auth check failed:', err);
-        router.push('/admin/login');
-      } finally {
         setLoading(false);
-      }
-    }
+      })
+      .catch(err => {
+        console.error('Auth check failed:', err);
+        window.location.href = '/admin/login';
+      })
+      .finally(() => clearTimeout(timeout));
 
-    checkAuth();
-  }, [router, isLoginPage, isSetPasswordPage]);
+    return () => { controller.abort(); clearTimeout(timeout); };
+  }, [isLoginPage, isSetPasswordPage]);
 
   // Don't wrap the login/set-password page in the admin layout
   if (isLoginPage || isSetPasswordPage) {
     return <>{children}</>;
   }
 
-  if (loading) {
+  if (loading || !user) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', fontFamily: 'var(--font-body)' }}>
         <p>Loading...</p>
@@ -91,7 +56,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="admin-wrapper">
-      <Suspense><AdminSidebar user={user!} /></Suspense>
+      <Suspense><AdminSidebar user={user} /></Suspense>
       <main className="admin-main">
         {children}
       </main>
