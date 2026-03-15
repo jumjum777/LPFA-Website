@@ -242,3 +242,46 @@ export interface ROTREventAssignment {
   created_at: string;
   updated_at: string;
 }
+
+export interface ROTRExpense {
+  id: string;
+  description: string;
+  amount: number;
+  category: 'staffing' | 'equipment' | 'supplies' | 'marketing' | 'catering' | 'rentals' | 'insurance' | 'permits' | 'entertainment' | 'advertising' | 'other';
+  vendor: string | null;
+  expense_date: string;
+  wix_event_id: string | null;
+  po_id: string | null;
+  receipt_urls: string[];
+  notes: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  // Recurring
+  is_recurring: boolean;
+  recurrence_type: 'monthly' | 'per_event' | 'annual' | null;
+  next_occurrence_date: string | null;
+  recurring_until: string | null;
+  parent_recurring_id: string | null;
+  // Invoice/payment
+  payment_status: 'unpaid' | 'partially_paid' | 'paid';
+  due_date: string | null;
+  paid_date: string | null;
+  paid_amount: number | null;
+  payment_method: string | null;
+  payment_notes: string | null;
+  invoice_number: string | null;
+}
+
+export interface ROTRAdditionalRevenue {
+  id: string;
+  description: string;
+  amount: number;
+  source_type: 'cash' | 'sponsorship' | 'merch' | 'donation' | 'other';
+  wix_event_id: string | null;
+  revenue_date: string;
+  notes: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}

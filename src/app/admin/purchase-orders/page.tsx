@@ -114,7 +114,7 @@ export default function PurchaseOrdersPage() {
     loadData();
     fetch('/api/admin/check')
       .then(r => r.json())
-      .then(d => { if (d.user?.display_name) setUserName(d.user.display_name); })
+      .then(d => { if (d.display_name) setUserName(d.display_name); })
       .catch(() => {});
   }, []);
 
@@ -176,7 +176,6 @@ export default function PurchaseOrdersPage() {
   async function savePO(status: 'draft' | 'pending_approval') {
     if (!form.title.trim() || !form.vendor_name.trim()) return;
     setSaving(true);
-    const supabase = createClient();
 
     const subtotal = calcSubtotal(form.line_items);
     const tax = parseFloat(form.tax) || 0;
@@ -201,15 +200,30 @@ export default function PurchaseOrdersPage() {
       updated_at: new Date().toISOString(),
     };
 
-    if (editingId) {
-      const { error } = await supabase.from('purchase_orders').update(payload).eq('id', editingId);
-      if (error) { alert('Failed to update: ' + error.message); setSaving(false); return; }
-      setOrders(prev => prev.map(o => o.id === editingId ? { ...o, ...payload } as PurchaseOrder : o));
-    } else {
-      const po_number = generatePONumber();
-      const { data, error } = await supabase.from('purchase_orders').insert({ ...payload, po_number }).select().single();
-      if (error) { alert('Failed to create: ' + error.message); setSaving(false); return; }
-      setOrders(prev => [data as PurchaseOrder, ...prev]);
+    try {
+      if (editingId) {
+        const res = await fetch('/api/admin/purchase-orders', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editingId, ...payload }),
+        });
+        if (!res.ok) { const d = await res.json(); alert('Failed to update: ' + d.error); setSaving(false); return; }
+        setOrders(prev => prev.map(o => o.id === editingId ? { ...o, ...payload } as PurchaseOrder : o));
+      } else {
+        const po_number = generatePONumber();
+        const res = await fetch('/api/admin/purchase-orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...payload, po_number }),
+        });
+        if (!res.ok) { const d = await res.json(); alert('Failed to create: ' + d.error); setSaving(false); return; }
+        const { order } = await res.json();
+        setOrders(prev => [order as PurchaseOrder, ...prev]);
+      }
+    } catch (err) {
+      alert('Failed to save: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      setSaving(false);
+      return;
     }
 
     setSaving(false);
@@ -218,17 +232,19 @@ export default function PurchaseOrdersPage() {
 
   async function deletePO(id: string) {
     if (!confirm('Delete this purchase order permanently?')) return;
-    const supabase = createClient();
-    await supabase.from('purchase_orders').delete().eq('id', id);
+    await fetch(`/api/admin/purchase-orders?id=${id}`, { method: 'DELETE' });
     setOrders(prev => prev.filter(o => o.id !== id));
     if (detailId === id) setDetailId(null);
   }
 
   async function updateStatus(id: string, status: string, extra?: Partial<PurchaseOrder>) {
-    const supabase = createClient();
     const updates = { status, updated_at: new Date().toISOString(), ...extra };
-    const { error } = await supabase.from('purchase_orders').update(updates).eq('id', id);
-    if (!error) {
+    const res = await fetch('/api/admin/purchase-orders', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, ...updates }),
+    });
+    if (res.ok) {
       setOrders(prev => prev.map(o => o.id === id ? { ...o, ...updates } as PurchaseOrder : o));
     }
   }
@@ -283,32 +299,31 @@ export default function PurchaseOrdersPage() {
     const contentW = pageW - margin * 2;
     let y = margin;
 
-    doc.setFillColor(11, 31, 58);
-    doc.rect(0, 0, pageW, 80, 'F');
+    doc.setDrawColor(11, 31, 58);
+    doc.setLineWidth(2);
+    doc.line(margin, 28, margin + contentW, 28);
     doc.setFillColor(217, 119, 6);
-    doc.rect(0, 80, pageW, 4, 'F');
+    doc.rect(margin, 80, contentW, 2, 'F');
 
-    doc.setTextColor(255, 255, 255);
+    doc.setTextColor(11, 31, 58);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
-    doc.text('PURCHASE ORDER', margin, 35);
-    doc.setFontSize(12);
+    doc.text('PURCHASE ORDER', margin, 48);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
-    doc.text(po.context === 'rotr' ? "Rockin' On The River" : 'Lorain Port & Finance Authority', margin, 55);
+    doc.setTextColor(100, 116, 139);
+    doc.text(po.context === 'rotr' ? "Rockin' On The River" : 'Lorain Port & Finance Authority', margin, 65);
     doc.setFontSize(10);
-    doc.text(po.po_number, margin, 70);
+    doc.text(po.po_number, margin, 77);
 
     const statusText = STATUS_LABELS[po.status] || po.status;
-    const statusW = doc.getTextWidth(statusText.toUpperCase()) + 16;
-    if (po.status === 'approved') doc.setFillColor(22, 101, 52);
-    else if (po.status === 'denied') doc.setFillColor(220, 38, 38);
-    else if (po.status === 'pending_approval') doc.setFillColor(146, 64, 14);
-    else doc.setFillColor(100, 116, 139);
-    doc.roundedRect(pageW - margin - statusW, 25, statusW, 22, 4, 4, 'F');
-    doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.text(statusText.toUpperCase(), pageW - margin - statusW / 2, 40, { align: 'center' });
+    doc.setFontSize(9);
+    if (po.status === 'approved' || po.status === 'completed') doc.setTextColor(22, 101, 52);
+    else if (po.status === 'denied') doc.setTextColor(220, 38, 38);
+    else if (po.status === 'pending_approval') doc.setTextColor(146, 64, 14);
+    else doc.setTextColor(100, 116, 139);
+    doc.text(statusText.toUpperCase(), pageW - margin, 48, { align: 'right' });
 
     y = 105;
     doc.setTextColor(100, 116, 139);
@@ -369,9 +384,11 @@ export default function PurchaseOrdersPage() {
       { label: 'Total', x: margin + 430, w: 102 },
     ];
 
-    doc.setFillColor(11, 31, 58);
+    doc.setFillColor(241, 245, 249);
     doc.rect(margin, y, contentW, 22, 'F');
-    doc.setTextColor(255, 255, 255);
+    doc.setDrawColor(203, 213, 225);
+    doc.line(margin, y + 22, margin + contentW, y + 22);
+    doc.setTextColor(71, 85, 105);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
     cols.forEach(col => doc.text(col.label.toUpperCase(), col.x + 6, y + 15));
@@ -529,7 +546,7 @@ export default function PurchaseOrdersPage() {
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: sc.bg, color: sc.color }}>
                   {STATUS_LABELS[detailPO.status]}
                 </span>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold text-white uppercase ${detailPO.context === 'rotr' ? 'bg-navy' : 'bg-blue'}`}>
+                <span className="rounded-full text-white uppercase" style={{ padding: '0.2rem 0.6rem', fontSize: '0.7rem', fontWeight: 600, background: detailPO.context === 'rotr' ? '#0B1F3A' : '#1B8BEB', letterSpacing: '0.03em' }}>
                   {detailPO.context}
                 </span>
               </div>
@@ -602,44 +619,45 @@ export default function PurchaseOrdersPage() {
           </div>
 
           {/* Activity Log */}
-          <div className="mt-4 border-t border-slate-200 dark:border-slate-700 pt-3">
-            <h4 className="mb-2 text-xs uppercase text-slate-500 dark:text-slate-400">
-              <i className="fas fa-history mr-1"></i> Activity
+          <div style={{ marginTop: '1.25rem', borderTop: '1px solid var(--gray-200)', paddingTop: '1rem' }}>
+            <h4 style={{ fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600, color: '#94a3b8', marginBottom: '0.75rem' }}>
+              <i className="fas fa-history" style={{ marginRight: '0.35rem' }}></i> Activity
             </h4>
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2 text-sm dark:text-slate-300">
-                <i className="fas fa-paper-plane text-blue w-4 text-center"></i>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--navy)' }}>
+                <i className="fas fa-paper-plane" style={{ color: '#1B8BEB', width: '16px', textAlign: 'center', fontSize: '0.75rem' }}></i>
                 <span><strong>{detailPO.requested_by}</strong> submitted this purchase order</span>
-                <span className="text-slate-400 ml-auto whitespace-nowrap text-xs">{formatDateTime(detailPO.created_at)}</span>
+                <span style={{ color: '#94a3b8', marginLeft: 'auto', whiteSpace: 'nowrap', fontSize: '0.75rem' }}>{formatDateTime(detailPO.created_at)}</span>
               </div>
               {detailPO.approved_by && (
-                <div className={`p-2.5 rounded-md text-sm ${detailPO.status === 'denied' ? 'bg-red-50 dark:bg-red-950/20' : detailPO.status === 'approved' || detailPO.status === 'completed' ? 'bg-green-50 dark:bg-green-950/20' : 'bg-slate-50 dark:bg-slate-800'}`}>
-                  <div className="flex items-center gap-2 dark:text-slate-300">
-                    <i className={`fas fa-${detailPO.status === 'denied' ? 'times-circle' : 'check-circle'} w-4 text-center ${detailPO.status === 'denied' ? 'text-red-600' : 'text-green-800'}`}></i>
-                    <span>
-                      <strong>{detailPO.approved_by}</strong> {detailPO.status === 'denied' ? 'denied' : 'approved'} this purchase order
-                    </span>
+                <div style={{
+                  padding: '0.6rem 0.75rem', borderRadius: '8px', fontSize: '0.85rem',
+                  background: detailPO.status === 'denied' ? '#fef2f2' : '#f0fdf4',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--navy)' }}>
+                    <i className={`fas fa-${detailPO.status === 'denied' ? 'times-circle' : 'check-circle'}`} style={{ color: detailPO.status === 'denied' ? '#DC2626' : '#059669', width: '16px', textAlign: 'center', fontSize: '0.75rem' }}></i>
+                    <span><strong>{detailPO.approved_by}</strong> {detailPO.status === 'denied' ? 'denied' : 'approved'} this purchase order</span>
                     {detailPO.approved_at && (
-                      <span className="text-slate-400 ml-auto whitespace-nowrap text-xs">{formatDateTime(detailPO.approved_at)}</span>
+                      <span style={{ color: '#94a3b8', marginLeft: 'auto', whiteSpace: 'nowrap', fontSize: '0.75rem' }}>{formatDateTime(detailPO.approved_at)}</span>
                     )}
                   </div>
                   {detailPO.denial_reason && (
-                    <div className="text-red-600 mt-1 pl-6 text-sm">
-                      <i className="fas fa-quote-left mr-1 text-xs opacity-50"></i>
+                    <div style={{ color: '#DC2626', marginTop: '0.35rem', paddingLeft: '1.5rem', fontSize: '0.82rem' }}>
+                      <i className="fas fa-quote-left" style={{ marginRight: '0.3rem', fontSize: '0.65rem', opacity: 0.5 }}></i>
                       {detailPO.denial_reason}
                     </div>
                   )}
                 </div>
               )}
               {detailPO.status === 'completed' && (
-                <div className="flex items-center gap-2 text-sm dark:text-slate-300">
-                  <i className="fas fa-flag-checkered text-blue-800 w-4 text-center"></i>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--navy)' }}>
+                  <i className="fas fa-flag-checkered" style={{ color: '#1B8BEB', width: '16px', textAlign: 'center', fontSize: '0.75rem' }}></i>
                   <span>Purchase order marked as <strong>completed</strong></span>
                 </div>
               )}
               {detailPO.status === 'archived' && (
-                <div className="flex items-center gap-2 text-sm opacity-70 dark:text-slate-300">
-                  <i className="fas fa-archive w-4 text-center"></i>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#94a3b8' }}>
+                  <i className="fas fa-archive" style={{ width: '16px', textAlign: 'center', fontSize: '0.75rem' }}></i>
                   <span>Purchase order has been <strong>archived</strong></span>
                 </div>
               )}
@@ -653,42 +671,43 @@ export default function PurchaseOrdersPage() {
           )}
         </div>
 
-        {/* Line Items */}
+        {/* Line Items & Totals */}
         <div className="admin-card" style={{ marginBottom: '1.25rem' }}>
           <h4 className="mb-3"><i className="fas fa-list mr-1.5"></i> Line Items</h4>
-          <div className="admin-table-wrap">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Description</th>
-                  <th className="text-center w-20">Qty</th>
-                  <th className="text-right w-30">Unit Price</th>
-                  <th className="text-right w-30">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {detailPO.line_items.map((item, idx) => (
-                  <tr key={idx}>
-                    <td>{item.description}</td>
-                    <td className="text-center">{item.qty}</td>
-                    <td className="text-right">{formatCurrency(item.unit_price)}</td>
-                    <td className="text-right font-medium">{formatCurrency(item.qty * item.unit_price)}</td>
+          {detailPO.line_items.filter(i => i.description?.trim()).length > 0 ? (
+            <div className="admin-table-wrap">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Description</th>
+                    <th className="text-center" style={{ width: '80px' }}>Qty</th>
+                    <th className="text-right" style={{ width: '110px' }}>Unit Price</th>
+                    <th className="text-right" style={{ width: '110px' }}>Total</th>
                   </tr>
-                ))}
-                <tr>
-                  <td colSpan={3} className="text-right text-slate-500">Subtotal</td>
-                  <td className="text-right">{formatCurrency(detailPO.subtotal)}</td>
-                </tr>
-                <tr>
-                  <td colSpan={3} className="text-right text-slate-500">Tax</td>
-                  <td className="text-right">{formatCurrency(detailPO.tax)}</td>
-                </tr>
-                <tr className="font-bold text-base">
-                  <td colSpan={3} className="text-right">Total</td>
-                  <td className="text-right">{formatCurrency(detailPO.total_amount)}</td>
-                </tr>
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {detailPO.line_items.filter(i => i.description?.trim()).map((item, idx) => (
+                    <tr key={idx}>
+                      <td>{item.description}</td>
+                      <td className="text-center">{item.qty}</td>
+                      <td className="text-right">{formatCurrency(item.unit_price)}</td>
+                      <td className="text-right font-medium">{formatCurrency(item.qty * item.unit_price)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-sm" style={{ color: '#94a3b8', margin: '0 0 1rem' }}>No line items added.</p>
+          )}
+          <div style={{ borderTop: '1px solid var(--gray-200)', marginTop: '0.75rem', paddingTop: '0.75rem' }}>
+            <div className="flex justify-end gap-6 text-sm" style={{ color: '#64748b' }}>
+              <span>Subtotal: <strong style={{ color: 'var(--navy)' }}>{formatCurrency(detailPO.subtotal)}</strong></span>
+              <span>Tax: <strong style={{ color: 'var(--navy)' }}>{formatCurrency(detailPO.tax)}</strong></span>
+            </div>
+            <div className="flex justify-end mt-2">
+              <span className="text-lg font-bold" style={{ color: 'var(--navy)' }}>Total: {formatCurrency(detailPO.total_amount)}</span>
+            </div>
           </div>
         </div>
 
@@ -1023,7 +1042,7 @@ export default function PurchaseOrdersPage() {
                 const pc = PRIORITY_COLORS[po.priority] || PRIORITY_COLORS.normal;
                 return (
                   <tr key={po.id} className={po.status === 'pending_approval' ? 'bg-amber-50 dark:bg-amber-900/10' : ''}>
-                    <td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
                       <button onClick={() => setDetailId(po.id)} className="bg-transparent border-none cursor-pointer text-blue font-semibold p-0 text-sm">
                         {po.po_number}
                       </button>
