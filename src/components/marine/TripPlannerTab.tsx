@@ -248,8 +248,8 @@ export default function TripPlannerTab() {
   // ─── Multi-Stop Results View ─────────────────────────────────────────
 
   const [expandedLeg, setExpandedLeg] = useState(0);
-  const [showHazards, setShowHazards] = useState(false);
-  const [showRecs, setShowRecs] = useState(false);
+  const [showHazards, setShowHazards] = useState(true);
+  const [showRecs, setShowRecs] = useState(true);
 
   if (msResult) {
     const routeStr = msResult.legs.map(l => l.fromLabel).join(' → ') + ' → ' + msResult.legs[msResult.legs.length - 1].toLabel;
@@ -265,7 +265,7 @@ export default function TripPlannerTab() {
           <div className="trip-overview-header">
             <div>
               <div className="trip-overview-route">
-                <i className="fas fa-route" style={{ color: '#1B8BEB', marginRight: '0.4rem' }}></i>
+                <i className="fas fa-route" style={{ color: 'rgba(255,255,255,0.45)', marginRight: '0.4rem' }}></i>
                 {routeStr}
               </div>
               <div className="trip-overview-meta">
@@ -283,6 +283,9 @@ export default function TripPlannerTab() {
         </div>
 
         {/* Leg Accordion */}
+        <div className="trip-results-label">
+          <i className="fas fa-route"></i> Trip Legs
+        </div>
         <div className="trip-legs-accordion">
           {msResult.legs.map((leg, i) => {
             const isOpen = expandedLeg === i;
@@ -351,9 +354,14 @@ export default function TripPlannerTab() {
           })}
         </div>
 
+        {/* Safety & Guidance label */}
+        <div className="trip-results-label" style={{ marginTop: '0.25rem' }}>
+          <i className="fas fa-shield-alt"></i> Safety &amp; Guidance
+        </div>
+
         {/* Hazards (collapsible) */}
         {msResult.hazards.length > 0 && (
-          <div className="trip-collapsible-section">
+          <div className="trip-collapsible-section trip-hazards-section">
             <button className="trip-collapsible-trigger" onClick={() => setShowHazards(v => !v)} type="button">
               <span>
                 <i className="fas fa-exclamation-triangle" style={{ color: '#D97706', marginRight: '0.4rem' }}></i>
@@ -377,7 +385,7 @@ export default function TripPlannerTab() {
 
         {/* Recommendations (collapsible) */}
         {msResult.recommendations.length > 0 && (
-          <div className="trip-collapsible-section">
+          <div className="trip-collapsible-section trip-recs-section">
             <button className="trip-collapsible-trigger" onClick={() => setShowRecs(v => !v)} type="button">
               <span>
                 <i className="fas fa-lightbulb" style={{ color: '#1B8BEB', marginRight: '0.4rem' }}></i>
@@ -401,7 +409,7 @@ export default function TripPlannerTab() {
 
         {/* Data Limitations (collapsible) */}
         {msResult.dataLimitations.length > 0 && (
-          <div className="trip-collapsible-section">
+          <div className="trip-collapsible-section trip-notes-section">
             <button className="trip-collapsible-trigger trip-collapsible-subtle" onClick={(e) => { const body = e.currentTarget.nextElementSibling; body?.classList.toggle('open'); e.currentTarget.querySelector('.trip-collapsible-chevron')?.classList.toggle('open'); }} type="button">
               <span>
                 <i className="fas fa-info-circle" style={{ color: '#94a3b8', marginRight: '0.4rem' }}></i>
@@ -461,9 +469,9 @@ export default function TripPlannerTab() {
           <div className="trip-overview-header">
             <div>
               <div className="trip-overview-route">
-                <i className="fas fa-anchor" style={{ color: '#1B8BEB', marginRight: '0.4rem' }}></i>
+                <i className="fas fa-anchor" style={{ color: 'rgba(255,255,255,0.45)', marginRight: '0.4rem' }}></i>
                 Lorain Harbor
-                <i className="fas fa-long-arrow-alt-right" style={{ margin: '0 0.5rem', color: '#94a3b8' }}></i>
+                <i className="fas fa-long-arrow-alt-right" style={{ margin: '0 0.5rem', color: 'rgba(255,255,255,0.3)' }}></i>
                 {dest?.label || destination}
               </div>
               <div className="trip-overview-meta">
@@ -491,6 +499,9 @@ export default function TripPlannerTab() {
         )}
 
         {/* Departure + Return Windows */}
+        <div className="trip-results-label">
+          <i className="fas fa-water"></i> Conditions
+        </div>
         <div className="trip-window-grid">
           {[
             { label: `Departing ${formatWindowTime(depDate, depTime)}`, data: result.departure, icon: 'fa-arrow-right' },
@@ -515,9 +526,14 @@ export default function TripPlannerTab() {
           ))}
         </div>
 
+        {/* Safety & Guidance label */}
+        <div className="trip-results-label" style={{ marginTop: '0.25rem' }}>
+          <i className="fas fa-shield-alt"></i> Safety &amp; Guidance
+        </div>
+
         {/* Hazards (collapsible) */}
         {result.hazards.length > 0 && (
-          <div className="trip-collapsible-section">
+          <div className="trip-collapsible-section trip-hazards-section">
             <button className="trip-collapsible-trigger" onClick={() => setShowHazards(v => !v)} type="button">
               <span>
                 <i className="fas fa-exclamation-triangle" style={{ color: '#D97706', marginRight: '0.4rem' }}></i>
@@ -541,7 +557,7 @@ export default function TripPlannerTab() {
 
         {/* Recommendations (collapsible) */}
         {result.recommendations.length > 0 && (
-          <div className="trip-collapsible-section">
+          <div className="trip-collapsible-section trip-recs-section">
             <button className="trip-collapsible-trigger" onClick={() => setShowRecs(v => !v)} type="button">
               <span>
                 <i className="fas fa-lightbulb" style={{ color: '#1B8BEB', marginRight: '0.4rem' }}></i>
@@ -588,7 +604,7 @@ export default function TripPlannerTab() {
 
         {/* Data Notes (collapsible) */}
         {result.dataLimitations.length > 0 && (
-          <div className="trip-collapsible-section">
+          <div className="trip-collapsible-section trip-notes-section">
             <button className="trip-collapsible-trigger trip-collapsible-subtle" onClick={(e) => { const body = e.currentTarget.nextElementSibling; body?.classList.toggle('open'); e.currentTarget.querySelector('.trip-collapsible-chevron')?.classList.toggle('open'); }} type="button">
               <span>
                 <i className="fas fa-info-circle" style={{ color: '#94a3b8', marginRight: '0.4rem' }}></i>

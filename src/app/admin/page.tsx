@@ -100,10 +100,13 @@ export default function AdminDashboard() {
   function loadData() {
     setLoading(true);
     setError(null);
-    fetch('/api/admin/dashboard-summary')
-      .then(r => r.json())
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+    fetch('/api/admin/dashboard-summary', { signal: controller.signal })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(d => { setData(d); setLoading(false); })
-      .catch(e => { setError(e.message); setLoading(false); });
+      .catch(e => { setError(e.name === 'AbortError' ? 'Request timed out. Please try again.' : e.message); setLoading(false); })
+      .finally(() => clearTimeout(timeout));
   }
 
   useEffect(() => {

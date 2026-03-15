@@ -51,33 +51,43 @@ export async function GET() {
         .in('status', ['new', 'open']).order('created_at', { ascending: false }).limit(5),
     ]),
 
-    // 2) GA4 traffic
+    // 2) GA4 traffic (10s timeout)
     (async () => {
       if (!isGA4Configured()) return null;
       try {
-        const [daily, currentSummary, previousSummary] = await Promise.all([
-          getGA4DailyReport(fmt(thirtyDaysAgo), fmt(now)),
-          getGA4Summary(fmt(thirtyDaysAgo), fmt(now)),
-          getGA4Summary(fmt(sixtyDaysAgo), fmt(thirtyDaysAgo)),
+        const result = await Promise.race([
+          (async () => {
+            const [daily, currentSummary, previousSummary] = await Promise.all([
+              getGA4DailyReport(fmt(thirtyDaysAgo), fmt(now)),
+              getGA4Summary(fmt(thirtyDaysAgo), fmt(now)),
+              getGA4Summary(fmt(sixtyDaysAgo), fmt(thirtyDaysAgo)),
+            ]);
+            return {
+              configured: true,
+              daily: daily.map(d => ({ date: d.date, sessions: d.sessions, users: d.users, pageviews: d.pageviews })),
+              summary: {
+                sessions: { current: currentSummary.sessions || 0, previous: previousSummary.sessions || 0 },
+                users: { current: currentSummary.users || 0, previous: previousSummary.users || 0 },
+                pageviews: { current: currentSummary.pageviews || 0, previous: previousSummary.pageviews || 0 },
+              },
+            };
+          })(),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 10000)),
         ]);
-        return {
-          configured: true,
-          daily: daily.map(d => ({ date: d.date, sessions: d.sessions, users: d.users, pageviews: d.pageviews })),
-          summary: {
-            sessions: { current: currentSummary.sessions || 0, previous: previousSummary.sessions || 0 },
-            users: { current: currentSummary.users || 0, previous: previousSummary.users || 0 },
-            pageviews: { current: currentSummary.pageviews || 0, previous: previousSummary.pageviews || 0 },
-          },
-        };
+        return result;
       } catch { return null; }
     })(),
 
-    // 3) Social media
+    // 3) Social media (8s timeout)
     (async () => {
       try {
         const profileKey = getProfileKey('lpfa');
         if (!profileKey) return null;
-        const { data } = await ayrshareFetch(['facebook', 'youtube'], profileKey);
+        const result = await Promise.race([
+          ayrshareFetch(['facebook', 'youtube'], profileKey),
+          new Promise<{ data: null }>((resolve) => setTimeout(() => resolve({ data: null }), 8000)),
+        ]);
+        const { data } = result;
         if (!data) return null;
         return {
           facebook: data.facebook?.analytics ? (data.facebook.analytics as Record<string, number>) : null,
@@ -86,11 +96,14 @@ export async function GET() {
       } catch { return null; }
     })(),
 
-    // 4) Marine alerts
+    // 4) Marine alerts (8s timeout)
     (async () => {
       try {
-        const marine = await fetchMarineData();
-        return marine.alerts.length;
+        const marine = await Promise.race([
+          fetchMarineData(),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
+        ]);
+        return marine ? marine.alerts.length : 0;
       } catch { return 0; }
     })(),
   ]);
